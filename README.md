@@ -4,7 +4,7 @@ Crawl data from ICC player rankings website and create animated graphs of player
 
 Common Parameters:
 + FORMAT: ['test', 'odi', 't20']
-+ TYPE: ['batting', 'bowling', 'allrounder']
++ TYPE: ['batting', 'bowling', 'allrounder'] (no 'all_rounder' for get_data.py because those pages don't exist)
 
 'get_data.py'
 Crawls ICC player ratings website for data and stores it in CSV format, one file per calendar day.
@@ -12,7 +12,7 @@ Crawls ICC player ratings website for data and stores it in CSV format, one file
 
 'build_players.py'
 Reads stored ratings data from get_data.py and creates rating timelines, one file per player.
-+ START_YEAR: Data will be crawled starting January 01 of this year. End date is always today's calendar date
++ START_YEAR: Data will be crawled starting January 01 of this year.
 + today: Set it to the last date you have data for
 
 'animate.py'
