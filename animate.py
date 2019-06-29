@@ -2,9 +2,9 @@ from datetime import date, timedelta, datetime
 from os import listdir
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = 'allrounder'
+TYPE = ''
 # ['test', 'odi', 't20']
-FORMAT = 'test'
+FORMAT = ''
 
 ONE_DAY = timedelta(days=1)
 ONE_WEEK = timedelta(days=7)
@@ -14,15 +14,15 @@ ONE_YEAR = timedelta(days=365)
 # empty or country code
 COUNTRY_PREFIX = ''
 
-THRESHOLD = 250
+THRESHOLD = 0
 Y_BUFFER = 50
 WORKING_THRESHOLD = THRESHOLD - Y_BUFFER
-MAX_RATING = 700
+MAX_RATING = 1000
 
-TITLE_POSITION = 600
+TITLE_POSITION = 900
 
 # between available data range
-START_DATE = date(1900, 1, 1)
+START_DATE = date(1980, 1, 1)
 END_DATE = date(2019, 6, 1)
 
 NUM_DAYS_TO_SHOW = 365 * 5

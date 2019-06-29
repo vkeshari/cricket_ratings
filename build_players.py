@@ -1,13 +1,14 @@
 from datetime import date, timedelta
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = 'allrounder'
+TYPE = ''
 # ['test', 'odi', 't20']
-FORMAT = 'test'
-START_YEAR = 1900
+FORMAT = ''
+START_YEAR = 1980
+# Last day of data available
+END_DATE = date.today() - 0 * ONE_DAY
 
 ONE_DAY = timedelta(days=1)
-today = date.today() - 2 * ONE_DAY
 
 def date_to_parts(d):
   yr = str(d.year)
@@ -58,7 +59,7 @@ def parse_date(d, typ, data):
 def parse_all_dates(typ):
   player_data = {}
   d = date(START_YEAR, 1, 1)
-  while (d < today):
+  while (d < END_DATE):
     parse_date(d, typ, player_data)
     d += ONE_DAY
   return player_data
@@ -76,7 +77,7 @@ if TYPE == 'allrounder':
     all_player_data[key]['name'] = batting_player_data[key]['name']
     all_player_data[key]['ratings'] = {}
     d = date(START_YEAR, 1, 1)
-    while d < today:
+    while d < END_DATE:
       (yr, mn, dy) = date_to_parts(d)
       date_str = yr + mn + dy
       if date_str in batting_player_data[key]['ratings'] \

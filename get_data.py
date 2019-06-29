@@ -2,10 +2,10 @@ from urllib import request
 from datetime import date, timedelta
 
 # ['batting', 'bowling']
-TYPE = 'bowling'
+TYPE = ''
 # ['test', 'odi', 't20']
-FORMAT = 'test'
-START_YEAR = 1900
+FORMAT = ''
+START_YEAR = 1980
 
 ID_TAG = 'td class="top100id"'
 RATING_TAG = 'td class="top100rating"'
