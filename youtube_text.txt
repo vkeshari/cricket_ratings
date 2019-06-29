@@ -1,2 +1,6 @@
 Cricket: Top ODI Bowlers 1980-2019
 ICC ODI Ratings of Bowlers from 1980-01-01 to 2019-06-01.
+
+Tests:
+Note that no Test Cricket was played during the two World Wars so the ratings didn't change during those periods.
+It is safe for the casual viewer to start at 5:01 (year 1950).
