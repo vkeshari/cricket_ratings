@@ -108,6 +108,6 @@ while (d < TODAY):
     print("\tNO PLAYERS FOUND")
     break
 
-  write_data(d, c)
+  write_data(d, players)
   d += ONE_DAY
 
