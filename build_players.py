@@ -6,9 +6,9 @@ TYPE = ''
 # ['test', 'odi', 't20']
 FORMAT = ''
 
-ONE_DAY = timedelta(days=1)
+ONE_DAY = timedelta(days = 1)
 
-START_DATE = date(2001, 1, 1)
+START_DATE = date(2021, 1, 1)
 # Last day of data available
 END_DATE = date.today() - 0 * ONE_DAY
 
@@ -28,13 +28,23 @@ def fix_name(name):
               .replace(' ', '_') \
               .replace("'", '_')
 
-def parse_date(d, typ, data):
+def get_file_lines(filename):
+  in_file = Path(filename)
+  if not in_file.exists():
+    print (typ + '\t' + frmt + '\t' + date_str + '\t' + 'NOT FOUND')
+    return
+
+  lines = []
+  with in_file.open('r') as f:
+    lines += f.readlines()
+
+  return lines
+
+def parse_date(d, typ, frmt, data):
   (yr, mn, dy) = date_to_parts(d)
   date_str = yr + mn + dy
-  filename = 'data/' + typ + '/' + FORMAT + '/' + date_str + '.csv'
-  f = open(filename, 'r')
-  lines = f.readlines()
-  f.close()
+  filename = 'data/' + typ + '/' + frmt + '/' + date_str + '.csv'
+  lines = get_file_lines(filename)
 
   for l in lines:
     parts = l.strip().split(',')
@@ -42,9 +52,9 @@ def parse_date(d, typ, data):
     rating = eval(parts[1])
     name = fix_name(parts[2])
     if (len(parts) > 4):
-      for i in range(3, len(parts)-1):
+      for i in range(3, len(parts) - 1):
         name += '_' + fix_name(parts[i])
-    country = parts[len(parts)-1]
+    country = parts[len(parts) - 1]
 
     key = country + ' ' + name
     if key not in data:
@@ -56,15 +66,55 @@ def parse_date(d, typ, data):
     data[key]['ratings'][date_str]['rank'] = rank
     data[key]['ratings'][date_str]['rating'] = rating
 
-  print (typ + '\t' + date_str + '\t' + str(len(data)))
+  #print (typ + '\t' + frmt + '\t' + date_str + '\t' + str(len(data)) + ' players')
+
+def validate_data(start_date, end_date, typ, frmt, data):
+  print ('VALIDATING DATA: ' + frmt + '\t' + typ)
+
+  date_to_count = {}
+  for p in data:
+    for d in data[p]['ratings']:
+      if d not in date_to_count:
+        date_to_count[d] = 0
+      date_to_count[d] += 1
+  print ('Dates built back: ' + str(len(date_to_count)))
+
+  d = start_date
+  while (d < end_date):
+    (yr, mn, dy) = date_to_parts(d)
+    date_str = yr + mn + dy
+    filename = 'data/' + typ + '/' + frmt + '/' + date_str + '.csv'
+    lines = get_file_lines(filename)
+
+    if not lines:
+      continue
+    if date_str not in date_to_count:
+      print (date_str + ':\t' + 'NO PLAYER DATA FOUND')
+      return False
+
+    original_count = len(lines)
+    parsed_count = date_to_count[date_str]
+    if not parsed_count == original_count:
+      print (date_str + ':\t' + 'ORIGINAL: ' + original_count + ',\t' + 'PARSED: ' + parsed_count)
+      return False
+
+    d += ONE_DAY
+
+  return True
 
 def parse_all_dates(typ):
   player_data = {}
   d = START_DATE
   while (d < END_DATE):
-    parse_date(d, typ, player_data)
+    parse_date(d, typ, FORMAT, player_data)
     d += ONE_DAY
-  return player_data
+
+  if validate_data(START_DATE, END_DATE, typ, FORMAT, player_data):
+    print ('VALIDATION SUCCESS')
+    return player_data
+  else:
+    print ('VALIDATION FAILED')
+    return {}
 
 def build_allrounder_data():
   max_ever = 0
@@ -97,8 +147,8 @@ def build_allrounder_data():
     if len(all_player_data[key]['ratings']) == 0:
       del all_player_data[key]
 
-    print (TYPE + '\t' + str(len(all_player_data)) + '\t' \
-            + 'Max: ' + str(max_ever) + '\t' + key)
+    # print (TYPE + '\t' + str(len(all_player_data)) + '\t' \
+    #         + 'Max: ' + str(max_ever) + '\t' + key)
 
   return all_player_data
 
@@ -109,8 +159,7 @@ if TYPE == 'allrounder':
 else:
   all_player_data = parse_all_dates(TYPE)
 
-print ('All data parsed')
-print ('Players: ' + '\t' + str(len(all_player_data)))
+print ('Players built: ' + '\t' + str(len(all_player_data)))
 
 for key in all_player_data:
   country = all_player_data[key]['country']
@@ -126,4 +175,6 @@ for key in all_player_data:
       f.write(date_str + ',' \
               + str(all_player_data[key]['ratings'][date_str]['rank']) + ',' \
               + str(all_player_data[key]['ratings'][date_str]['rating']) + '\n')
-  print('\t' + filename + '\t' + str(len(all_player_data[key]['ratings'])))
+    # print('\t' + filename + '\t' + str(len(all_player_data[key]['ratings'])))
+
+print ('All data written')

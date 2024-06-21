@@ -7,7 +7,7 @@ TYPE = ''
 # ['test', 'odi', 't20']
 FORMAT = ''
 
-START_DATE = date(2001, 1, 1)
+START_DATE = date(2021, 1, 1)
 TODAY = date.today()
 ONE_DAY = timedelta(days = 1)
 
@@ -44,8 +44,15 @@ def get_data(d):
   print (yr + '\t' + mn + '\t' + dy)
   url = 'http://www.relianceiccrankings.com/datespecific/' + FORMAT + '/' \
         + TYPE  + '/' + yr + '/' + mn + '/' + dy + '/'
-  page = request.urlopen(url)
-  text = page.read().decode('utf-8')
+
+  text = ''
+  while not text:
+    try:
+      page = request.urlopen(url)
+      text = page.read().decode('utf-8')
+    except:
+      print (yr + '\t' + mn + '\t' + dy + '\t' + 'Retrying')
+  
   return text
 
 def parse_html(h):
