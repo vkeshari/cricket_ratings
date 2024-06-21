@@ -1,14 +1,16 @@
 from datetime import date, timedelta
+from pathlib import Path
 
 # ['batting', 'bowling', 'allrounder']
 TYPE = ''
 # ['test', 'odi', 't20']
 FORMAT = ''
-START_YEAR = 1980
-# Last day of data available
-END_DATE = date.today() - 0 * ONE_DAY
 
 ONE_DAY = timedelta(days=1)
+
+START_DATE = date(2001, 1, 1)
+# Last day of data available
+END_DATE = date.today() - 0 * ONE_DAY
 
 def date_to_parts(d):
   yr = str(d.year)
@@ -58,13 +60,13 @@ def parse_date(d, typ, data):
 
 def parse_all_dates(typ):
   player_data = {}
-  d = date(START_YEAR, 1, 1)
+  d = START_DATE
   while (d < END_DATE):
     parse_date(d, typ, player_data)
     d += ONE_DAY
   return player_data
 
-if TYPE == 'allrounder':
+def build_allrounder_data():
   max_ever = 0
   batting_player_data = parse_all_dates('batting')
   bowling_player_data = parse_all_dates('bowling')
@@ -76,7 +78,7 @@ if TYPE == 'allrounder':
     all_player_data[key]['country'] = batting_player_data[key]['country']
     all_player_data[key]['name'] = batting_player_data[key]['name']
     all_player_data[key]['ratings'] = {}
-    d = date(START_YEAR, 1, 1)
+    d = START_DATE
     while d < END_DATE:
       (yr, mn, dy) = date_to_parts(d)
       date_str = yr + mn + dy
@@ -98,8 +100,13 @@ if TYPE == 'allrounder':
     print (TYPE + '\t' + str(len(all_player_data)) + '\t' \
             + 'Max: ' + str(max_ever) + '\t' + key)
 
+  return all_player_data
+
+print (FORMAT + '\t' + TYPE)
+
+if TYPE == 'allrounder':
+  all_player_data = build_allrounder_data()
 else:
-  max_ever = 0
   all_player_data = parse_all_dates(TYPE)
 
 print ('All data parsed')
@@ -110,10 +117,13 @@ for key in all_player_data:
   name = all_player_data[key]['name']
   ratings = all_player_data[key]['ratings']
   filename = 'players/' + TYPE + '/' + FORMAT + '/' + country + '_' + name + '.data'
-  f = open(filename, 'w')
-  for date_str in ratings:
-    f.write(date_str + ',' \
-            + str(all_player_data[key]['ratings'][date_str]['rank']) + ',' \
-            + str(all_player_data[key]['ratings'][date_str]['rating']) + '\n')
-  f.close()
 
+  output_file = Path(filename)
+  output_file.parent.mkdir(exist_ok = True, parents = True)
+
+  with output_file.open('w') as f:
+    for date_str in ratings:
+      f.write(date_str + ',' \
+              + str(all_player_data[key]['ratings'][date_str]['rank']) + ',' \
+              + str(all_player_data[key]['ratings'][date_str]['rating']) + '\n')
+  print('\t' + filename + '\t' + str(len(all_player_data[key]['ratings'])))

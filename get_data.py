@@ -7,9 +7,9 @@ TYPE = ''
 # ['test', 'odi', 't20']
 FORMAT = ''
 
-START_DATE = date(2007, 1, 1)
+START_DATE = date(2001, 1, 1)
 TODAY = date.today()
-ONE_DAY = timedelta(days=1)
+ONE_DAY = timedelta(days = 1)
 
 ID_TAG_PREFIX = '<td class="'
 ID_TAG_START = '>'
