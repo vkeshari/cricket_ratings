@@ -22,8 +22,8 @@ MAX_RATING = 1000
 TITLE_POSITION = 900
 
 # between available data range
-START_DATE = date(1980, 1, 1)
-END_DATE = date(2019, 6, 1)
+START_DATE = date(2010, 1, 1)
+END_DATE = date(2020, 1, 1)
 
 NUM_DAYS_TO_SHOW = 365 * 5
 GRAPH_HISTORY = ONE_DAY * NUM_DAYS_TO_SHOW
@@ -249,7 +249,7 @@ def draw_for_date(current_date):
 
   pyplot.draw()
 
-FILE_NAME = ''
+FILE_NAME = 'out/'
 if len(COUNTRY_PREFIX) > 0:
   FILE_NAME += COUNTRY_PREFIX
 else:
@@ -265,6 +265,7 @@ while current_date <= END_DATE:
   all_dates.append(current_date)
   current_date += ONE_DAY
 
+print ('Writing:' + '\t' + FILE_NAME)
 writer = animation.FFMpegWriter(fps=60, bitrate=5000)
 with writer.saving(fig, FILE_NAME, dpi=100):
   current_date = START_DATE
