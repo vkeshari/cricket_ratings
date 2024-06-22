@@ -79,6 +79,7 @@ def validate_data(start_date, end_date, typ, frmt, data):
       date_to_count[d] += 1
   print ('Dates built back: ' + str(len(date_to_count)))
 
+  mismatch = False
   d = start_date
   while (d < end_date):
     (yr, mn, dy) = date_to_parts(d)
@@ -89,18 +90,19 @@ def validate_data(start_date, end_date, typ, frmt, data):
     if not lines:
       continue
     if date_str not in date_to_count:
+      mismatch = True
       print (date_str + ':\t' + 'NO PLAYER DATA FOUND')
-      return False
+      continue
 
     original_count = len(lines)
     parsed_count = date_to_count[date_str]
     if not parsed_count == original_count:
-      print (date_str + ':\t' + 'ORIGINAL: ' + original_count + ',\t' + 'PARSED: ' + parsed_count)
-      return False
+      mismatch = True
+      print (date_str + ':\t' + 'ORIGINAL: ' + str(original_count) + ',\t' + 'PARSED: ' + str(parsed_count))
 
     d += ONE_DAY
 
-  return True
+  return not mismatch
 
 def parse_all_dates(typ):
   player_data = {}
