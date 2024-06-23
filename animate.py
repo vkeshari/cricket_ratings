@@ -14,7 +14,7 @@ ONE_YEAR = timedelta(days=365)
 # empty or country code
 COUNTRY_PREFIX = ''
 
-THRESHOLD = 0
+THRESHOLD = 750
 Y_BUFFER = 50
 WORKING_THRESHOLD = THRESHOLD - Y_BUFFER
 MAX_RATING = 1000
@@ -22,8 +22,8 @@ MAX_RATING = 1000
 TITLE_POSITION = 900
 
 # between available data range
-START_DATE = date(2010, 1, 1)
-END_DATE = date(2020, 1, 1)
+START_DATE = date(2021, 1, 1)
+END_DATE = date(2024, 1, 1)
 
 NUM_DAYS_TO_SHOW = 365 * 5
 GRAPH_HISTORY = ONE_DAY * NUM_DAYS_TO_SHOW
@@ -171,7 +171,8 @@ POSSIBLE_XTICKS = [date(year = y, month = 1, day = 1) \
                     for y in range(START_DATE.year, END_DATE.year + 1)]
 
 def draw_for_date(current_date):
-  print (current_date)
+  if current_date.day == 1:
+    print (current_date)
   axs.clear()
 
   type_title_string = ''
@@ -273,4 +274,5 @@ with writer.saving(fig, FILE_NAME, dpi=100):
     draw_for_date(current_date)
     writer.grab_frame()
     current_date += ONE_DAY
+print ('Done:' + '\t' + FILE_NAME)
 
