@@ -10,10 +10,11 @@ t20  2007-01-01 for data, 2009-01-01 for graphs
 Common Parameters:
 + FORMAT: ['test', 'odi', 't20']
 + TYPE: ['batting', 'bowling', 'allrounder'] (no 'allrounder' for get_data.py because those pages don't exist)
++ START_DATE / END_DATE: Self-explanatory.
 
 'get_data.py'
 Crawls ICC player ratings website for data and stores it in CSV format, one file per calendar day.
-+ START_DATE: Self-explanatory. End date is always today's calendar date.
++ START_DATE: Start crawling data from this date. End date is always today's calendar date.
 
 'build_players.py'
 Reads stored ratings data from get_data.py and creates rating timelines, one file per player.
@@ -28,5 +29,3 @@ Reads player ratings timelines from build_players.py and creates an animated gra
 + Y_BUFFER      : Ratings are calculated for this buffer below the THRESHOLD but now shown.
 + GRAPH_SMOOTH  : Fit a monotonic spline curve on data
 + TITLE_POSITION: Show the current date on the graph at this y-axis (rating) value.
-
-+ START_DATE / END_DATE: Self-explanatory.

@@ -7,7 +7,7 @@ TYPE = ''
 # ['test', 'odi', 't20']
 FORMAT = ''
 # ['line', 'bar']
-GRAPH_TYPE = '' # no-op
+GRAPH_TYPE = 'line'
 GRAPH_SMOOTH = True
 
 # Empty or country code
@@ -31,6 +31,17 @@ ONE_YEAR = timedelta(days=365)
 
 NUM_DAYS_TO_SHOW = 365 * 5
 GRAPH_HISTORY = ONE_DAY * NUM_DAYS_TO_SHOW
+
+assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
+assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
+assert GRAPH_TYPE in ['line'], "Invalid GRAPH_TYPE requested"
+assert START_DATE < END_DATE, "START_DATE must be earlier than end date"
+assert END_DATE <= date.today(), "Future END_DATE requested"
+
+assert THRESHOLD >= 500, "THRESHOLD MUST NOT BE LESS THAN 500"
+assert MAX_RATING <= 1000, "MAX_RATING MUST NOT BE GREATER THAN 1000"
+assert TITLE_POSITION < MAX_RATING and TITLE_POSITION > THRESHOLD, "TITLE POSITION OUTSIDE RANGE"
+assert NUM_DAYS_TO_SHOW >= 365, "AT LEAST ONE YEAR MUST BE GRAPHED"
 
 def date_to_parts(d):
   yr = str(d.year)
@@ -226,7 +237,7 @@ def draw_for_date(current_date):
   axs.set_title(COUNTRY_PREFIX + ' ' + format_title_string \
                 + ' ' + type_title_string + ' Rating : ' \
                 + str(START_DATE) + ' to ' + str(END_DATE) \
-                + '\n(Min. Rating: ' + str(THRESHOLD) + ')')
+                + '\n(Minimum Rating: ' + str(THRESHOLD) + ')')
 
   axs.set_ylabel('Rating')
   axs.set_ylim(THRESHOLD, MAX_RATING)
