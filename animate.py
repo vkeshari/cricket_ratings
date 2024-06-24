@@ -3,24 +3,24 @@ from os import listdir
 from scipy import interpolate
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = 'batting'
+TYPE = ''
 # ['test', 'odi', 't20']
-FORMAT = 't20'
+FORMAT = ''
 # ['line', 'bar']
-GRAPH_TYPE = ''
+GRAPH_TYPE = '' # no-op
 GRAPH_SMOOTH = True
 
-# empty or country code
+# Empty or country code
 COUNTRY_PREFIX = ''
 
-THRESHOLD = 700
+THRESHOLD = 600
 Y_BUFFER = 50
 WORKING_THRESHOLD = THRESHOLD - Y_BUFFER
 MAX_RATING = 1000
 
 TITLE_POSITION = 900
 
-# between available data range
+# Graph date range
 START_DATE = date(2021, 1, 1)
 END_DATE = date(2024, 1, 1)
 
