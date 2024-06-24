@@ -2,9 +2,9 @@ from datetime import date, timedelta
 from pathlib import Path
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = ''
+TYPE = 'batting'
 # ['test', 'odi', 't20']
-FORMAT = ''
+FORMAT = 't20'
 
 ONE_DAY = timedelta(days = 1)
 
@@ -98,7 +98,8 @@ def validate_data(start_date, end_date, typ, frmt, data):
     parsed_count = date_to_count[date_str]
     if not parsed_count == original_count:
       mismatch = True
-      print (date_str + ':\t' + 'ORIGINAL: ' + str(original_count) + ',\t' + 'PARSED: ' + str(parsed_count))
+      print (date_str + ':\t' + 'ORIGINAL: ' + str(original_count) + ',\t' \
+              + 'PARSED: ' + str(parsed_count))
 
     d += ONE_DAY
 

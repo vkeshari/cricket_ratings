@@ -3,9 +3,9 @@ from pathlib import Path
 from datetime import date, timedelta
 
 # ['batting', 'bowling']
-TYPE = ''
+TYPE = 'batting'
 # ['test', 'odi', 't20']
-FORMAT = ''
+FORMAT = 't20'
 
 START_DATE = date(2021, 1, 1)
 TODAY = date.today()
