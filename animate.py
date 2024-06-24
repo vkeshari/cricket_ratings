@@ -60,36 +60,46 @@ def get_player_ratings(typ, frmt, threshold, smooth = False):
     min_player_date = string_to_date(lines[0].split(',')[0])
     max_player_date = string_to_date(lines[-1].split(',')[0])
 
+    # Get all ratings for a player
     full_player_ratings = {}
     last_rating = -1
     for i, l in enumerate(lines):
       parts = l.split(',')
       d = string_to_date(parts[0])
       rating = eval(parts[2])
-      if rating == last_rating and i < len(lines) - 1:
-        continue
       last_rating = rating
       full_player_ratings[d] = rating
 
-    if smooth and len(full_player_ratings) > 3:
-      (ds, rs) = list(zip(*sorted(full_player_ratings.items())))
+    # Remove redundant middle points
+    trimmed_player_ratings = {}
+    for d in full_player_ratings:
+      if d - ONE_DAY in full_player_ratings \
+          and d + ONE_DAY in full_player_ratings \
+          and full_player_ratings[d] == full_player_ratings[d - ONE_DAY]:
+        continue
+      trimmed_player_ratings[d] = full_player_ratings[d]
+
+    if smooth and len(trimmed_player_ratings) > 1:
+      (ds, rs) = list(zip(*sorted(trimmed_player_ratings.items())))
       ts = [(d - min_player_date).days for d in ds]
       all_dates_range = range((max_player_date - min_player_date).days + 1)
 
       interpolated_ratings = interpolate.pchip_interpolate(ts, rs, all_dates_range)
-      full_player_ratings = {min_player_date + timedelta(days = t): r for (t, r) in zip(all_dates_range, interpolated_ratings)}
+      trimmed_player_ratings = {min_player_date + timedelta(days = t): r \
+                                for (t, r) in zip(all_dates_range, interpolated_ratings)}
 
     first_date = max(min_player_date, START_DATE)
     last_date = min(max_player_date, END_DATE)
 
+    # Build ratings for date range
     player_ratings[p] = {}
     player_ratings[p]['all_ratings'] = {}
     player_ratings[p]['max_ratings'] = {}
     max_rating = 0
-    for d in full_player_ratings:
+    for d in trimmed_player_ratings:
       if d < first_date or d > last_date:
         continue
-      rating = full_player_ratings[d]
+      rating = trimmed_player_ratings[d]
       if rating <= threshold:
         continue
       if int(rating) > max_rating:
@@ -101,6 +111,7 @@ def get_player_ratings(typ, frmt, threshold, smooth = False):
       del player_ratings[p]
       continue
 
+    # Fill missing dates with last available rating
     last_rating = 0
     d = first_date
     while d <= last_date:
