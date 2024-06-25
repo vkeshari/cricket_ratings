@@ -5,6 +5,7 @@ from os import listdir
 TYPE = ''
 # ['test', 'odi', 't20']
 FORMAT = ''
+PLAYERS_DIR = 'players/' + TYPE + '/' + FORMAT
 
 MAX_PLAYERS = 25
 
@@ -28,14 +29,24 @@ def date_to_string(d):
     dy = '0' + dy
   return yr + '-' + mn + '-' + dy
 
-def get_last_ratings(typ, frmt):
+def readable_name(p):
+  sep = p.find('_')
+  return p[sep+1:].split('.')[0].replace('_', ' ')
+
+def country(p):
+  return p.split('_')[0]
+
+def readable_name_and_country(p):
+  return readable_name(p) + ' (' + country(p) + ')'
+
+def get_last_ratings(players_dir):
   final_ratings = {}
-  player_files = listdir('players/' + typ + '/' + frmt)
+  player_files = listdir(players_dir)
 
   max_d = EPOCH
   for p in player_files:
     lines = []
-    with open('players/' + typ + '/' + frmt + '/' + p, 'r') as f:
+    with open(players_dir + '/' + p, 'r') as f:
       lines += f.readlines()
 
     min_rank = 100
@@ -54,25 +65,29 @@ def get_last_ratings(typ, frmt):
       if rank < min_rank:
         min_rank = rank
 
-    final_ratings[p] = {'last_date': d, 'rank': min_rank, 'final': rating, 'max': max_rating}
+    final_ratings[p] = {'last_date': d, 'rank': rank, 'final': rating, \
+                        'max_rating': max_rating, 'min_rank': min_rank}
 
   actual_final_ratings = {k: v for (k, v) in final_ratings.items() if v['last_date'] < max_d}
 
   return actual_final_ratings
 
-final_ratings = get_last_ratings(TYPE, FORMAT)
+final_ratings = get_last_ratings(PLAYERS_DIR)
 
 sorted_final_ratings = dict(sorted(final_ratings.items(),
                                     key = lambda item: item[1]['final'],
                                     reverse = True))
 
+print ("Players by final career rating at retirement:" + '\t' + FORMAT + '\t' + TYPE)
 for i, p in enumerate(sorted_final_ratings):
   final_rank = sorted_final_ratings[p]['rank']
   final_rating = sorted_final_ratings[p]['final']
-  max_rating = sorted_final_ratings[p]['max']
+  max_rating = sorted_final_ratings[p]['max_rating']
+  min_rank = sorted_final_ratings[p]['min_rank']
   last_date = sorted_final_ratings[p]['last_date']
-  print (str(i + 1) + '\tRetired: ' + date_to_string(last_date) + '\tFinal Rank: ' \
-          + str(final_rank) + '\tFinal Rating: ' + str(final_rating) + '\t' + p)
+  print (str(i + 1) + '\tRetired: ' + date_to_string(last_date)
+          + '\tFinal Rank: ' + str(final_rank) + '\tFinal Rating: ' + str(final_rating) \
+          + '\t' + readable_name_and_country(p))
 
   if i > MAX_PLAYERS - 2:
     break
