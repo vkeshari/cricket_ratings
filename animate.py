@@ -32,7 +32,7 @@ Y_BUFFER = 50
 WORKING_THRESHOLD = THRESHOLD - Y_BUFFER
 
 # bar graph only
-TOP_PLAYERS = 20
+TOP_PLAYERS = 10
 MIN_RATING_SCALE = 500
 
 # line graph only
@@ -269,7 +269,7 @@ def draw_for_date(current_date):
 
     axs.set_ylabel('Rank', fontsize ='xx-large')
     axs.set_ylim(TOP_PLAYERS, 0)
-    yticks = range(0, TOP_PLAYERS + 1, 5)
+    yticks = range(1, TOP_PLAYERS + 1)
     axs.set_yticks(yticks)
     axs.set_yticklabels([str(y) for y in yticks], fontsize ='x-large')
 
@@ -375,7 +375,10 @@ FILE_NAME += '_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
 if GRAPH_TYPE == 'line':
   resolution = tuple([12.8, 7.2])
 elif GRAPH_TYPE == 'bar':
-  resolution = tuple([7.2, 12.8])
+  if TOP_PLAYERS >= 15:
+    resolution = tuple([7.2, 12.8])
+  else:
+    resolution = tuple([7.2, 7.2])
 
 fig, axs = pyplot.subplots(figsize = resolution)
 
