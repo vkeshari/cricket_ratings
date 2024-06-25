@@ -29,3 +29,15 @@ Reads player ratings timelines from build_players.py and creates an animated gra
 + Y_BUFFER      : Ratings are calculated for this buffer below the THRESHOLD but now shown.
 + GRAPH_SMOOTH  : Fit a monotonic spline curve on data
 + TITLE_POSITION: Show the current date on the graph at this y-axis (rating) value.
+
+utils/
+Note: Run these from the repository root folder.
+
+'top_final_ratings.py'
+Reads player ratings timelines from build_players.py and shows players that had the highest ratings at retirement.
++ MAX_PLAYERS: Self-explanatory
+
+'time_at_top.py'
+Reads player ratings timelines from build_players.py and shows players that were in the top N ratings for the longest time.
++ NUM_TOP    : Count days when player's rating is in the top NUM_TOP
++ MAX_PLAYERS: Self-explanatory
