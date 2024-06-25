@@ -68,7 +68,8 @@ def get_last_ratings(players_dir):
     final_ratings[p] = {'last_date': d, 'rank': rank, 'final': rating, \
                         'max_rating': max_rating, 'min_rank': min_rank}
 
-  actual_final_ratings = {k: v for (k, v) in final_ratings.items() if v['last_date'] < max_d}
+  actual_final_ratings = {k: v for (k, v) in final_ratings.items()
+                          if v['last_date'] < max_d}
 
   return actual_final_ratings
 
@@ -79,7 +80,7 @@ sorted_final_ratings = dict(sorted(final_ratings.items(),
                                     reverse = True))
 
 print ("Players by final career rating at retirement:" + '\t' + FORMAT + '\t' + TYPE)
-for i, p in enumerate(sorted_final_ratings):
+for i, p in enumerate(sorted_final_ratings)[ : MAX_PLAYERS]:
   final_rank = sorted_final_ratings[p]['rank']
   final_rating = sorted_final_ratings[p]['final']
   max_rating = sorted_final_ratings[p]['max_rating']
@@ -88,6 +89,3 @@ for i, p in enumerate(sorted_final_ratings):
   print (str(i + 1) + '\tRetired: ' + date_to_string(last_date)
           + '\tFinal Rank: ' + str(final_rank) + '\tFinal Rating: ' + str(final_rating) \
           + '\t' + readable_name_and_country(p))
-
-  if i > MAX_PLAYERS - 2:
-    break

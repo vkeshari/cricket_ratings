@@ -7,6 +7,12 @@ test 1901-01-01 for data, 1951-01-01 for graphs (note: no international cricket 
 odi  1975-01-01 for data, 1981-01-01 for graphs
 t20  2007-01-01 for data, 2009-01-01 for graphs
 
+Recommended threshold for all bar charts: 500
+Recommended thresholds for line charts:
++ Batting - Test: 750, ODI: 750, T20: 700
++ Bowling - Test: 700, ODI: 700, T20: 600
++ Country specific graph - 100 less than usual
+
 Common Parameters:
 + FORMAT: ['test', 'odi', 't20']
 + TYPE: ['batting', 'bowling', 'allrounder'] (no 'allrounder' for get_data.py because those pages don't exist)

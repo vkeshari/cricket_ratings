@@ -50,7 +50,8 @@ def get_top_ratings(players_dir, num_top):
       if rank <= num_top:
         days_at_top += 1
 
-    top_ratings[p] = {'days_at_top': days_at_top, 'min_rank': min_rank, 'max_rating': max_rating}
+    top_ratings[p] = {'days_at_top': days_at_top, 'min_rank': min_rank,
+                      'max_rating': max_rating}
 
   return top_ratings
 
@@ -60,16 +61,13 @@ sorted_top_ratings = dict(sorted(top_ratings.items(),
                                     key = lambda item: item[1]['days_at_top'],
                                     reverse = True))
 
-print ("Players by longest time spent at top " + str(NUM_TOP) + ' rankings :' \
+print ("Players by longest time spent in top " + str(NUM_TOP) + ' rankings :' \
         + '\t' + FORMAT + '\t' + TYPE)
 
-for i, p in enumerate(sorted_top_ratings):
+for i, p in enumerate(sorted_top_ratings)[ : MAX_PLAYERS]:
   days_at_top = sorted_top_ratings[p]['days_at_top']
   min_rank = sorted_top_ratings[p]['min_rank']
   max_rating = sorted_top_ratings[p]['max_rating']
   print (str(i + 1) + '\tMax Rating: ' + str(max_rating) + '\t\tBest Rank: ' \
           + str(min_rank) + '\tDays in top ' + str(NUM_TOP) + ': ' + str(days_at_top) \
           + '\t' + readable_name_and_country(p))
-
-  if i > MAX_PLAYERS - 2:
-    break
