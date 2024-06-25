@@ -1,3 +1,5 @@
+import math
+
 from datetime import date, timedelta, datetime
 from os import listdir
 from scipy import interpolate
@@ -39,16 +41,19 @@ TITLE_POSITION = 900
 NUM_DAYS_TO_SHOW = 365 * 5
 GRAPH_HISTORY = ONE_DAY * NUM_DAYS_TO_SHOW
 
+# Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling
+ALLROUNDERS_GEOM_MEAN = False
+
 assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
 assert GRAPH_TYPE in ['line', 'bar'], "Invalid GRAPH_TYPE requested"
-assert START_DATE < END_DATE, "START_DATE must be earlier than end date"
+assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
 assert END_DATE <= date.today(), "Future END_DATE requested"
 
-assert TOP_PLAYERS >= 5 and TOP_PLAYERS <= 50, "TOP_PLAYERS must be between 5 and 50"
-assert THRESHOLD >= 500, "THRESHOLD must not be less than 500"
 assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
-assert MIN_RATING_SCALE > 0, "MIN_RATING_SCALE must be positive"
+assert TOP_PLAYERS >= 5 and TOP_PLAYERS <= 50, "TOP_PLAYERS must be between 5 and 50"
+assert THRESHOLD >= 0, "THRESHOLD must not be negative"
+assert MIN_RATING_SCALE >= 0, "MIN_RATING_SCALE must not be negative"
 assert TITLE_POSITION < MAX_RATING and TITLE_POSITION > THRESHOLD, \
     "TITLE_POSITION outside range"
 assert NUM_DAYS_TO_SHOW >= 365, "NUM_DAYS_TO_SHOW too small. " \
@@ -84,12 +89,13 @@ def get_player_ratings(typ, frmt, threshold, smooth = False):
 
     # Get all ratings for a player
     full_player_ratings = {}
-    last_rating = -1
     for i, l in enumerate(lines):
       parts = l.split(',')
       d = string_to_date(parts[0])
+
       rating = eval(parts[2])
-      last_rating = rating
+      if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN:
+        rating = int(math.sqrt(rating * 1000))
       full_player_ratings[d] = rating
 
     # Remove redundant middle points
@@ -116,7 +122,6 @@ def get_player_ratings(typ, frmt, threshold, smooth = False):
     # Build ratings for date range
     player_ratings[p] = {}
     player_ratings[p]['all_ratings'] = {}
-    player_ratings[p]['max_ratings'] = {}
     max_rating = 0
     for d in trimmed_player_ratings:
       if d < first_date or d > last_date:
@@ -126,8 +131,8 @@ def get_player_ratings(typ, frmt, threshold, smooth = False):
         continue
       if int(rating) > max_rating:
         max_rating = int(rating)
-        player_ratings[p]['max_ratings'][d] = max_rating
       player_ratings[p]['all_ratings'][d] = rating
+    player_ratings[p]['max_rating'] = max_rating
 
     if len(player_ratings[p]['all_ratings']) == 0:
       del player_ratings[p]
@@ -149,7 +154,7 @@ def get_player_ratings(typ, frmt, threshold, smooth = False):
 
     print (str(len(player_ratings)) + '\t' + typ + '\t' \
             + str(len(player_ratings[p]['all_ratings'])) + '\t' \
-            + 'Max: ' + str(max(player_ratings[p]['max_ratings'].values())) + '\t' + p)
+            + 'Max: ' + str(player_ratings[p]['max_rating']) + '\t' + p)
   return player_ratings
 
 player_ratings = get_player_ratings(TYPE, FORMAT, WORKING_THRESHOLD,
@@ -279,10 +284,12 @@ def draw_for_date(current_date):
 
     players_for_date = [item for item in time_series[current_date].items() \
                           if item[1] > THRESHOLD]
-
-    (ps, rs) = list(zip(*sorted(players_for_date, \
-                          key = lambda item: item[1], reverse = True) \
-                        [: TOP_PLAYERS]))
+    ps = []
+    rs = []
+    if players_for_date:
+      (ps, rs) = list(zip(*sorted(players_for_date, \
+                            key = lambda item: item[1], reverse = True) \
+                          [: TOP_PLAYERS]))
 
     names = [readable_name_and_country(p) for p in ps]
     cols = [player_to_color[p] for p in ps]
