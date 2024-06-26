@@ -36,12 +36,12 @@ TOP_PLAYERS = 10
 MIN_RATING_SCALE = 500
 
 # line graph only
-TITLE_POSITION = 900
+TITLE_POSITION = MAX_RATING - 100
 
-NUM_DAYS_TO_SHOW = 365 * 5
-GRAPH_HISTORY = ONE_DAY * NUM_DAYS_TO_SHOW
+NUM_YEARS_TO_SHOW = 1
+GRAPH_HISTORY = ONE_YEAR * NUM_YEARS_TO_SHOW
 
-# Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling
+# Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = False
 
 assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
@@ -51,13 +51,15 @@ assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
 assert END_DATE <= date.today(), "Future END_DATE requested"
 
 assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
-assert TOP_PLAYERS >= 5 and TOP_PLAYERS <= 50, "TOP_PLAYERS must be between 5 and 50"
+assert TOP_PLAYERS >= 10 and TOP_PLAYERS <= 40, "TOP_PLAYERS must be between 10 and 40"
 assert THRESHOLD >= 0, "THRESHOLD must not be negative"
 assert MIN_RATING_SCALE >= 0, "MIN_RATING_SCALE must not be negative"
+assert MIN_RATING_SCALE <= THRESHOLD, "THRESHOLD is less than MIN_RATING_SCALE"
+
 assert TITLE_POSITION < MAX_RATING and TITLE_POSITION > THRESHOLD, \
     "TITLE_POSITION outside range"
-assert NUM_DAYS_TO_SHOW >= 365, "NUM_DAYS_TO_SHOW too small. " \
-                                + "At least one year must be graphed."
+assert NUM_YEARS_TO_SHOW >= 1 and NUM_YEARS_TO_SHOW <= 5, \
+            "NUM_YEARS_TO_SHOW must be between 1 and 5 years"
 
 def date_to_parts(d):
   yr = str(d.year)
@@ -75,6 +77,7 @@ def string_to_date(s):
 
 def get_player_ratings(typ, frmt, threshold, smooth = False):
   player_ratings = {}
+  max_ratings = {}
   player_files = listdir('players/' + typ + '/' + frmt)
   for p in player_files:
     if len(COUNTRY_PREFIX) > 0 and not p.startswith(COUNTRY_PREFIX + '_'):
@@ -131,7 +134,13 @@ def get_player_ratings(typ, frmt, threshold, smooth = False):
         continue
       if int(rating) > max_rating:
         max_rating = int(rating)
+
       player_ratings[p]['all_ratings'][d] = rating
+
+      if d not in max_ratings \
+            or rating > max_ratings[d]['rating']:
+        max_ratings[d] = {'rating': rating, 'date': d, 'name': p}
+
     player_ratings[p]['max_rating'] = max_rating
 
     if len(player_ratings[p]['all_ratings']) == 0:
@@ -155,10 +164,24 @@ def get_player_ratings(typ, frmt, threshold, smooth = False):
     print (str(len(player_ratings)) + '\t' + typ + '\t' \
             + str(len(player_ratings[p]['all_ratings'])) + '\t' \
             + 'Max: ' + str(player_ratings[p]['max_rating']) + '\t' + p)
-  return player_ratings
 
-player_ratings = get_player_ratings(TYPE, FORMAT, WORKING_THRESHOLD,
-                                    smooth = GRAPH_SMOOTH)
+  max_ever_ratings = {}
+  max_ever_ratings[START_DATE - ONE_DAY] = {'rating': 0, \
+                                            'date' : START_DATE - ONE_DAY, \
+                                            'name' : 'Sunil Shetty'}
+  d = START_DATE
+  while d <= END_DATE:
+    if d in max_ratings and \
+          max_ratings[d]['rating'] > max_ever_ratings[d - ONE_DAY]['rating']:
+      max_ever_ratings[d] = max_ratings[d]
+    else:
+      max_ever_ratings[d] = max_ever_ratings[d - ONE_DAY]
+    d += ONE_DAY
+
+  return (player_ratings, max_ever_ratings)
+
+(player_ratings, max_ever_ratings) = get_player_ratings(TYPE, FORMAT, WORKING_THRESHOLD,
+                                                        smooth = GRAPH_SMOOTH)
 
 time_series = {}
 d = START_DATE
@@ -260,9 +283,9 @@ def draw_for_date(current_date):
     country_title_prefix = ' ' + COUNTRY_PREFIX
 
   title_text = 'Top' + country_title_prefix + ' ' + format_title_string \
-                  + ' ' + type_title_string + ' Rating\n' \
+                  + ' ' + type_title_string + ' Rating: ' \
+                  + '(Minimum Rating: ' + str(THRESHOLD) + ')\n' \
                   + str(START_DATE) + ' to ' + str(END_DATE) \
-                  + '\n(Minimum Rating: ' + str(THRESHOLD) + ')'
 
   if GRAPH_TYPE == 'bar':
     axs.set_title(title_text, fontsize ='xx-large')
@@ -309,19 +332,35 @@ def draw_for_date(current_date):
                 alpha=1, fontsize='xx-large', \
                 horizontalalignment='right', verticalalignment='bottom')
 
+    max_ever_rating = max_ever_ratings[current_date]['rating']
+    max_ever_rating_date = max_ever_ratings[current_date]['date']
+    max_ever_rating_name = max_ever_ratings[current_date]['name']
+    pyplot.axvline(x = max_ever_rating, color="grey", linestyle=":")
+
+    max_ever_rating_text = ' Best: ' + str(int(max_ever_rating)) + '\n' \
+                            + '  ' + str(max_ever_rating_date) + '\n' \
+                            + '  ' + readable_name(max_ever_rating_name) + '\n' \
+                            + '   ' + '(' + country(max_ever_rating_name) + ')'
+    
+    if max_ever_rating > (MIN_RATING_SCALE + (MAX_RATING - MIN_RATING_SCALE) / 2):
+      pyplot.text(max_ever_rating, 0.5, \
+                  s = max_ever_rating_text, \
+                  alpha=1, fontsize='medium', \
+                  horizontalalignment='left', verticalalignment='top')
+
   elif GRAPH_TYPE == 'line':
-    axs.set_title(title_text)
+    axs.set_title(title_text, fontsize ='x-large')
 
     possible_yticks = range(0, 1000, 100)
     possible_xticks = [date(year = y, month = 1, day = 1) \
                         for y in range(START_DATE.year, END_DATE.year + 1)]
 
-    axs.set_ylabel('Rating')
+    axs.set_ylabel('Rating', fontsize ='large')
     axs.set_ylim(THRESHOLD, MAX_RATING)
     actual_yticks = [t for t in possible_yticks if t > THRESHOLD and t < MAX_RATING]
     axs.set_yticks(actual_yticks)
 
-    axs.set_xlabel('Date')
+    axs.set_xlabel('Date', fontsize ='large')
     graph_start_date = current_date - GRAPH_HISTORY
     axs.set_xlim(graph_start_date, current_date + ONE_YEAR)
     actual_xticks = [d for d in possible_xticks \
@@ -373,9 +412,12 @@ FILE_NAME += '_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
               + '_' + GRAPH_TYPE + '_' + str(GRAPH_SMOOTH) + '.mp4'
 
 if GRAPH_TYPE == 'line':
-  resolution = tuple([12.8, 7.2])
+  if NUM_YEARS_TO_SHOW > 2:
+    resolution = tuple([12.8, 7.2])
+  else:
+    resolution = tuple([7.2, 7.2])
 elif GRAPH_TYPE == 'bar':
-  if TOP_PLAYERS >= 15:
+  if TOP_PLAYERS > 15:
     resolution = tuple([7.2, 12.8])
   else:
     resolution = tuple([7.2, 7.2])

@@ -9,8 +9,8 @@ FORMAT = 't20'
 ONE_DAY = timedelta(days = 1)
 
 START_DATE = date(2021, 1, 1)
-# Last day of data available
-END_DATE = date.today() - 0 * ONE_DAY
+# Last day of available data
+END_DATE = date(2024, 1, 1)
 
 def date_to_parts(d):
   yr = str(d.year)
@@ -31,7 +31,7 @@ def fix_name(name):
 def get_file_lines(filename):
   in_file = Path(filename)
   if not in_file.exists():
-    print (typ + '\t' + frmt + '\t' + date_str + '\t' + 'NOT FOUND')
+    print (filename + '\t' + 'NOT FOUND')
     return
 
   lines = []
