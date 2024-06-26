@@ -36,7 +36,7 @@ TOP_PLAYERS = 10
 MIN_RATING_SCALE = 500
 
 # line graph only
-TITLE_POSITION = MAX_RATING - 100
+TITLE_POSITION = MAX_RATING - 20
 
 NUM_YEARS_TO_SHOW = 1
 GRAPH_HISTORY = ONE_YEAR * NUM_YEARS_TO_SHOW
@@ -398,6 +398,22 @@ def draw_for_date(current_date):
     pyplot.text(current_date - GRAPH_HISTORY + ONE_MONTH, TITLE_POSITION, \
                 s=str(current_date), \
                 alpha=1, fontsize='large', \
+                horizontalalignment='left', verticalalignment='top')
+
+    max_ever_rating = max_ever_ratings[current_date]['rating']
+    max_ever_rating_date = max_ever_ratings[current_date]['date']
+    max_ever_rating_name = max_ever_ratings[current_date]['name']
+    max_line_xmax = GRAPH_HISTORY.days / (GRAPH_HISTORY + ONE_YEAR).days
+    pyplot.axhline(y = max_ever_rating, xmax = max_line_xmax, color="grey", linestyle=":")
+
+    max_ever_rating_text = ' Best: ' + str(int(max_ever_rating)) \
+                            + ' on ' + str(max_ever_rating_date) \
+                            + ', ' + readable_name(max_ever_rating_name) \
+                            + ' (' + country(max_ever_rating_name) + ')'
+    
+    pyplot.text(current_date - GRAPH_HISTORY + ONE_MONTH, max_ever_rating + 5, \
+                s = max_ever_rating_text, \
+                alpha=0.5, fontsize='medium', \
                 horizontalalignment='left', verticalalignment='bottom')
 
   pyplot.draw()
