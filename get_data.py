@@ -11,6 +11,10 @@ START_DATE = date(2021, 1, 1)
 TODAY = date.today()
 ONE_DAY = timedelta(days = 1)
 
+assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
+assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
+assert START_DATE < TODAY, "START_DATE must be in the past"
+
 ID_TAG_PREFIX = '<td class="'
 ID_TAG_START = '>'
 ID_TAG_END = '</td>'

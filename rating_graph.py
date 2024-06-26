@@ -54,7 +54,7 @@ assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
 assert TOP_PLAYERS >= 10 and TOP_PLAYERS <= 40, "TOP_PLAYERS must be between 10 and 40"
 assert THRESHOLD >= 0, "THRESHOLD must not be negative"
 assert MIN_RATING_SCALE >= 0, "MIN_RATING_SCALE must not be negative"
-assert MIN_RATING_SCALE <= THRESHOLD, "THRESHOLD is less than MIN_RATING_SCALE"
+assert MIN_RATING_SCALE <= THRESHOLD, "THRESHOLD cannot be less than MIN_RATING_SCALE"
 
 assert TITLE_POSITION < MAX_RATING and TITLE_POSITION > THRESHOLD, \
     "TITLE_POSITION outside range"

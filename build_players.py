@@ -12,6 +12,11 @@ START_DATE = date(2021, 1, 1)
 # Last day of available data
 END_DATE = date(2024, 1, 1)
 
+assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
+assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
+assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
+assert END_DATE <= date.today(), "Future END_DATE requested"
+
 def date_to_parts(d):
   yr = str(d.year)
   mn = str(d.month)
