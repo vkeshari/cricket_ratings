@@ -31,7 +31,7 @@ Recommended thresholds for line charts:
 + Country specific graph - 100 less than usual
 Recommended thresholds for all allrounder charts: 0
 
-'animate.py'
+'rating_graph.py'
 Reads player ratings timelines from build_players.py and creates an animated graph of ratings over time.
 + COUNTRY_PREFIX: Country code (e.g. AUS) or empty for all players.
 + MAX_RATING    : Maximum rating to show (y-axis max).
