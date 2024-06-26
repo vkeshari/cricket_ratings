@@ -36,7 +36,7 @@ TOP_PLAYERS = 10
 MIN_RATING_SCALE = 500
 
 # line graph only
-TITLE_POSITION = MAX_RATING - 20
+DATE_POSITION = MAX_RATING - 20
 
 NUM_YEARS_TO_SHOW = 1
 GRAPH_HISTORY = ONE_YEAR * NUM_YEARS_TO_SHOW
@@ -46,30 +46,20 @@ ALLROUNDERS_GEOM_MEAN = False
 
 assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
-assert GRAPH_TYPE in ['line', 'bar'], "Invalid GRAPH_TYPE requested"
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
 assert END_DATE <= date.today(), "Future END_DATE requested"
 
+assert GRAPH_TYPE in ['line', 'bar'], "Invalid GRAPH_TYPE requested"
 assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
 assert TOP_PLAYERS >= 10 and TOP_PLAYERS <= 40, "TOP_PLAYERS must be between 10 and 40"
 assert THRESHOLD >= 0, "THRESHOLD must not be negative"
 assert MIN_RATING_SCALE >= 0, "MIN_RATING_SCALE must not be negative"
 assert MIN_RATING_SCALE <= THRESHOLD, "THRESHOLD cannot be less than MIN_RATING_SCALE"
 
-assert TITLE_POSITION < MAX_RATING and TITLE_POSITION > THRESHOLD, \
-    "TITLE_POSITION outside range"
+assert DATE_POSITION < MAX_RATING and DATE_POSITION > THRESHOLD, \
+    "DATE_POSITION outside range"
 assert NUM_YEARS_TO_SHOW >= 1 and NUM_YEARS_TO_SHOW <= 5, \
             "NUM_YEARS_TO_SHOW must be between 1 and 5 years"
-
-def date_to_parts(d):
-  yr = str(d.year)
-  mn = str(d.month)
-  if (d.month < 10):
-    mn = '0' + mn
-  dy = str(d.day)
-  if (d.day < 10):
-    dy = '0' + dy
-  return (yr, mn, dy)
 
 def string_to_date(s):
   dt = datetime.strptime(s, '%Y%m%d')
@@ -204,7 +194,7 @@ def readable_name(p):
 def country(p):
   return p.split('_')[0]
 
-def readable_name_and_country(p):
+def full_readable_name(p):
   return readable_name(p) + ' (' + country(p) + ')'
 
 def get_player_colors(player_ratings):
@@ -219,6 +209,7 @@ def get_player_colors(player_ratings):
     player_colors[p] = colors[i]
     i += 1
   return player_colors
+player_colors = get_player_colors(player_ratings)
 
 def get_country_colors():
   country_colors = {}
@@ -244,8 +235,6 @@ def get_country_colors():
   country_colors['WI'] = 'maroon'
   country_colors['ZIM'] = 'orangered'
   return country_colors
-
-player_colors = get_player_colors(player_ratings)
 country_colors = get_country_colors()
 
 player_to_color = {}
@@ -314,7 +303,7 @@ def draw_for_date(current_date):
                             key = lambda item: item[1], reverse = True) \
                           [: TOP_PLAYERS]))
 
-    names = [readable_name_and_country(p) for p in ps]
+    names = [full_readable_name(p) for p in ps]
     cols = [player_to_color[p] for p in ps]
     ys = [y + 0.5 for y in range(len(names))]
 
@@ -368,7 +357,7 @@ def draw_for_date(current_date):
     axs.set_xticks(actual_xticks)
     axs.set_xticklabels([str(d.year) for d in actual_xticks])
 
-    axs.grid(True, which='both', axis='both', alpha=0.5)
+    axs.grid(True, which = 'both', axis = 'both', alpha = 0.5)
 
     for p in player_ratings:
       dates_to_plot = []
@@ -379,42 +368,42 @@ def draw_for_date(current_date):
           ratings_to_plot.append(r)
 
       pyplot.plot(dates_to_plot, ratings_to_plot, \
-                  linewidth=5, antialiased=True, alpha=0.5, \
-                  color=player_to_color[p])
+                  linewidth = 5, antialiased = True, alpha = 0.5, \
+                  color = player_to_color[p])
 
     for p in time_series[current_date]:
       if time_series[current_date][p] < THRESHOLD:
         continue
 
       pyplot.plot(current_date, time_series[current_date][p], \
-                  marker="o", markersize=5, \
-                  color=player_to_color[p])
+                  marker = "o", markersize = 5, \
+                  color = player_to_color[p])
 
       pyplot.text(current_date + ONE_MONTH, time_series[current_date][p], \
-                  s=readable_name_and_country(p), \
-                  alpha=0.5, fontsize='medium', \
-                  horizontalalignment='left', verticalalignment='center')
+                  s = full_readable_name(p), \
+                  alpha = 0.5, fontsize = 'medium', \
+                  horizontalalignment = 'left', verticalalignment = 'center')
 
-    pyplot.text(current_date - GRAPH_HISTORY + ONE_MONTH, TITLE_POSITION, \
-                s=str(current_date), \
-                alpha=1, fontsize='large', \
-                horizontalalignment='left', verticalalignment='top')
+    pyplot.text(current_date - GRAPH_HISTORY + ONE_MONTH, DATE_POSITION, \
+                s = str(current_date), \
+                alpha = 1, fontsize = 'large', \
+                horizontalalignment = 'left', verticalalignment = 'top')
 
     max_ever_rating = max_ever_ratings[current_date]['rating']
     max_ever_rating_date = max_ever_ratings[current_date]['date']
     max_ever_rating_name = max_ever_ratings[current_date]['name']
     max_line_xmax = GRAPH_HISTORY.days / (GRAPH_HISTORY + ONE_YEAR).days
-    pyplot.axhline(y = max_ever_rating, xmax = max_line_xmax, color="grey", linestyle=":")
+    pyplot.axhline(y = max_ever_rating, xmax = max_line_xmax, \
+                    color = "grey", linestyle = ":")
 
     max_ever_rating_text = ' Best: ' + str(int(max_ever_rating)) \
                             + ' on ' + str(max_ever_rating_date) \
-                            + ', ' + readable_name(max_ever_rating_name) \
-                            + ' (' + country(max_ever_rating_name) + ')'
+                            + ', ' + full_readable_name(max_ever_rating_name)
     
     pyplot.text(current_date - GRAPH_HISTORY + ONE_MONTH, max_ever_rating + 5, \
                 s = max_ever_rating_text, \
-                alpha=0.5, fontsize='medium', \
-                horizontalalignment='left', verticalalignment='bottom')
+                alpha = 0.5, fontsize = 'medium', \
+                horizontalalignment = 'left', verticalalignment = 'bottom')
 
   pyplot.draw()
 
@@ -429,22 +418,16 @@ FILE_NAME += '_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
 
 if GRAPH_TYPE == 'line':
   if NUM_YEARS_TO_SHOW > 2:
-    resolution = tuple([12.8, 7.2])
+    resolution = (12.8, 7.2)
   else:
-    resolution = tuple([7.2, 7.2])
+    resolution = (7.2, 7.2)
 elif GRAPH_TYPE == 'bar':
   if TOP_PLAYERS > 15:
-    resolution = tuple([7.2, 12.8])
+    resolution = (7.2, 12.8)
   else:
-    resolution = tuple([7.2, 7.2])
+    resolution = (7.2, 7.2)
 
 fig, axs = pyplot.subplots(figsize = resolution)
-
-all_dates = []
-current_date = START_DATE
-while current_date <= END_DATE:
-  all_dates.append(current_date)
-  current_date += ONE_DAY
 
 print ('Writing:' + '\t' + FILE_NAME)
 writer = animation.FFMpegWriter(fps=60, bitrate=5000)
