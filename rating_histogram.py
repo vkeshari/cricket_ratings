@@ -20,6 +20,14 @@ THRESHOLD = 0
 MAX_RATING = 1000
 BIN_SIZE = 50
 
+# Aggregation
+# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly']
+AGGREGATION_WINDOW = ''
+# ['', 'avg', 'median', 'min', 'max']
+PLAYER_AGGREGATE = ''
+# ['', 'avg', 'median', 'min', 'max']
+BUCKET_AGGREGATE = ''
+
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = False
 
@@ -27,10 +35,27 @@ assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
 assert END_DATE <= date.today(), "Future END_DATE requested"
+
 assert THRESHOLD >= 0, "THRESHOLD must not be negative"
 assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
 assert BIN_SIZE > 0, "BIN_SIZE must be positive"
 assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, "BIN_SIZE must split ratings range evenly"
+
+if AGGREGATION_WINDOW:
+  assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly'], \
+        "Invalid AGGREGATION_WINDOW provided"
+  assert PLAYER_AGGREGATE or BUCKET_AGGREGATE, \
+        "AGGREGATION_WINDOW provided but no aggregation requested"
+if PLAYER_AGGREGATE:
+  assert AGGREGATION_WINDOW, "Aggregation requested but no AGGREGATION_WINDOW provided"
+  assert not BUCKET_AGGREGATE, "Only one of PLAYER_AGGREGATE or BUCKET_AGGREGATE supported"
+  assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max'], \
+        "Invalid PLAYER_AGGREGATE provided"
+if BUCKET_AGGREGATE:
+  assert AGGREGATION_WINDOW, "Aggregation requested but no AGGREGATION_WINDOW provided"
+  assert not PLAYER_AGGREGATE, "Only one of PLAYER_AGGREGATE or BUCKET_AGGREGATE supported"
+  assert BUCKET_AGGREGATE in ['avg', 'median', 'min', 'max'], \
+        "Invalid BUCKET_AGGREGATE provided"
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
@@ -75,7 +100,37 @@ def get_daily_ratings():
   return daily_ratings
 
 daily_ratings = get_daily_ratings()
-print("Daily ratings data built for " + str(len(daily_ratings)) + " days." )
+print("Daily ratings data built for " + str(len(daily_ratings)) + " days" )
+
+bins = range(THRESHOLD, MAX_RATING + 1, BIN_SIZE)
+
+def get_dates_to_plot():
+  dates_to_plot = []
+  d = START_DATE
+  while d <= END_DATE:
+    dates_to_plot.append(d)
+    d += ONE_DAY
+  return dates_to_plot
+dates_to_plot = get_dates_to_plot()
+
+def is_aggregation_window_start(d):
+  return AGGREGATION_WINDOW == 'monthly' and d.day == 1 \
+      or AGGREGATION_WINDOW == 'quarterly' and d.day == 1 and d.month in [1, 4, 7, 10] \
+      or AGGREGATION_WINDOW == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
+      or AGGREGATION_WINDOW == 'yearly' and d.day == 1 and d.month == 1 \
+
+def get_aggregate_ratings(daily_ratings):
+  aggregate_ratings = daily_ratings
+  # ...
+  return aggregate_ratings
+
+if AGGREGATION_WINDOW:
+  dates_to_plot = [START_DATE]
+  dates_to_plot += [d for d in range(START_DATE + 1, END_DATE + 1, ONE_DAY) \
+                          if is_aggregation_window_start(d)]
+  daily_ratings = get_aggregate_ratings(daily_ratings)
+  print("Aggregate ratings built with " + str(len(daily_ratings)) \
+            + "aggregate windows" )
 
 from matplotlib import pyplot, animation
 
@@ -109,7 +164,6 @@ def draw_for_date(current_date):
 
   day_ratings = daily_ratings[current_date].values()
 
-  bins = range(THRESHOLD, MAX_RATING + 1, BIN_SIZE)
   axs.hist(day_ratings, bins = bins, \
             range = (THRESHOLD, MAX_RATING), \
             align = 'mid', \
@@ -121,7 +175,7 @@ def draw_for_date(current_date):
 
   pyplot.draw()
 
-FILE_NAME = 'out/HIST__' + str(START_DATE.year) + '_' + str(END_DATE.year) \
+FILE_NAME = 'out/HIST_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
               + '_' + TYPE + '_' + FORMAT + '_' + str(THRESHOLD) \
               + '_' + str(BIN_SIZE) + '.mp4'
 
@@ -129,12 +183,16 @@ resolution = (7.2, 7.2)
 
 fig, axs = pyplot.subplots(figsize = resolution)
 
+fps = 60
+if AGGREGATION_WINDOW == 'monthly':
+  fps = 2
+elif AGGREGATION_WINDOW in ['quarterly', 'halfyearly', 'yearly']:
+  fps = 1
+
 print ('Writing:' + '\t' + FILE_NAME)
-writer = animation.FFMpegWriter(fps=60, bitrate=5000)
-with writer.saving(fig, FILE_NAME, dpi=100):
-  current_date = START_DATE
-  while current_date <= END_DATE:
+writer = animation.FFMpegWriter(fps = fps, bitrate = 5000)
+with writer.saving(fig, FILE_NAME, dpi = 100):
+  for current_date in dates_to_plot:
     draw_for_date(current_date)
     writer.grab_frame()
-    current_date += ONE_DAY
 print ('Done:' + '\t' + FILE_NAME)

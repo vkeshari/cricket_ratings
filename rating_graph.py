@@ -173,11 +173,18 @@ def get_player_ratings(typ, frmt, threshold, smooth = False):
 (player_ratings, max_ever_ratings) = get_player_ratings(TYPE, FORMAT, WORKING_THRESHOLD,
                                                         smooth = GRAPH_SMOOTH)
 
+def get_dates_to_plot():
+  dates_to_plot = []
+  d = START_DATE
+  while d <= END_DATE:
+    dates_to_plot.append(d)
+    d += ONE_DAY
+  return dates_to_plot
+dates_to_plot = get_dates_to_plot()
+
 time_series = {}
-d = START_DATE
-while d <= END_DATE:
+for d in dates_to_plot:
   time_series[d] = {}
-  d += ONE_DAY
 
 for p in player_ratings:
   d = player_ratings[p]['first_date']
@@ -430,12 +437,10 @@ elif GRAPH_TYPE == 'bar':
 fig, axs = pyplot.subplots(figsize = resolution)
 
 print ('Writing:' + '\t' + FILE_NAME)
-writer = animation.FFMpegWriter(fps=60, bitrate=5000)
-with writer.saving(fig, FILE_NAME, dpi=100):
-  current_date = START_DATE
-  while current_date <= END_DATE:
+writer = animation.FFMpegWriter(fps = 60, bitrate = 5000)
+with writer.saving(fig, FILE_NAME, dpi = 100):
+  for current_date in dates_to_plot:
     draw_for_date(current_date)
     writer.grab_frame()
-    current_date += ONE_DAY
 print ('Done:' + '\t' + FILE_NAME)
 
