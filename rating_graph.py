@@ -4,10 +4,9 @@ from datetime import date, timedelta, datetime
 from os import listdir
 from scipy import interpolate
 
-ONE_DAY = timedelta(days=1)
-ONE_WEEK = timedelta(days=7)
-ONE_MONTH = timedelta(days=30)
-ONE_YEAR = timedelta(days=365)
+ONE_DAY = timedelta(days = 1)
+ONE_MONTH = timedelta(days = 30)
+ONE_YEAR = timedelta(days = 365)
 
 MAX_RATING = 1000
 

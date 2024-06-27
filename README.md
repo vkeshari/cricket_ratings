@@ -42,6 +42,19 @@ Bar charts only:
 + TOP_PLAYERS     : Total no. of bars shown
 + MIN_RATING_SCALE: Bars start at this value
 
+'rating_histogram.py'
+Reads player ratings timelines from build_players.py and created an animated histogram of rating distribution over time.
+
+MAX_RATING: Maximum rating to show (x-axis max).
+THRESHOLD : Minimum rating to show (x-axis min).
+BIN_SIZE  : Group players into bins of this size on histogram.
+
+Aggregation:
+Aggregate ratings over a window by player or by bin using a numeric measure.
+AGGREGATION_WINDOW: ['', 'monthly', 'quarterly', 'halfyearly', 'yearly'] (no aggregation if empty)
+PLAYER_AGGREGATE  : ['', 'avg', 'median', 'min', 'max', 'first', 'last']
+BIN_AGGREGATE     : ['', 'avg', 'median', 'min', 'max', 'first', 'last']
+
 ### Utils ###
 ./utils/*.py
 Note: Run these from the repository root folder.
