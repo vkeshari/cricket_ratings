@@ -185,7 +185,7 @@ for p in player_ratings:
     time_series[d][p] = player_ratings[p]['all_ratings'][d]
     d += ONE_DAY
 
-from matplotlib import pyplot, axes, cm, animation
+from matplotlib import pyplot, cm, animation
 
 def readable_name(p):
   sep = p.find('_')
