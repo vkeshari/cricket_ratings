@@ -182,6 +182,8 @@ def get_aggregate_ratings(daily_ratings):
       for p in daily_ratings[d]:
         player_rating = daily_ratings[d][p]
         player_bin_number = int((player_rating - THRESHOLD) / BIN_SIZE)
+        if player_bin_number < 0:
+          continue
         player_bin = THRESHOLD + player_bin_number * BIN_SIZE
 
         if player_bin not in day_bin_counts:
@@ -192,7 +194,7 @@ def get_aggregate_ratings(daily_ratings):
       for b in day_bin_counts:
         if b not in bucket_values:
           bucket_values[b] = []
-        bucket_values[b].append(day_bin_counts[b] * 100 / day_player_total)
+        bucket_values[b].append(day_bin_counts[b] * BIN_SIZE / (2 * day_player_total))
 
   return aggregate_ratings
 
@@ -277,11 +279,16 @@ def draw_for_date(current_date):
 
   elif BIN_AGGREGATE:
     if current_date in daily_ratings:
-      (xs, ys) = zip(*daily_ratings[current_date].items())
+      (xs, ys) = zip(*sorted(daily_ratings[current_date].items()))
 
       axs.bar(xs, ys, align = 'edge', width = BIN_SIZE, color = color, alpha = 0.7)
 
     pyplot.text(x = MAX_RATING - 10, y = max_y - 2 * text_spacing, \
+                  s = 'Normalized player count: ' + str(round(sum(ys))), \
+                  alpha = 0.8, fontsize = 'x-large', \
+                  horizontalalignment = 'right', verticalalignment = 'top')
+
+    pyplot.text(x = MAX_RATING - 10, y = max_y - 3 * text_spacing, \
                   s = 'Aggregation: ' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE, \
                   alpha = 0.8, fontsize = 'x-large', \
                   horizontalalignment = 'right', verticalalignment = 'top')
@@ -291,9 +298,9 @@ def draw_for_date(current_date):
 aggregation_filename = ''
 if AGGREGATION_WINDOW:
   if PLAYER_AGGREGATE:
-    aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE
+    aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE + '_BYPLAYER'
   elif BIN_AGGREGATE:
-    aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_bybin'
+    aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_BYBIN'
 FILE_NAME = 'out/HIST_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
               + '_' + TYPE + '_' + FORMAT + '_' + str(THRESHOLD) \
               + '_' + str(BIN_SIZE) + aggregation_filename + '.mp4'
