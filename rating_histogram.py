@@ -21,7 +21,7 @@ BIN_SIZE = 50
 
 # Aggregation
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly']
-AGGREGATION_WINDOW = 'monthly'
+AGGREGATION_WINDOW = 'quarterly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = 'max'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
@@ -211,6 +211,7 @@ def draw_for_date(current_date):
 
   axs.grid(True, which = 'both', axis = 'both', alpha = 0.5)
 
+  day_ratings_to_show = []
   if current_date in daily_ratings:
     day_ratings = daily_ratings[current_date].values()
     day_ratings_to_show = [r for r in day_ratings if r >= THRESHOLD and r <= MAX_RATING]
@@ -228,6 +229,7 @@ def draw_for_date(current_date):
               color = color, alpha = 0.7)
 
   text_spacing = int(BIN_SIZE / 50)
+
   pyplot.text(x = MAX_RATING - 10, y = max_y - text_spacing, s = str(current_date), \
                 alpha = 0.8, fontsize = 'x-large', \
                 horizontalalignment = 'right', verticalalignment = 'top')
