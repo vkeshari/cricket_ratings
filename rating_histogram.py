@@ -15,7 +15,7 @@ START_DATE = date(2021, 1, 1)
 END_DATE = date(2024, 1, 1)
 
 # Min and MAX rating to show
-THRESHOLD = 400
+THRESHOLD = 500
 MAX_RATING = 1000
 BIN_SIZE = 50
 
