@@ -14,16 +14,16 @@ FORMAT = 't20'
 START_DATE = date(2021, 1, 1)
 END_DATE = date(2024, 1, 1)
 
-# Min and MAX rating to show
+# Upper and lower bounds of ratings to show
 THRESHOLD = 500
 MAX_RATING = 1000
 BIN_SIZE = 50
 
 # Aggregation
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly']
-AGGREGATION_WINDOW = 'quarterly'
+AGGREGATION_WINDOW = ''
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
-PLAYER_AGGREGATE = 'max'
+PLAYER_AGGREGATE = ''
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 BIN_AGGREGATE = ''
 
@@ -156,13 +156,43 @@ def get_aggregate_ratings(daily_ratings):
         last_window_start = d
       else:
         aggregate_ratings[d] = aggregate_ratings[last_window_start]
+
       for p in daily_ratings[d]:
         if p not in bucket_values:
           bucket_values[p] = []
         bucket_values[p].append(daily_ratings[d][p])
 
   elif BIN_AGGREGATE:
-    return daily_ratings
+    bucket_values = {}
+    last_window_start = first_date
+    for d in daily_ratings:
+      if d not in aggregate_ratings:
+        aggregate_ratings[d] = {}
+      if d == last_date or is_aggregation_window_start(d):
+        for b in bucket_values:
+          aggregate_ratings[last_window_start][b] = \
+                  aggregate_values(bucket_values[b], BIN_AGGREGATE)
+        bucket_values = {}
+        last_window_start = d
+      else:
+        aggregate_ratings[d] = aggregate_ratings[last_window_start]
+
+      day_bin_counts = {}
+      day_player_total = 0 # used to normalize
+      for p in daily_ratings[d]:
+        player_rating = daily_ratings[d][p]
+        player_bin_number = int((player_rating - THRESHOLD) / BIN_SIZE)
+        player_bin = THRESHOLD + player_bin_number * BIN_SIZE
+
+        if player_bin not in day_bin_counts:
+          day_bin_counts[player_bin] = 0
+        day_bin_counts[player_bin] += 1
+        day_player_total += 1
+
+      for b in day_bin_counts:
+        if b not in bucket_values:
+          bucket_values[b] = []
+        bucket_values[b].append(day_bin_counts[b] * 100 / day_player_total)
 
   return aggregate_ratings
 
@@ -211,44 +241,59 @@ def draw_for_date(current_date):
 
   axs.grid(True, which = 'both', axis = 'both', alpha = 0.5)
 
-  day_ratings_to_show = []
-  if current_date in daily_ratings:
-    day_ratings = daily_ratings[current_date].values()
-    day_ratings_to_show = [r for r in day_ratings if r >= THRESHOLD and r <= MAX_RATING]
-
-    color = 'darkgrey'
-    if TYPE == 'batting':
-      color = 'red'
-    if TYPE == 'bowling':
-      color = 'blue'
-    if TYPE == 'allrounder':
-      color = 'green'
-
-    axs.hist(day_ratings_to_show, bins = bins, \
-              align = 'mid', \
-              color = color, alpha = 0.7)
-
   text_spacing = int(BIN_SIZE / 50)
 
   pyplot.text(x = MAX_RATING - 10, y = max_y - text_spacing, s = str(current_date), \
                 alpha = 0.8, fontsize = 'x-large', \
                 horizontalalignment = 'right', verticalalignment = 'top')
 
-  pyplot.text(x = MAX_RATING - 10, y = max_y - 2 * text_spacing, \
-                s = 'Players shown: ' + str(len(day_ratings_to_show)), \
-                alpha = 0.8, fontsize = 'x-large', \
-                horizontalalignment = 'right', verticalalignment = 'top')
+  color = 'darkgrey'
+  if TYPE == 'batting':
+    color = 'red'
+  if TYPE == 'bowling':
+    color = 'blue'
+  if TYPE == 'allrounder':
+    color = 'green'
 
-  pyplot.text(x = MAX_RATING - 10, y = max_y - 3 * text_spacing, \
-                s = 'Aggregation: ' + AGGREGATION_WINDOW + ' ' + PLAYER_AGGREGATE, \
-                alpha = 0.8, fontsize = 'x-large', \
-                horizontalalignment = 'right', verticalalignment = 'top')
+  if PLAYER_AGGREGATE:
+    day_ratings_to_show = []
+    if current_date in daily_ratings:
+      day_ratings = daily_ratings[current_date].values()
+      day_ratings_to_show = [r for r in day_ratings if r >= THRESHOLD and r <= MAX_RATING]
+
+      axs.hist(day_ratings_to_show, bins = bins, \
+                align = 'mid', \
+                color = color, alpha = 0.7)
+
+    pyplot.text(x = MAX_RATING - 10, y = max_y - 2 * text_spacing, \
+                  s = 'Players shown: ' + str(len(day_ratings_to_show)), \
+                  alpha = 0.8, fontsize = 'x-large', \
+                  horizontalalignment = 'right', verticalalignment = 'top')
+
+    pyplot.text(x = MAX_RATING - 10, y = max_y - 3 * text_spacing, \
+                  s = 'Aggregation: ' + AGGREGATION_WINDOW + ' ' + PLAYER_AGGREGATE, \
+                  alpha = 0.8, fontsize = 'x-large', \
+                  horizontalalignment = 'right', verticalalignment = 'top')
+
+  elif BIN_AGGREGATE:
+    if current_date in daily_ratings:
+      (xs, ys) = zip(*daily_ratings[current_date].items())
+
+      axs.bar(xs, ys, align = 'edge', width = BIN_SIZE, color = color, alpha = 0.7)
+
+    pyplot.text(x = MAX_RATING - 10, y = max_y - 2 * text_spacing, \
+                  s = 'Aggregation: ' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE, \
+                  alpha = 0.8, fontsize = 'x-large', \
+                  horizontalalignment = 'right', verticalalignment = 'top')
 
   pyplot.draw()
 
 aggregation_filename = ''
 if AGGREGATION_WINDOW:
-  aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE
+  if PLAYER_AGGREGATE:
+    aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE
+  elif BIN_AGGREGATE:
+    aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_bybin'
 FILE_NAME = 'out/HIST_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
               + '_' + TYPE + '_' + FORMAT + '_' + str(THRESHOLD) \
               + '_' + str(BIN_SIZE) + aggregation_filename + '.mp4'
