@@ -11,9 +11,6 @@ TYPE = 'batting'
 # ['test', 'odi', 't20']
 FORMAT = 't20'
 
-# Empty or country code
-COUNTRY_PREFIX = ''
-
 # Graph date range
 START_DATE = date(2021, 1, 1)
 END_DATE = date(2024, 1, 1)
@@ -52,16 +49,13 @@ def country(p):
 def full_readable_name(p):
   return readable_name(p) + ' (' + country(p) + ')'
 
-def get_daily_ratings(typ, frmt, start_date, end_date, threshold, country_prefix):
+def get_daily_ratings():
   daily_ratings = {}
 
-  player_files = listdir('players/' + typ + '/' + frmt)
+  player_files = listdir('players/' + TYPE + '/' + FORMAT)
   for p in player_files:
-    if len(COUNTRY_PREFIX) > 0:
-      continue
-
     lines = []
-    with open('players/' + typ + '/' + frmt + '/' + p, 'r') as f:
+    with open('players/' + TYPE + '/' + FORMAT + '/' + p, 'r') as f:
       lines += f.readlines()
 
     for l in lines:
@@ -80,8 +74,7 @@ def get_daily_ratings(typ, frmt, start_date, end_date, threshold, country_prefix
 
   return daily_ratings
 
-daily_ratings = get_daily_ratings(TYPE, FORMAT, START_DATE, END_DATE, \
-                                      THRESHOLD, COUNTRY_PREFIX)
+daily_ratings = get_daily_ratings()
 print("Daily ratings data built for " + str(len(daily_ratings)) + " days." )
 
 from matplotlib import pyplot, animation
@@ -90,8 +83,6 @@ def draw_for_date(current_date):
   if current_date.day == 1:
     print (current_date)
   axs.clear()
-
-  day_ratings = daily_ratings[current_date].values()
 
   title_text = "Distribution of " + FORMAT + ' ' + TYPE + " ratings" \
                 + '\n' + str(START_DATE) + " to " + str(END_DATE)
@@ -116,6 +107,8 @@ def draw_for_date(current_date):
 
   axs.grid(True, which = 'both', axis = 'both', alpha = 0.5)
 
+  day_ratings = daily_ratings[current_date].values()
+
   bins = range(THRESHOLD, MAX_RATING + 1, BIN_SIZE)
   axs.hist(day_ratings, bins = bins, \
             range = (THRESHOLD, MAX_RATING), \
@@ -128,12 +121,7 @@ def draw_for_date(current_date):
 
   pyplot.draw()
 
-FILE_NAME = 'out/HIST_'
-if len(COUNTRY_PREFIX) > 0:
-  FILE_NAME += COUNTRY_PREFIX
-else:
-  FILE_NAME += 'ALL'
-FILE_NAME += '_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
+FILE_NAME = 'out/HIST__' + str(START_DATE.year) + '_' + str(END_DATE.year) \
               + '_' + TYPE + '_' + FORMAT + '_' + str(THRESHOLD) \
               + '_' + str(BIN_SIZE) + '.mp4'
 
