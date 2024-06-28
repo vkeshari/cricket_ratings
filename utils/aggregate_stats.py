@@ -19,7 +19,7 @@ END_DATE = date(2024, 1, 1)
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
 MAX_RATING = 1000
-BIN_SIZE = 20
+BIN_SIZE = 50
 
 # Aggregation
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
