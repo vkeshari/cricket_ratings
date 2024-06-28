@@ -10,20 +10,20 @@ ONE_DAY = timedelta(days = 1)
 # ['batting', 'bowling', 'allrounder']
 TYPE = 'batting'
 # ['test', 'odi', 't20']
-FORMAT = 't20'
+FORMAT = 'odi'
 
 # Graph date range
-START_DATE = date(2021, 1, 1)
+START_DATE = date(1981, 1, 1)
 END_DATE = date(2024, 1, 1)
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
 MAX_RATING = 1000
-BIN_SIZE = 50
+BIN_SIZE = 20
 
 # Aggregation
-# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly']
-AGGREGATION_WINDOW = 'quarterly'
+# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
+AGGREGATION_WINDOW = 'yearly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = ''
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
@@ -43,10 +43,10 @@ assert BIN_SIZE >= 10, "BIN_SIZE must be at least 10"
 assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, "BIN_SIZE must split ratings range evenly"
 
 if AGGREGATION_WINDOW:
-  assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly'], \
-        "Invalid AGGREGATION_WINDOW provided"
   assert PLAYER_AGGREGATE or BIN_AGGREGATE, \
         "AGGREGATION_WINDOW provided but no aggregation requested"
+  assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
+        "Invalid AGGREGATION_WINDOW provided"
 if PLAYER_AGGREGATE:
   assert AGGREGATION_WINDOW, "Aggregation requested but no AGGREGATION_WINDOW provided"
   assert not BIN_AGGREGATE, "Only one of PLAYER_AGGREGATE or BIN_AGGREGATE supported"
@@ -60,6 +60,9 @@ if BIN_AGGREGATE:
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
+print (str(THRESHOLD) + ' : ' + str(BIN_SIZE) + ' : ' + str(MAX_RATING))
+if AGGREGATION_WINDOW:
+  print (AGGREGATION_WINDOW + ' / ' + PLAYER_AGGREGATE + ' / ' + BIN_AGGREGATE)
 
 def string_to_date(s):
   dt = datetime.strptime(s, '%Y%m%d')
@@ -121,6 +124,8 @@ def is_aggregation_window_start(d):
       or AGGREGATION_WINDOW == 'quarterly' and d.day == 1 and d.month in [1, 4, 7, 10] \
       or AGGREGATION_WINDOW == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
       or AGGREGATION_WINDOW == 'yearly' and d.day == 1 and d.month == 1 \
+      or AGGREGATION_WINDOW == 'decadal' and d.day == 1 and d.month == 1 \
+                                        and d.year % 10 == 1
 
 def aggregate_values(values, agg_type):
   if agg_type == 'avg':
@@ -211,8 +216,7 @@ if AGGREGATION_WINDOW:
     dates_to_plot.append(END_DATE)
 
   daily_ratings = get_aggregate_ratings(daily_ratings)
-  print("Aggregate ratings built with " + str(len(daily_ratings)) \
-            + " aggregate windows" )
+  print(AGGREGATION_WINDOW + " aggregate ratings built")
 
 from matplotlib import pyplot, animation
 
@@ -320,7 +324,7 @@ Path(FILE_NAME).parent.mkdir(exist_ok = True, parents = True)
 fps = 60
 if AGGREGATION_WINDOW == 'monthly':
   fps = 6
-elif AGGREGATION_WINDOW in ['quarterly', 'halfyearly', 'yearly']:
+elif AGGREGATION_WINDOW in ['quarterly', 'halfyearly', 'yearly', 'decadal']:
   fps = 2
 
 print ('Writing:' + '\t' + FILE_NAME)
