@@ -2,6 +2,7 @@ import math
 
 from datetime import date, timedelta, datetime
 from os import listdir
+from pathlib import Path
 from scipy import interpolate
 
 ONE_DAY = timedelta(days = 1)
@@ -413,15 +414,6 @@ def draw_for_date(current_date):
 
   pyplot.draw()
 
-FILE_NAME = 'out/'
-if len(COUNTRY_PREFIX) > 0:
-  FILE_NAME += COUNTRY_PREFIX
-else:
-  FILE_NAME += 'ALL'
-FILE_NAME += '_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
-              + '_' + TYPE + '_' + FORMAT + '_' + str(THRESHOLD) \
-              + '_' + GRAPH_TYPE + '_' + str(GRAPH_SMOOTH) + '.mp4'
-
 if GRAPH_TYPE == 'line':
   if NUM_YEARS_TO_SHOW > 2:
     resolution = (12.8, 7.2)
@@ -432,8 +424,24 @@ elif GRAPH_TYPE == 'bar':
     resolution = (7.2, 12.8)
   else:
     resolution = (7.2, 7.2)
-
 fig, axs = pyplot.subplots(figsize = resolution)
+
+type_filename = TYPE
+if TYPE == 'allrounder':
+  if ALLROUNDERS_GEOM_MEAN:
+    type_filename += 'Geom'
+  else:
+    type_filename += '1000'
+
+FILE_NAME = 'out/' + GRAPH_TYPE + '/'
+if len(COUNTRY_PREFIX) > 0:
+  FILE_NAME += COUNTRY_PREFIX
+else:
+  FILE_NAME += 'ALL'
+FILE_NAME += '_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
+              + '_' + type_filename + '_' + FORMAT + '_' + str(THRESHOLD) \
+              + '_' + GRAPH_TYPE + '_' + str(GRAPH_SMOOTH) + '.mp4'
+Path(FILE_NAME).parent.mkdir(exist_ok = True, parents = True)
 
 print ('Writing:' + '\t' + FILE_NAME)
 writer = animation.FFMpegWriter(fps = 60, bitrate = 5000)

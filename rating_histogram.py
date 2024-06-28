@@ -1,7 +1,9 @@
+import math
+
 from datetime import date, timedelta, datetime
 from os import listdir
+from pathlib import Path
 import numpy as np
-import math
 
 ONE_DAY = timedelta(days = 1)
 
@@ -21,11 +23,11 @@ BIN_SIZE = 50
 
 # Aggregation
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly']
-AGGREGATION_WINDOW = ''
+AGGREGATION_WINDOW = 'quarterly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = ''
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
-BIN_AGGREGATE = ''
+BIN_AGGREGATE = 'avg'
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -295,19 +297,25 @@ def draw_for_date(current_date):
 
   pyplot.draw()
 
+resolution = (7.2, 7.2)
+fig, axs = pyplot.subplots(figsize = resolution)
+
 aggregation_filename = ''
 if AGGREGATION_WINDOW:
   if PLAYER_AGGREGATE:
     aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE + '_BYPLAYER'
   elif BIN_AGGREGATE:
     aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_BYBIN'
-FILE_NAME = 'out/HIST_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
-              + '_' + TYPE + '_' + FORMAT + '_' + str(THRESHOLD) \
+type_filename = TYPE
+if TYPE == 'allrounder':
+  if ALLROUNDERS_GEOM_MEAN:
+    type_filename += 'Geom'
+  else:
+    type_filename += '1000'
+FILE_NAME = 'out/hist/HIST_' + str(START_DATE.year) + '_' + str(END_DATE.year) \
+              + '_' + type_filename + '_' + FORMAT + '_' + str(THRESHOLD) \
               + '_' + str(BIN_SIZE) + aggregation_filename + '.mp4'
-
-resolution = (7.2, 7.2)
-
-fig, axs = pyplot.subplots(figsize = resolution)
+Path(FILE_NAME).parent.mkdir(exist_ok = True, parents = True)
 
 fps = 60
 if AGGREGATION_WINDOW == 'monthly':
