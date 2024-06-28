@@ -29,6 +29,8 @@ PLAYER_AGGREGATE = ''
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 BIN_AGGREGATE = 'avg'
 
+BIN_CURVE_FIT = True
+
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
 
@@ -109,6 +111,7 @@ daily_ratings = get_daily_ratings()
 print("Daily ratings data built for " + str(len(daily_ratings)) + " days" )
 
 bins = range(THRESHOLD, MAX_RATING + 1, BIN_SIZE)
+scale_y = BIN_SIZE / 2
 
 def get_dates_to_plot():
   dates_to_plot = []
@@ -201,7 +204,7 @@ def get_aggregate_ratings(daily_ratings):
       for b in day_bin_counts:
         if b not in bucket_values:
           bucket_values[b] = []
-        bucket_values[b].append(day_bin_counts[b] * BIN_SIZE / (2 * day_player_total))
+        bucket_values[b].append(day_bin_counts[b] * scale_y / day_player_total)
 
   return aggregate_ratings
 
@@ -219,6 +222,29 @@ if AGGREGATION_WINDOW:
   print(AGGREGATION_WINDOW + " aggregate ratings built")
 
 from matplotlib import pyplot, animation
+from scipy import optimize
+
+def exp_func(x, a, b):
+  return a * np.exp(-x / b)
+
+def get_curve_fit(ratings_hist):
+  for b in bins:
+    if b not in ratings_hist:
+      ratings_hist[b] = 0
+
+  xs = [((b + BIN_SIZE / 2 ) - THRESHOLD) / (MAX_RATING - THRESHOLD) for b in bins]
+  ys = [item[1] for item in sorted(ratings_hist.items())]
+  (a, b), _ = optimize.curve_fit(exp_func, xs, ys)
+
+  mean = THRESHOLD + (MAX_RATING - THRESHOLD) * b
+  sig1 = THRESHOLD + (MAX_RATING - THRESHOLD) * 2 * b
+  sig2 = THRESHOLD + (MAX_RATING - THRESHOLD) * 3 * b
+
+  xs_new = range(THRESHOLD, MAX_RATING + 1)
+  xs_scaled = [(x - THRESHOLD) / (MAX_RATING - THRESHOLD) for x in xs_new]
+  ys_new = [exp_func(x, a, b) for x in xs_scaled]
+  
+  return (xs_new, ys_new, {'mean': mean, 'sig1': sig1, 'sig2': sig2})
 
 def draw_for_date(current_date):
   if current_date.day == 1:
@@ -289,6 +315,14 @@ def draw_for_date(current_date):
 
       axs.bar(xs, ys, align = 'edge', width = BIN_SIZE, color = color, alpha = 0.7)
 
+      if BIN_CURVE_FIT:
+        (xfit, yfit, indices) = get_curve_fit(daily_ratings[current_date])
+        pyplot.plot(xfit, yfit, alpha = 0.8, color = 'black', linewidth = 3)
+
+        pyplot.axvline(x = indices['mean'], color = 'grey', alpha = 0.5, linestyle = '--')
+        pyplot.axvline(x = indices['sig1'], color = 'grey', alpha = 0.5, linestyle = '--')
+        pyplot.axvline(x = indices['sig2'], color = 'grey', alpha = 0.5, linestyle = '--')
+
     pyplot.text(x = MAX_RATING - 10, y = max_y - 2 * text_spacing, \
                   s = 'Normalized player count: ' + str(round(sum(ys))), \
                   alpha = 0.8, fontsize = 'x-large', \
@@ -309,7 +343,10 @@ if AGGREGATION_WINDOW:
   if PLAYER_AGGREGATE:
     aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE + '_BYPLAYER'
   elif BIN_AGGREGATE:
-    aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_BYBIN'
+    if BIN_CURVE_FIT:
+      aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_BYBINFIT'
+    else:
+      aggregation_filename += '_' + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_BYBIN'
 type_filename = TYPE
 if TYPE == 'allrounder':
   if ALLROUNDERS_GEOM_MEAN:
