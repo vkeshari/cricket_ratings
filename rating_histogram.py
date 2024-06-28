@@ -245,7 +245,7 @@ def draw_for_date(current_date):
 
   axs.grid(True, which = 'both', axis = 'both', alpha = 0.5)
 
-  text_spacing = int(BIN_SIZE / 50)
+  text_spacing = BIN_SIZE / 50
 
   pyplot.text(x = MAX_RATING - 10, y = max_y - text_spacing, s = str(current_date), \
                 alpha = 0.8, fontsize = 'x-large', \
