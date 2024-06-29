@@ -27,8 +27,16 @@ AGGREGATION_WINDOW = 'quarterly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = 'max'
 
-MAX_SIGMA = 3
-SIGMA_PERCENTAGES = False
+MIN_RATIO = 0.05
+# [0.025, 0.05, 0.1]
+RATIO_STEP = 0.05
+
+RATIO_STOPS = [0.5, 0.7, 0.9, 1.0]
+
+THRESHOLD_RELATIVE = True
+SHOW_PERCENTAGES = False
+
+VERBOSE = True
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -43,15 +51,17 @@ assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
 assert BIN_SIZE >= 10, "BIN_SIZE must be at least 10"
 assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, "BIN_SIZE must split ratings range evenly"
 
-if AGGREGATION_WINDOW:
-  assert PLAYER_AGGREGATE, \
-        "AGGREGATION_WINDOW provided but no aggregation requested"
-  assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
-        "Invalid AGGREGATION_WINDOW provided"
-if PLAYER_AGGREGATE:
-  assert AGGREGATION_WINDOW, "Aggregation requested but no AGGREGATION_WINDOW provided"
-  assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
-        "Invalid PLAYER_AGGREGATE provided"
+assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
+      "Invalid AGGREGATION_WINDOW provided"
+assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
+      "Invalid PLAYER_AGGREGATE provided"
+
+assert MIN_RATIO > 0, "MIN_RATIO must be greater than 0.5"
+assert RATIO_STEP in [0.025, 0.05, 0.1], "Invalid RATIO_STEP provided"
+
+if RATIO_STOPS:
+  for r in RATIO_STOPS:
+    assert r > 0.0 and r <= 1.0, "Each value in RATIO_STOPS must be in (0, 1]"
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
@@ -160,70 +170,131 @@ def get_aggregate_ratings(daily_ratings):
 aggregate_ratings = get_aggregate_ratings(daily_ratings)
 print(AGGREGATION_WINDOW + " aggregate ratings built")
 
-print('\n=== Player count in each bin ===')
-h = 'AGG DATE START'
-for b in bins:
-  h += '\t' + str(b)
-print(h)
+dates_to_show = []
 d = first_date
 while d <= last_date:
   if d >= START_DATE and d <= END_DATE and is_aggregation_window_start(d):
+    dates_to_show.append(d)
+  d += ONE_DAY
+
+if VERBOSE:
+
+  print('\n=== Player count in each rating bin ===')
+  h = 'AGG DATE START'
+  for b in bins:
+    h += '\t' + str(b)
+  h += '\tMax'
+  print(h)
+  d = first_date
+  for d in dates_to_show:
     s = str(d)
     for b in bins:
       bin_ratings = [r for r in aggregate_ratings[d].values() \
                               if r >= b and r < b + BIN_SIZE]
       s += '\t{v}'.format(v = len(bin_ratings))
+    max_rating = max(aggregate_ratings[d].values())
+    s += '\t' + str(max_rating)
     print(s)
-  d += ONE_DAY
 
-print('\n=== Mean and sigma values (assuming exponential distribution) ===')
-h = 'AGG DATE START\tSTDEV\tTHRSH\tMEAN'
-for i in range(1, MAX_SIGMA + 1):
-  h += '\tSTD' + str(i)
-print(h)
-d = first_date
-while d <= last_date:
-  if d >= START_DATE and d <= END_DATE and is_aggregation_window_start(d):
+  print('\n=== Player count in each rating ratio bin (by step) ===')
+  h = 'AGG START DATE'
+  num_bins = round((1.0 - MIN_RATIO) / RATIO_STEP)
+  bin_stops = np.linspace(MIN_RATIO, 1.0, num_bins + 1)
+  for b in bin_stops:
+    h += '\t' + '{b:.2f}'.format(b = b)
+  print(h)
+
+  for d in dates_to_show:
     ratings_in_range = [v for v in aggregate_ratings[d].values() \
-                            if v >= THRESHOLD and v <= MAX_RATING]
-    mean = aggregate_values(sorted(ratings_in_range), 'median')
-    stdev = mean - THRESHOLD
+                        if v >= THRESHOLD and v <= MAX_RATING]
+    
+    max_rating = max(ratings_in_range)
+    total_players = len(ratings_in_range)
 
-    s = str(d) + '\t' + str(int(stdev)) + '\t' + str(THRESHOLD) + '\t' + str(int(mean))
-    for i in range(1, MAX_SIGMA + 1):
-      s += '\t' + str(int(mean + i * stdev))
-    print(s)
-  d += ONE_DAY
-
-print('\n=== Player count in each exponential sigma bin ===')
-h = 'AGG DATE START\tTOTAL\tTHRSH\tMEAN'
-for i in range(1, MAX_SIGMA + 1):
-  h += '\tSTD' + str(i)
-print(h)
-d = first_date
-while d <= last_date:
-  if d >= START_DATE and d <= END_DATE and is_aggregation_window_start(d):
-    ratings_in_range = [v for v in aggregate_ratings[d].values() \
-                            if v >= THRESHOLD and v <= MAX_RATING]
-    mean = aggregate_values(sorted(ratings_in_range), 'median')
-    stdev = mean - THRESHOLD
-
-    s = str(d) + '\t' + str(len(ratings_in_range))
-    bin_counts = {}
-    for t in range(MAX_SIGMA + 2):
-      bin_counts[t] = 0
+    bin_counts = [0] * len(bin_stops)
     for r in ratings_in_range:
-      r_bin = int((r - THRESHOLD) / stdev)
-      if r_bin > MAX_SIGMA + 1:
-        r_bin = MAX_SIGMA + 1
-      if SIGMA_PERCENTAGES:
-        bin_counts[r_bin] += 100 / len(ratings_in_range)
+      if THRESHOLD_RELATIVE:
+        rating_ratio = (r - THRESHOLD) / (max_rating - THRESHOLD)
       else:
-        bin_counts[r_bin] += 1
+        rating_ratio = r / max_rating
+      if rating_ratio < bin_stops[0]:
+        continue
+      for i, b in enumerate(bin_stops):
+        if rating_ratio < b:
+          bin_counts[i - 1] += 1
+          break
+        if rating_ratio == b:
+          bin_counts[i] += 1
+          break
 
-    for t in sorted(bin_counts.keys()):
-      sigma_value_format = '{c:.2f}' if SIGMA_PERCENTAGES else '{c}'
-      s += '\t' + sigma_value_format.format(c = bin_counts[t])
-    print(s)
+    s = str(d)
+    for b in bin_counts:
+      if SHOW_PERCENTAGES:
+        s += '\t' + '{v:.2f}'.format(v = b * 100 / total_players)
+      else:
+        s += '\t' + str(b)
+    print (s)
 
-  d += ONE_DAY
+if VERBOSE:
+  print('\n=== Player count in each rating ratio bin (provided) ===')
+  h = 'AGG START DATE'
+  for b in RATIO_STOPS:
+    h += '\t' + '{b:.2f}'.format(b = b)
+  print(h)
+
+super_bins = {}
+for r in RATIO_STOPS[ : -1]:
+  super_bins[r] = []
+
+for d in dates_to_show:
+  ratings_in_range = [v for v in aggregate_ratings[d].values() \
+                      if v >= THRESHOLD and v <= MAX_RATING]
+  
+  max_rating = max(ratings_in_range)
+  total_players = len(ratings_in_range)
+
+  bin_counts = [0] * len(RATIO_STOPS)
+  for r in ratings_in_range:
+    if THRESHOLD_RELATIVE:
+      rating_ratio = (r - THRESHOLD) / (max_rating - THRESHOLD)
+    else:
+      rating_ratio = r / max_rating
+    if rating_ratio < RATIO_STOPS[0]:
+      continue
+    for i, b in enumerate(RATIO_STOPS):
+      if rating_ratio < b:
+        bin_counts[i - 1] += 1
+        break
+      if rating_ratio == b:
+        bin_counts[i] += 1
+        break
+  bin_counts[-2] += bin_counts[-1]
+
+  for i, r in enumerate(super_bins.keys()):
+    super_bins[r].append(bin_counts[i])
+
+  if VERBOSE:
+    s = str(d)
+    for b in bin_counts:
+      if SHOW_PERCENTAGES:
+        s += '\t' + '{v:.2f}'.format(v = b * 100 / total_players)
+      else:
+        s += '\t' + str(b)
+    print (s)
+
+print('\n=== Metrics for player count in each rating ratio bin (provided) ===')
+percentiles = [10, 50, 90]
+h = 'METRIC'
+for r in super_bins:
+  h += '\t' + str(r)
+print(h)
+
+for p in percentiles:
+  s = 'P' + str(p)
+  for r in super_bins:
+    s += '\t' + str(int(np.percentile(super_bins[r], p)))
+  print (s)
+s = 'AVG'
+for r in super_bins:
+  s += '\t' + '{v:.2f}'.format(v = np.average(super_bins[r]))
+print (s)
