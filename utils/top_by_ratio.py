@@ -10,14 +10,15 @@ ONE_DAY = timedelta(days = 1)
 # ['batting', 'bowling', 'allrounder']
 TYPE = 'batting'
 # ['test', 'odi', 't20']
-FORMAT = 'test'
+FORMAT = 't20'
 
 # Graph date range
-START_DATE = date(1901, 1, 1)
-END_DATE = date(2020, 1, 1)
+START_DATE = date(2021, 1, 1)
+END_DATE = date(2024, 1, 1)
+SKIP_YEARS = [2020]
 
 # Upper and lower bounds of ratings to show
-THRESHOLD = 500
+THRESHOLD = 0
 MAX_RATING = 1000
 
 # Aggregation
@@ -26,12 +27,13 @@ AGGREGATION_WINDOW = 'quarterly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = 'max'
 
-TOP_PLAYERS = 25
-THRESHOLD_RELATIVE = True
+TOP_PLAYERS = 50
+THRESHOLD_RELATIVE = False
 
-RATIO_STOPS = [0.35, 0.61, 0.94, 1.0]
+RATIO_STOPS = [0.8, 0.9, 0.95]
 
 SHOW_BIN_COUNTS = False
+BY_MEDAL_PERCENTAGES = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -119,6 +121,8 @@ first_date = min(daily_ratings.keys())
 last_date = max(daily_ratings.keys())
 
 def is_aggregation_window_start(d):
+  if d.year in SKIP_YEARS:
+    return False
   return AGGREGATION_WINDOW == 'monthly' and d.day == 1 \
       or AGGREGATION_WINDOW == 'quarterly' and d.day == 1 and d.month in [1, 4, 7, 10] \
       or AGGREGATION_WINDOW == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
@@ -191,6 +195,7 @@ if SHOW_BIN_COUNTS:
   print(h)
 
 player_medals = {}
+player_periods = {}
 
 for d in dates_to_show:
   ratings_in_range = {k: v for k, v in aggregate_ratings[d].items() \
@@ -204,6 +209,9 @@ for d in dates_to_show:
     bin_players.append([])
   for p in ratings_in_range:
     rating = ratings_in_range[p]
+    if p not in player_periods:
+      player_periods[p] = 0
+    player_periods[p] += 1
     if THRESHOLD_RELATIVE:
       rating_ratio = (rating - THRESHOLD) / (max_rating - THRESHOLD)
     else:
@@ -232,6 +240,11 @@ for d in dates_to_show:
         for rs in actual_ratio_stops:
           player_medals[p][rs] = 0
       player_medals[p][r] += 1
+
+if BY_MEDAL_PERCENTAGES:
+  for p in player_medals:
+    for r in player_medals[p]:
+      player_medals[p][r] = 100 * player_medals[p][r] / player_periods[p]
 
   if SHOW_BIN_COUNTS:
     s = str(d)
@@ -276,13 +289,16 @@ def full_readable_name(p):
   return readable_name(p) + ' (' + country(p) + ')'
 
 print('\n=== Top ' + str(TOP_PLAYERS) + ' Players ===')
-print('GOLD\tSILVER\tBRONZE\tPLAYER NAME')
+print('TOTAL\tGOLD\tSILVER\tBRONZE\tPLAYER NAME')
 
 for i, p in enumerate(player_medals):
-  s = ''
+  s = str(player_periods[p])
   for r in reversed(actual_ratio_stops):
-    s += str(player_medals[p][r]) + '\t'
-  s += full_readable_name(p)
+    if BY_MEDAL_PERCENTAGES:
+      s += '\t{v:.2f}'.format(v = player_medals[p][r])
+    else:
+      s += '\t' + str(player_medals[p][r])
+  s += '\t' + full_readable_name(p)
   print (s)
 
   if i >= TOP_PLAYERS:

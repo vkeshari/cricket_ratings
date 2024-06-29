@@ -156,25 +156,24 @@ def get_aggregate_ratings(daily_ratings):
 
   aggregate_ratings = {}
 
-  if PLAYER_AGGREGATE:
-    bucket_values = {}
-    last_window_start = first_date
-    for d in daily_ratings:
-      if d not in aggregate_ratings:
-        aggregate_ratings[d] = {}
-      if d == last_date or is_aggregation_window_start(d):
-        for p in bucket_values:
-          aggregate_ratings[last_window_start][p] = \
-                  aggregate_values(bucket_values[p], PLAYER_AGGREGATE)
-        bucket_values = {}
-        last_window_start = d
-      else:
-        aggregate_ratings[d] = aggregate_ratings[last_window_start]
+  bucket_values = {}
+  last_window_start = first_date
+  for d in daily_ratings:
+    if d not in aggregate_ratings:
+      aggregate_ratings[d] = {}
+    if d == last_date or is_aggregation_window_start(d):
+      for p in bucket_values:
+        aggregate_ratings[last_window_start][p] = \
+                aggregate_values(bucket_values[p], PLAYER_AGGREGATE)
+      bucket_values = {}
+      last_window_start = d
+    else:
+      aggregate_ratings[d] = aggregate_ratings[last_window_start]
 
-      for p in daily_ratings[d]:
-        if p not in bucket_values:
-          bucket_values[p] = []
-        bucket_values[p].append(daily_ratings[d][p])
+    for p in daily_ratings[d]:
+      if p not in bucket_values:
+        bucket_values[p] = []
+      bucket_values[p].append(daily_ratings[d][p])
 
   return aggregate_ratings
 
