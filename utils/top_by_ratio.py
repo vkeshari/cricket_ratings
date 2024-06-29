@@ -10,16 +10,15 @@ ONE_DAY = timedelta(days = 1)
 # ['batting', 'bowling', 'allrounder']
 TYPE = 'batting'
 # ['test', 'odi', 't20']
-FORMAT = 't20'
+FORMAT = 'test'
 
 # Graph date range
-START_DATE = date(2021, 1, 1)
-END_DATE = date(2024, 1, 1)
+START_DATE = date(1901, 1, 1)
+END_DATE = date(2020, 1, 1)
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
 MAX_RATING = 1000
-BIN_SIZE = 50
 
 # Aggregation
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
@@ -27,16 +26,12 @@ AGGREGATION_WINDOW = 'quarterly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = 'max'
 
-MIN_RATIO = 0.05
-# [0.025, 0.05, 0.1]
-RATIO_STEP = 0.05
-
-RATIO_STOPS = [0.5, 0.7, 0.9, 1.0]
-
+TOP_PLAYERS = 25
 THRESHOLD_RELATIVE = True
-SHOW_PERCENTAGES = False
 
-VERBOSE = True
+RATIO_STOPS = [0.35, 0.61, 0.94, 1.0]
+
+SHOW_BIN_COUNTS = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -48,36 +43,32 @@ assert END_DATE <= date.today(), "Future END_DATE requested"
 
 assert THRESHOLD >= 0, "THRESHOLD must not be negative"
 assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
-assert BIN_SIZE >= 10, "BIN_SIZE must be at least 10"
-assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, "BIN_SIZE must split ratings range evenly"
 
 assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
       "Invalid AGGREGATION_WINDOW provided"
 assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
       "Invalid PLAYER_AGGREGATE provided"
+assert TOP_PLAYERS >= 5, "TOP_PLAYERS must be at least 5"
 
-assert MIN_RATIO > 0, "MIN_RATIO must be greater than 0.5"
-assert RATIO_STEP in [0.025, 0.05, 0.1], "Invalid RATIO_STEP provided"
+assert len(RATIO_STOPS) == 4, "RATIO_STOPS must have length 4"
+assert RATIO_STOPS[-1] == 1.0, "Last value of RATIO_STOPS must be 1.0"
+for r in RATIO_STOPS:
+  assert r > 0.0 and r <= 1.0, "Each value in RATIO_STOPS must be in (0, 1]"
 
-if RATIO_STOPS:
-  assert RATIO_STOPS[-1] == 1.0, "Last value of RATIO_STOPS must be 1.0"
-  for r in RATIO_STOPS:
-    assert r > 0.0 and r <= 1.0, "Each value in RATIO_STOPS must be in (0, 1]"
-
-  def strictly_increasing(l):
-    if len(l) == 1:
-      return True
-    for i, v in enumerate(l):
-      if i == 0:
-        continue
-      if v <= l[i - 1]:
-        return False
+def strictly_increasing(l):
+  if len(l) == 1:
     return True
-  assert strictly_increasing(RATIO_STOPS), "RATIO_STOPS must be strictly increasing"
+  for i, v in enumerate(l):
+    if i == 0:
+      continue
+    if v <= l[i - 1]:
+      return False
+  return True
+assert strictly_increasing(RATIO_STOPS), "RATIO_STOPS must be strictly increasing"
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
-print (str(THRESHOLD) + ' : ' + str(BIN_SIZE) + ' : ' + str(MAX_RATING))
+print (str(THRESHOLD) + ' : ' + str(MAX_RATING))
 print (AGGREGATION_WINDOW + ' / ' + PLAYER_AGGREGATE)
 
 def string_to_date(s):
@@ -126,7 +117,6 @@ print("Daily ratings data built for " + str(len(daily_ratings)) + " days" )
 
 first_date = min(daily_ratings.keys())
 last_date = max(daily_ratings.keys())
-bins = range(THRESHOLD, MAX_RATING, BIN_SIZE)
 
 def is_aggregation_window_start(d):
   return AGGREGATION_WINDOW == 'monthly' and d.day == 1 \
@@ -188,124 +178,112 @@ while d <= last_date:
     dates_to_show.append(d)
   d += ONE_DAY
 
-if VERBOSE:
+metrics_bins = {}
+actual_ratio_stops = RATIO_STOPS[ : -1]
+for r in actual_ratio_stops:
+  metrics_bins[r] = []
 
-  print('\n=== Player count in each rating bin ===')
-  h = 'AGG DATE START'
-  for b in bins:
-    h += '\t' + str(b)
-  h += '\tMax'
-  print(h)
-  d = first_date
-  for d in dates_to_show:
-    s = str(d)
-    for b in bins:
-      bin_ratings = [r for r in aggregate_ratings[d].values() \
-                              if r >= b and r < b + BIN_SIZE]
-      s += '\t{v}'.format(v = len(bin_ratings))
-    max_rating = max(aggregate_ratings[d].values())
-    s += '\t' + str(max_rating)
-    print(s)
-
-  print('\n=== Player count in each rating ratio bin (by step) ===')
+if SHOW_BIN_COUNTS:
+  print('\n=== Player count in each rating ratio bin ===')
   h = 'AGG START DATE'
-  num_bins = round((1.0 - MIN_RATIO) / RATIO_STEP)
-  bin_stops = np.linspace(MIN_RATIO, 1.0, num_bins + 1)
-  for b in bin_stops:
+  for b in actual_ratio_stops:
     h += '\t' + '{b:.2f}'.format(b = b)
   print(h)
 
-  for d in dates_to_show:
-    ratings_in_range = [v for v in aggregate_ratings[d].values() \
-                        if v >= THRESHOLD and v <= MAX_RATING]
-    
-    max_rating = max(ratings_in_range)
-    total_players = len(ratings_in_range)
-
-    bin_counts = [0] * len(bin_stops)
-    for r in ratings_in_range:
-      if THRESHOLD_RELATIVE:
-        rating_ratio = (r - THRESHOLD) / (max_rating - THRESHOLD)
-      else:
-        rating_ratio = r / max_rating
-      if rating_ratio < bin_stops[0]:
-        continue
-      for i, b in enumerate(bin_stops):
-        if rating_ratio < b:
-          bin_counts[i - 1] += 1
-          break
-        if rating_ratio == b:
-          bin_counts[i] += 1
-          break
-
-    s = str(d)
-    for b in bin_counts:
-      if SHOW_PERCENTAGES:
-        s += '\t' + '{v:.2f}'.format(v = b * 100 / total_players)
-      else:
-        s += '\t' + str(b)
-    print (s)
-
-if VERBOSE:
-  print('\n=== Player count in each rating ratio bin (provided) ===')
-  h = 'AGG START DATE'
-  for b in RATIO_STOPS:
-    h += '\t' + '{b:.2f}'.format(b = b)
-  print(h)
-
-super_bins = {}
-for r in RATIO_STOPS[ : -1]:
-  super_bins[r] = []
+player_medals = {}
 
 for d in dates_to_show:
-  ratings_in_range = [v for v in aggregate_ratings[d].values() \
-                      if v >= THRESHOLD and v <= MAX_RATING]
+  ratings_in_range = {k: v for k, v in aggregate_ratings[d].items() \
+                      if v >= THRESHOLD and v <= MAX_RATING}
   
-  max_rating = max(ratings_in_range)
-  total_players = len(ratings_in_range)
+  max_rating = max(ratings_in_range.values())
 
   bin_counts = [0] * len(RATIO_STOPS)
-  for r in ratings_in_range:
+  bin_players = []
+  for r in RATIO_STOPS:
+    bin_players.append([])
+  for p in ratings_in_range:
+    rating = ratings_in_range[p]
     if THRESHOLD_RELATIVE:
-      rating_ratio = (r - THRESHOLD) / (max_rating - THRESHOLD)
+      rating_ratio = (rating - THRESHOLD) / (max_rating - THRESHOLD)
     else:
-      rating_ratio = r / max_rating
+      rating_ratio = rating / max_rating
     if rating_ratio < RATIO_STOPS[0]:
       continue
     for i, r in enumerate(RATIO_STOPS):
       if rating_ratio < r:
         bin_counts[i - 1] += 1
+        bin_players[i - 1].append(p)
         break
       if rating_ratio == r:
         bin_counts[i] += 1
+        bin_players[i].append(p)
         break
   bin_counts[-2] += bin_counts[-1]
+  bin_players[-2] += bin_players[-1]
 
-  for i, r in enumerate(super_bins.keys()):
-    super_bins[r].append(bin_counts[i])
+  for i, r in enumerate(actual_ratio_stops):
+    metrics_bins[r].append(bin_counts[i])
 
-  if VERBOSE:
+  for i, r in enumerate(actual_ratio_stops):
+    for p in bin_players[i]:
+      if p not in player_medals:
+        player_medals[p] = {}
+        for rs in actual_ratio_stops:
+          player_medals[p][rs] = 0
+      player_medals[p][r] += 1
+
+  if SHOW_BIN_COUNTS:
     s = str(d)
-    for b in bin_counts:
-      if SHOW_PERCENTAGES:
-        s += '\t' + '{v:.2f}'.format(v = b * 100 / total_players)
-      else:
-        s += '\t' + str(b)
+    for b in bin_counts[ : -1]:
+      s += '\t' + str(b)
     print (s)
+
+for r in actual_ratio_stops:
+  player_medals = dict(sorted(player_medals.items(),
+                                key = lambda item: item[1][r], reverse = True))
+
 
 print('\n=== Metrics for player count in each rating ratio bin (provided) ===')
 percentiles = [10, 50, 90]
 h = 'METRIC'
-for r in super_bins:
+for r in metrics_bins:
   h += '\t' + str(r)
 print(h)
 
 for p in percentiles:
   s = 'P' + str(p)
-  for r in super_bins:
-    s += '\t' + str(int(np.percentile(super_bins[r], p)))
+  for r in metrics_bins:
+    s += '\t' + str(int(np.percentile(metrics_bins[r], p)))
   print (s)
 s = 'AVG'
-for r in super_bins:
-  s += '\t' + '{v:.2f}'.format(v = np.average(super_bins[r]))
+for r in metrics_bins:
+  s += '\t' + '{v:.2f}'.format(v = np.average(metrics_bins[r]))
 print (s)
+s = 'TOTAL'
+for r in metrics_bins:
+  s += '\t' + str(sum(metrics_bins[r]))
+print (s)
+
+def readable_name(p):
+  sep = p.find('_')
+  return p[sep+1:].split('.')[0].replace('_', ' ')
+
+def country(p):
+  return p.split('_')[0]
+
+def full_readable_name(p):
+  return readable_name(p) + ' (' + country(p) + ')'
+
+print('\n=== Top ' + str(TOP_PLAYERS) + ' Players ===')
+print('GOLD\tSILVER\tBRONZE\tPLAYER NAME')
+
+for i, p in enumerate(player_medals):
+  s = ''
+  for r in reversed(actual_ratio_stops):
+    s += str(player_medals[p][r]) + '\t'
+  s += full_readable_name(p)
+  print (s)
+
+  if i >= TOP_PLAYERS:
+    break
