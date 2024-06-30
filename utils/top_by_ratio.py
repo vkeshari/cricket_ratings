@@ -15,7 +15,7 @@ FORMAT = 't20'
 # Graph date range
 START_DATE = date(2021, 1, 1)
 END_DATE = date(2024, 1, 1)
-SKIP_YEARS = [2020]
+SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 0
@@ -30,7 +30,7 @@ PLAYER_AGGREGATE = 'max'
 TOP_PLAYERS = 25
 THRESHOLD_RELATIVE = False
 
-RATIO_STOPS = [0.85, 0.95, 0.97, 1]
+RATIO_STOPS = [0.85, 0.90, 0.97, 1]
 
 SHOW_METRICS = False
 SHOW_BIN_COUNTS = False

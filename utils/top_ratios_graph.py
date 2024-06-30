@@ -15,7 +15,7 @@ FORMAT = 't20'
 # Graph date range
 START_DATE = date(2021, 1, 1)
 END_DATE = date(2024, 1, 1)
-SKIP_YEARS = [2020]
+SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 0
