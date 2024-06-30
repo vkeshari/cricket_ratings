@@ -140,7 +140,7 @@ def aggregate_values(values, agg_type):
   if agg_type == 'avg':
     return np.average(values)
   if agg_type == 'median':
-    return np.percentile(values, 50)
+    return np.percentile(values, 50, method = 'nearest')
   if agg_type == 'min':
     return min(values)
   if agg_type == 'max':
@@ -302,7 +302,7 @@ print(h)
 for p in percentiles:
   s = 'P' + str(p)
   for r in super_bins:
-    s += '\t' + str(int(np.percentile(super_bins[r], p)))
+    s += '\t' + str(int(np.percentile(super_bins[r], p, method = 'nearest')))
   print (s)
 s = 'AVG'
 for r in super_bins:

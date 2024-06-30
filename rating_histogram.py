@@ -134,7 +134,7 @@ def aggregate_values(values, agg_type):
   if agg_type == 'avg':
     return np.average(values)
   if agg_type == 'median':
-    return np.percentile(values, 50)
+    return np.percentile(values, 50, method = 'nearest')
   if agg_type == 'min':
     return min(values)
   if agg_type == 'max':

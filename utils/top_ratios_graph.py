@@ -27,10 +27,18 @@ AGGREGATION_WINDOW = 'yearly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = 'max'
 
-TOP_PLAYERS = 5
 THRESHOLD_RELATIVE = False
 
-RATIO_STOPS = [0.8, 0.9, 0.95, 1]
+MAX_RATIO = 1.0
+MIN_RATIO = 0.7
+# [0.01, 0.02, 0.05, 0.1]
+RATIO_STEP = 0.01
+
+RATIO_BINS = round((MAX_RATIO - MIN_RATIO) / RATIO_STEP)
+
+CUMULATIVES = True
+
+AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
 SHOW_BIN_COUNTS = False
 BY_MEDAL_PERCENTAGES = False
@@ -50,23 +58,10 @@ assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'd
       "Invalid AGGREGATION_WINDOW provided"
 assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
       "Invalid PLAYER_AGGREGATE provided"
-assert TOP_PLAYERS >= 5, "TOP_PLAYERS must be at least 5"
 
-assert len(RATIO_STOPS) == 4, "RATIO_STOPS must have length 4"
-assert RATIO_STOPS[-1] == 1.0, "Last value of RATIO_STOPS must be 1.0"
-for r in RATIO_STOPS:
-  assert r > 0.0 and r <= 1.0, "Each value in RATIO_STOPS must be in (0, 1]"
-
-def strictly_increasing(l):
-  if len(l) == 1:
-    return True
-  for i, v in enumerate(l):
-    if i == 0:
-      continue
-    if v <= l[i - 1]:
-      return False
-  return True
-assert strictly_increasing(RATIO_STOPS), "RATIO_STOPS must be strictly increasing"
+assert MAX_RATIO == 1.0, "MAX_RATIO must be 1.0"
+assert MIN_RATIO >= 0.7 and MIN_RATIO < 1.0, "MIN_RATIO must be between 0.7 and 1.0"
+assert RATIO_STEP in [0.01, 0.02, 0.05, 0.1], "Invalid RATIO_STEP provided"
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
@@ -173,7 +168,8 @@ while d <= last_date:
   d += ONE_DAY
 
 metrics_bins = {}
-actual_ratio_stops = RATIO_STOPS[ : -1]
+ratio_stops = np.linspace(MIN_RATIO, MAX_RATIO, RATIO_BINS + 1)
+actual_ratio_stops = ratio_stops[ : -1]
 for r in actual_ratio_stops:
   metrics_bins[r] = []
 
@@ -193,9 +189,9 @@ for d in dates_to_show:
   
   max_rating = max(ratings_in_range.values())
 
-  bin_counts = [0] * len(RATIO_STOPS)
+  bin_counts = [0] * len(ratio_stops)
   bin_players = []
-  for r in RATIO_STOPS:
+  for r in ratio_stops:
     bin_players.append([])
   for p in ratings_in_range:
     rating = ratings_in_range[p]
@@ -206,9 +202,9 @@ for d in dates_to_show:
       rating_ratio = (rating - THRESHOLD) / (max_rating - THRESHOLD)
     else:
       rating_ratio = rating / max_rating
-    if rating_ratio < RATIO_STOPS[0]:
+    if rating_ratio < ratio_stops[0]:
       continue
-    for i, r in enumerate(RATIO_STOPS):
+    for i, r in enumerate(ratio_stops):
       if rating_ratio < r:
         bin_counts[i - 1] += 1
         bin_players[i - 1].append(p)
@@ -247,80 +243,116 @@ for r in actual_ratio_stops:
                                 key = lambda item: item[1][r], reverse = True))
 
 
-print('\n=== Metrics for player count in each rating ratio bin ===')
-percentiles = [10, 50, 90]
-h = 'METRIC'
-for r in reversed(metrics_bins):
-  h += '\t' + str(r)
-print(h)
+graph_metrics = {'starts': [], 'ends': [], \
+                  'widths': [], 'lines': [], 'avgs': []}
 
-for p in percentiles:
-  s = 'P' + str(p)
-  for r in reversed(metrics_bins):
-    s += '\t' + str(int(np.percentile(metrics_bins[r], p, method = 'nearest')))
-  print (s)
+cum_metrics_bins = {}
+for r in actual_ratio_stops:
+  cum_metrics_bins[r] = [0] * len(dates_to_show)
 
-print()
-
-s = 'AVG'
-for r in reversed(metrics_bins):
-  s += '\t' + '{v:.2f}'.format(v = np.average(metrics_bins[r]))
-print (s)
-
-s = 'SUM'
-for r in reversed(metrics_bins):
-  s += '\t' + str(sum(metrics_bins[r]))
-print (s)
-
-print()
-
-cumulatives = {}
-cum_total = 0
-cum_avg = 0
-for r in reversed(metrics_bins):
-  cumulatives[r] = {}
-  cum_total += sum(metrics_bins[r])
-  cumulatives[r]['sum'] = cum_total
-  cum_avg += np.average(metrics_bins[r])
-  cumulatives[r]['avg'] = cum_avg
-
-s = 'C_AVG'
-for r in reversed(metrics_bins):
-  s += '\t' + '{v:.2f}'.format(v = cumulatives[r]['avg'])
-print(s)
-
-s = 'C_SUM'
-for r in reversed(metrics_bins):
-  s += '\t' + str(cumulatives[r]['sum'])
-print(s)
-
-def readable_name(p):
-  sep = p.find('_')
-  return p[sep+1:].split('.')[0].replace('_', ' ')
-
-def country(p):
-  return p.split('_')[0]
-
-def full_readable_name(p):
-  return readable_name(p) + ' (' + country(p) + ')'
-
-print('\n=== Top ' + str(TOP_PLAYERS) + ' Players ===')
-print('SPAN\tMEDALS\tGOLD\tSILVER\tBRONZE\tPLAYER NAME')
-
-for i, p in enumerate(player_medals):
-  s = str(player_periods[p])
-  total_medals = sum(player_medals[p].values())
-  if BY_MEDAL_PERCENTAGES:
-    s += '\t{v:.2f}'.format(v = total_medals)
-  else:
-    s += '\t' + str(total_medals)
-  for r in reversed(actual_ratio_stops):
-    if BY_MEDAL_PERCENTAGES:
-      s += '\t{v:.2f}'.format(v = player_medals[p][r])
+last_r = -1
+for r in reversed(actual_ratio_stops):
+  for i, v in enumerate(metrics_bins[r]):
+    if last_r == -1:
+      cum_metrics_bins[r][i] = 0
     else:
-      s += '\t' + str(player_medals[p][r])
-  s += '\t' + full_readable_name(p)
-  print (s)
+      cum_metrics_bins[r][i] = cum_metrics_bins[last_r][i]
+    cum_metrics_bins[r][i] += v
+  last_r = r
 
-  if i >= TOP_PLAYERS:
-    break
+  if CUMULATIVES:
+    start = np.percentile(cum_metrics_bins[r], 10, method = 'nearest')
+    end = np.percentile(cum_metrics_bins[r], 90, method = 'nearest')
+    width = end - start
+    line = (min(cum_metrics_bins[r]), max(cum_metrics_bins[r]))
+    avg = np.average(cum_metrics_bins[r])
+  else:
+    start = np.percentile(metrics_bins[r], 10, method = 'nearest')
+    end = np.percentile(metrics_bins[r], 90, method = 'nearest')
+    width = end - start
+    line = (min(metrics_bins[r]), max(metrics_bins[r]))
+    avg = np.average(metrics_bins[r])
+
+  graph_metrics['starts'].append(start)
+  graph_metrics['ends'].append(end)
+  graph_metrics['widths'].append(width)
+  graph_metrics['lines'].append(line)
+  graph_metrics['avgs'].append(avg)
+
+(gold, silver, bronze) = (-1, -1, -1)
+for i, av in enumerate(graph_metrics['avgs']):
+  if gold == -1 and av > AVG_MEDAL_CUMULATIVE_COUNTS['gold']:
+    gold = i - 1
+  if silver == -1 and av > AVG_MEDAL_CUMULATIVE_COUNTS['silver']:
+    silver = i - 1
+  if bronze == -1 and av > AVG_MEDAL_CUMULATIVE_COUNTS['bronze']:
+    bronze = i - 1
+
+
+from matplotlib import pyplot as plt
+
+resolution = tuple([7.2, 7.2])
+fig, ax = plt.subplots(figsize = resolution)
+
+TITLE_TEXT = "No. of players above ratio vs top player rating\n " \
+              + FORMAT + ' ' + TYPE + ' (' + str(START_DATE) + ' to ' + str(END_DATE) + ')'
+ax.set_title(TITLE_TEXT, fontsize ='xx-large')
+
+ax.set_ylabel('Rating ratio vs top player', fontsize ='x-large')
+ax.set_xlabel('No. of players above ratio threshold', fontsize ='x-large')
+
+ax.set_ylim(MIN_RATIO - RATIO_STEP, MAX_RATIO)
+ax.set_yticks(actual_ratio_stops)
+ax.set_yticklabels(['{v:.2f}'.format(v = r) for r in actual_ratio_stops], \
+                        fontsize ='medium')
+
+xmax = int(graph_metrics['ends'][-1]) + 2
+ax.set_xlim(0, xmax)
+xticks = list(range(0, xmax + 1, 1))
+ax.set_xticks(xticks)
+xticklabels = [str(x) if x % 2 == 0 else '' for x in xticks]
+ax.set_xticklabels(xticklabels, fontsize ='medium')
+
+ax.grid(True, which = 'both', axis = 'x', alpha = 0.5)
+
+ax.barh(y = list(reversed(actual_ratio_stops)), width = graph_metrics['widths'], \
+          align = 'center', height = 0.9 * RATIO_STEP, left = graph_metrics['starts'], \
+          color = 'green', alpha = 0.5, \
+        )
+plt.plot(graph_metrics['avgs'], list(reversed(actual_ratio_stops)), \
+                  linewidth = 0, alpha = 0.8, \
+                  marker = 'x', markerfacecolor = 'blue', \
+                  markersize = 8, markeredgewidth = 2)
+for i, r in enumerate(reversed(actual_ratio_stops)):
+  plt.plot(list(graph_metrics['lines'][i]), [r, r], linewidth = 2, \
+                    color = 'black', alpha = 0.8, \
+                    marker = 'o', markerfacecolor = 'red', \
+                    markersize = 3, markeredgewidth = 0)
+
+gold_y = list(reversed(actual_ratio_stops))[gold]
+gold_x = graph_metrics['avgs'][gold]
+gold_label = '{v:.2f}'.format(v = gold_x)
+plt.axhline(y = gold_y, linestyle = '--', linewidth = 1, color = 'black', alpha = 0.8)
+plt.text(x = xmax - 1, y = gold_y, s = 'Gold', alpha = 0.8, fontsize = 'large', \
+              horizontalalignment = 'right', verticalalignment = 'bottom')
+plt.axvline(x = gold_x, linestyle = ':', linewidth = 1, color = 'black', alpha = 0.8)
+
+silver_y = list(reversed(actual_ratio_stops))[silver]
+silver_x = graph_metrics['avgs'][silver]
+silver_label = '{v:.2f}'.format(v = silver_x)
+plt.axhline(y = silver_y, linestyle = '--', linewidth = 1, color = 'black', alpha = 0.8)
+plt.text(x = xmax - 1, y = silver_y, s = 'Silver', alpha = 0.8, fontsize = 'large', \
+              horizontalalignment = 'right', verticalalignment = 'bottom')
+plt.axvline(x = silver_x, linestyle = ':', linewidth = 1, color = 'black', alpha = 0.8)
+
+bronze_y = list(reversed(actual_ratio_stops))[bronze]
+bronze_x = graph_metrics['avgs'][bronze]
+bronze_label = '{v:.2f}'.format(v = bronze_x)
+plt.axhline(y = bronze_y, linestyle = '--', linewidth = 1, color = 'black', alpha = 0.8)
+plt.text(x = xmax - 1, y = bronze_y, s = 'Bronze', alpha = 0.8, fontsize = 'large', \
+              horizontalalignment = 'right', verticalalignment = 'bottom')
+plt.axvline(x = bronze_x, linestyle = ':', linewidth = 1, color = 'black', alpha = 0.8)
+
+
+fig.tight_layout()
+plt.show()
