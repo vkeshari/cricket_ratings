@@ -37,11 +37,12 @@ RATIO_STEP = 0.01
 RATIO_BINS = round((MAX_RATIO - MIN_RATIO) / RATIO_STEP)
 
 CUMULATIVES = True
+BY_MEDAL_PERCENTAGES = False
 
 AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
 SHOW_BIN_COUNTS = False
-BY_MEDAL_PERCENTAGES = False
+SHOW_GRAPH = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -288,77 +289,85 @@ for i, av in enumerate(graph_metrics['avgs']):
   if bronze == -1 and av > AVG_MEDAL_CUMULATIVE_COUNTS['bronze']:
     bronze = i - 1
 
+gold_ratio = list(reversed(actual_ratio_stops))[gold]
+silver_ratio = list(reversed(actual_ratio_stops))[silver]
+bronze_ratio = list(reversed(actual_ratio_stops))[bronze]
 
-from matplotlib import pyplot as plt
+gold_exp_num = graph_metrics['avgs'][gold]
+silver_exp_num = graph_metrics['avgs'][silver]
+bronze_exp_num = graph_metrics['avgs'][bronze]
 
-resolution = tuple([7.2, 7.2])
-fig, ax = plt.subplots(figsize = resolution)
+print ('\nGold:\t{g:.2f}\tSilver:\t{s:.2f}\tBronze:\t{b:.2f}'.format(
+                    g = gold_ratio, s = silver_ratio, b = bronze_ratio))
 
-TITLE_TEXT = "No. of players above ratio vs top player rating\n " \
-              + FORMAT + ' ' + TYPE + ' (' + str(START_DATE) + ' to ' + str(END_DATE) + ')'
-ax.set_title(TITLE_TEXT, fontsize ='xx-large')
+if SHOW_GRAPH:
+  from matplotlib import pyplot as plt
 
-ax.set_ylabel('Rating ratio vs top player', fontsize ='x-large')
-ax.set_xlabel('No. of players above ratio threshold', fontsize ='x-large')
+  resolution = tuple([7.2, 7.2])
+  fig, ax = plt.subplots(figsize = resolution)
 
-ax.set_ylim(MIN_RATIO - RATIO_STEP, MAX_RATIO)
-ax.set_yticks(actual_ratio_stops)
-ax.set_yticklabels(['{v:.2f}'.format(v = r) for r in actual_ratio_stops], \
-                        fontsize ='medium')
+  TITLE_TEXT = "No. of players above ratio vs top player rating\n " \
+                + FORMAT + ' ' + TYPE + ' (' + str(START_DATE) + ' to ' + str(END_DATE) + ')'
+  ax.set_title(TITLE_TEXT, fontsize ='xx-large')
 
-xmax = int(graph_metrics['ends'][-1]) + 2
-ax.set_xlim(0, xmax)
-xticks = list(range(0, xmax + 1, 1))
-ax.set_xticks(xticks)
+  ax.set_ylabel('Rating ratio vs top player', fontsize ='x-large')
+  ax.set_xlabel('No. of players above ratio threshold', fontsize ='x-large')
 
-xlabwidth = 1
-if graph_metrics['ends'][-1] > 30:
-  xlabwidth = 2
-if graph_metrics['ends'][-1] > 60:
-  xlabwidth = 5
-xticklabels = [str(x) if x % xlabwidth == 0 else '' for x in xticks]
-ax.set_xticklabels(xticklabels, fontsize ='medium')
+  ax.set_ylim(MIN_RATIO - RATIO_STEP, MAX_RATIO)
+  ax.set_yticks(actual_ratio_stops)
+  ax.set_yticklabels(['{v:.2f}'.format(v = r) for r in actual_ratio_stops], \
+                          fontsize ='medium')
 
-ax.grid(True, which = 'both', axis = 'x', alpha = 0.5)
+  xmax = int(graph_metrics['ends'][-1]) + 2
+  ax.set_xlim(0, xmax)
+  xticks = list(range(0, xmax + 1, 1))
+  ax.set_xticks(xticks)
 
-ax.barh(y = list(reversed(actual_ratio_stops)), width = graph_metrics['widths'], \
-          align = 'center', height = 0.9 * RATIO_STEP, left = graph_metrics['starts'], \
-          color = 'green', alpha = 0.5, \
-        )
-plt.plot(graph_metrics['avgs'], list(reversed(actual_ratio_stops)), \
-                  linewidth = 0, alpha = 0.8, \
-                  marker = 'x', markerfacecolor = 'blue', \
-                  markersize = 8, markeredgewidth = 2)
-for i, r in enumerate(reversed(actual_ratio_stops)):
-  plt.plot(list(graph_metrics['lines'][i]), [r, r], linewidth = 2, \
-                    color = 'black', alpha = 0.8, \
-                    marker = 'o', markerfacecolor = 'red', \
-                    markersize = 3, markeredgewidth = 0)
+  xlabwidth = 1
+  if graph_metrics['ends'][-1] > 30:
+    xlabwidth = 2
+  if graph_metrics['ends'][-1] > 60:
+    xlabwidth = 5
+  xticklabels = [str(x) if x % xlabwidth == 0 else '' for x in xticks]
+  ax.set_xticklabels(xticklabels, fontsize ='medium')
 
-gold_y = list(reversed(actual_ratio_stops))[gold]
-gold_x = graph_metrics['avgs'][gold]
-gold_label = '{v:.2f}'.format(v = gold_x)
-plt.axhline(y = gold_y, linestyle = '--', linewidth = 1, color = 'black', alpha = 0.8)
-plt.text(x = xmax - 1, y = gold_y, s = 'Gold', alpha = 0.8, fontsize = 'large', \
-              horizontalalignment = 'right', verticalalignment = 'bottom')
-plt.axvline(x = gold_x, linestyle = ':', linewidth = 1, color = 'black', alpha = 0.8)
+  ax.grid(True, which = 'both', axis = 'x', alpha = 0.5)
 
-silver_y = list(reversed(actual_ratio_stops))[silver]
-silver_x = graph_metrics['avgs'][silver]
-silver_label = '{v:.2f}'.format(v = silver_x)
-plt.axhline(y = silver_y, linestyle = '--', linewidth = 1, color = 'black', alpha = 0.8)
-plt.text(x = xmax - 1, y = silver_y, s = 'Silver', alpha = 0.8, fontsize = 'large', \
-              horizontalalignment = 'right', verticalalignment = 'bottom')
-plt.axvline(x = silver_x, linestyle = ':', linewidth = 1, color = 'black', alpha = 0.8)
-
-bronze_y = list(reversed(actual_ratio_stops))[bronze]
-bronze_x = graph_metrics['avgs'][bronze]
-bronze_label = '{v:.2f}'.format(v = bronze_x)
-plt.axhline(y = bronze_y, linestyle = '--', linewidth = 1, color = 'black', alpha = 0.8)
-plt.text(x = xmax - 1, y = bronze_y, s = 'Bronze', alpha = 0.8, fontsize = 'large', \
-              horizontalalignment = 'right', verticalalignment = 'bottom')
-plt.axvline(x = bronze_x, linestyle = ':', linewidth = 1, color = 'black', alpha = 0.8)
+  ax.barh(y = list(reversed(actual_ratio_stops)), width = graph_metrics['widths'], \
+            align = 'center', height = 0.9 * RATIO_STEP, left = graph_metrics['starts'], \
+            color = 'green', alpha = 0.5, \
+          )
+  plt.plot(graph_metrics['avgs'], list(reversed(actual_ratio_stops)), \
+                    linewidth = 0, alpha = 0.8, \
+                    marker = 'x', markerfacecolor = 'blue', \
+                    markersize = 8, markeredgewidth = 2)
+  for i, r in enumerate(reversed(actual_ratio_stops)):
+    plt.plot(list(graph_metrics['lines'][i]), [r, r], linewidth = 2, \
+                      color = 'black', alpha = 0.8, \
+                      marker = 'o', markerfacecolor = 'red', \
+                      markersize = 3, markeredgewidth = 0)
 
 
-fig.tight_layout()
-plt.show()
+  gold_label = '{v:.2f}'.format(v = gold_exp_num)
+  plt.axhline(y = gold_ratio, linestyle = '--', linewidth = 1, color = 'black', alpha = 0.8)
+  plt.text(x = xmax - 1, y = gold_ratio, s = 'Gold', alpha = 0.8, fontsize = 'large', \
+                horizontalalignment = 'right', verticalalignment = 'bottom')
+  plt.axvline(x = gold_exp_num, linestyle = ':', linewidth = 1, color = 'black', alpha = 0.8)
+
+
+  silver_label = '{v:.2f}'.format(v = silver_exp_num)
+  plt.axhline(y = silver_ratio, linestyle = '--', linewidth = 1, color = 'black', alpha = 0.8)
+  plt.text(x = xmax - 1, y = silver_ratio, s = 'Silver', alpha = 0.8, fontsize = 'large', \
+                horizontalalignment = 'right', verticalalignment = 'bottom')
+  plt.axvline(x = silver_exp_num, linestyle = ':', linewidth = 1, color = 'black', alpha = 0.8)
+
+
+  bronze_label = '{v:.2f}'.format(v = bronze_exp_num)
+  plt.axhline(y = bronze_ratio, linestyle = '--', linewidth = 1, color = 'black', alpha = 0.8)
+  plt.text(x = xmax - 1, y = bronze_ratio, s = 'Bronze', alpha = 0.8, fontsize = 'large', \
+                horizontalalignment = 'right', verticalalignment = 'bottom')
+  plt.axvline(x = bronze_exp_num, linestyle = ':', linewidth = 1, color = 'black', alpha = 0.8)
+
+
+  fig.tight_layout()
+  plt.show()

@@ -27,11 +27,12 @@ AGGREGATION_WINDOW = 'yearly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = 'max'
 
-TOP_PLAYERS = 5
+TOP_PLAYERS = 25
 THRESHOLD_RELATIVE = False
 
-RATIO_STOPS = [0.8, 0.9, 0.95, 1]
+RATIO_STOPS = [0.85, 0.95, 0.97, 1]
 
+SHOW_METRICS = False
 SHOW_BIN_COUNTS = False
 BY_MEDAL_PERCENTAGES = False
 
@@ -247,52 +248,53 @@ for r in actual_ratio_stops:
                                 key = lambda item: item[1][r], reverse = True))
 
 
-print('\n=== Metrics for player count in each rating ratio bin ===')
-percentiles = [10, 50, 90]
-h = 'METRIC'
-for r in reversed(metrics_bins):
-  h += '\t' + str(r)
-print(h)
-
-for p in percentiles:
-  s = 'P' + str(p)
+if SHOW_METRICS:
+  print('\n=== Metrics for player count in each rating ratio bin ===')
+  percentiles = [10, 50, 90]
+  h = 'METRIC'
   for r in reversed(metrics_bins):
-    s += '\t' + str(int(np.percentile(metrics_bins[r], p, method = 'nearest')))
+    h += '\t' + str(r)
+  print(h)
+
+  for p in percentiles:
+    s = 'P' + str(p)
+    for r in reversed(metrics_bins):
+      s += '\t' + str(int(np.percentile(metrics_bins[r], p, method = 'nearest')))
+    print (s)
+
+  print()
+
+  s = 'AVG'
+  for r in reversed(metrics_bins):
+    s += '\t' + '{v:.2f}'.format(v = np.average(metrics_bins[r]))
   print (s)
 
-print()
+  s = 'SUM'
+  for r in reversed(metrics_bins):
+    s += '\t' + str(sum(metrics_bins[r]))
+  print (s)
 
-s = 'AVG'
-for r in reversed(metrics_bins):
-  s += '\t' + '{v:.2f}'.format(v = np.average(metrics_bins[r]))
-print (s)
+  print()
 
-s = 'SUM'
-for r in reversed(metrics_bins):
-  s += '\t' + str(sum(metrics_bins[r]))
-print (s)
+  cumulatives = {}
+  cum_total = 0
+  cum_avg = 0
+  for r in reversed(metrics_bins):
+    cumulatives[r] = {}
+    cum_total += sum(metrics_bins[r])
+    cumulatives[r]['sum'] = cum_total
+    cum_avg += np.average(metrics_bins[r])
+    cumulatives[r]['avg'] = cum_avg
 
-print()
+  s = 'C_AVG'
+  for r in reversed(metrics_bins):
+    s += '\t' + '{v:.2f}'.format(v = cumulatives[r]['avg'])
+  print(s)
 
-cumulatives = {}
-cum_total = 0
-cum_avg = 0
-for r in reversed(metrics_bins):
-  cumulatives[r] = {}
-  cum_total += sum(metrics_bins[r])
-  cumulatives[r]['sum'] = cum_total
-  cum_avg += np.average(metrics_bins[r])
-  cumulatives[r]['avg'] = cum_avg
-
-s = 'C_AVG'
-for r in reversed(metrics_bins):
-  s += '\t' + '{v:.2f}'.format(v = cumulatives[r]['avg'])
-print(s)
-
-s = 'C_SUM'
-for r in reversed(metrics_bins):
-  s += '\t' + str(cumulatives[r]['sum'])
-print(s)
+  s = 'C_SUM'
+  for r in reversed(metrics_bins):
+    s += '\t' + str(cumulatives[r]['sum'])
+  print(s)
 
 def readable_name(p):
   sep = p.find('_')
@@ -305,20 +307,20 @@ def full_readable_name(p):
   return readable_name(p) + ' (' + country(p) + ')'
 
 print('\n=== Top ' + str(TOP_PLAYERS) + ' Players ===')
-print('SPAN\tMEDALS\tGOLD\tSILVER\tBRONZE\tPLAYER NAME')
+print('SPAN,\tMEDALS,\tGOLD,\tSILVER,\tBRONZE,\tPLAYER NAME')
 
 for i, p in enumerate(player_medals):
-  s = str(player_periods[p])
+  s = str(player_periods[p]) + ','
   total_medals = sum(player_medals[p].values())
   if BY_MEDAL_PERCENTAGES:
-    s += '\t{v:.2f}'.format(v = total_medals)
+    s += '\t{v:.2f}'.format(v = total_medals) + ','
   else:
-    s += '\t' + str(total_medals)
+    s += '\t' + str(total_medals) + ','
   for r in reversed(actual_ratio_stops):
     if BY_MEDAL_PERCENTAGES:
-      s += '\t{v:.2f}'.format(v = player_medals[p][r])
+      s += '\t{v:.2f}'.format(v = player_medals[p][r]) + ','
     else:
-      s += '\t' + str(player_medals[p][r])
+      s += '\t' + str(player_medals[p][r]) + ','
   s += '\t' + full_readable_name(p)
   print (s)
 
