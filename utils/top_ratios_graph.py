@@ -60,7 +60,7 @@ assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
       "Invalid PLAYER_AGGREGATE provided"
 
 assert MAX_RATIO == 1.0, "MAX_RATIO must be 1.0"
-assert MIN_RATIO >= 0.7 and MIN_RATIO < 1.0, "MIN_RATIO must be between 0.7 and 1.0"
+assert MIN_RATIO >= 0.5 and MIN_RATIO < 1.0, "MIN_RATIO must be between 0.7 and 1.0"
 assert RATIO_STEP in [0.01, 0.02, 0.05, 0.1], "Invalid RATIO_STEP provided"
 
 print (FORMAT + '\t' + TYPE)
@@ -310,7 +310,13 @@ xmax = int(graph_metrics['ends'][-1]) + 2
 ax.set_xlim(0, xmax)
 xticks = list(range(0, xmax + 1, 1))
 ax.set_xticks(xticks)
-xticklabels = [str(x) if x % 2 == 0 else '' for x in xticks]
+
+xlabwidth = 1
+if graph_metrics['ends'][-1] > 30:
+  xlabwidth = 2
+if graph_metrics['ends'][-1] > 60:
+  xlabwidth = 5
+xticklabels = [str(x) if x % xlabwidth == 0 else '' for x in xticks]
 ax.set_xticklabels(xticklabels, fontsize ='medium')
 
 ax.grid(True, which = 'both', axis = 'x', alpha = 0.5)
