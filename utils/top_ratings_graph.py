@@ -317,7 +317,9 @@ if SHOW_GRAPH:
   ax.set_ylabel('Rating', fontsize ='x-large')
   ax.set_xlabel('No. of players above rating', fontsize ='x-large')
 
-  ax.set_ylim(THRESHOLD - RATING_STEP, MAX_RATING)
+  ymin = THRESHOLD - RATING_STEP
+  ymax = MAX_RATING
+  ax.set_ylim(ymin, ymax)
   ax.set_yticks(actual_rating_stops)
   ax.set_yticklabels([str(r) for r in actual_rating_stops], \
                           fontsize ='medium')
@@ -357,33 +359,32 @@ if SHOW_GRAPH:
                       marker = 'o', markerfacecolor = 'red', \
                       markersize = 3, markeredgewidth = 0)
 
-
   gold_label = '{v:.2f}'.format(v = gold_exp_num)
   plt.axhline(y = gold_rating, linestyle = '--', linewidth = 1, \
                 color = 'black', alpha = 0.8)
   plt.text(x = xmax - 1, y = gold_rating, s = 'Gold', alpha = 0.8, fontsize = 'large', \
                 horizontalalignment = 'right', verticalalignment = 'bottom')
+  gold_ymax_rating = (gold_rating - ymin) / (ymax - ymin)
   plt.axvline(x = gold_exp_num, linestyle = ':', linewidth = 1, \
-                color = 'black', alpha = 0.8)
-
+                color = 'black', alpha = 0.8, ymax = gold_ymax_rating)
 
   silver_label = '{v:.2f}'.format(v = silver_exp_num)
   plt.axhline(y = silver_rating, linestyle = '--', linewidth = 1, \
                 color = 'black', alpha = 0.8)
   plt.text(x = xmax - 1, y = silver_rating, s = 'Silver', alpha = 0.8, fontsize = 'large', \
                 horizontalalignment = 'right', verticalalignment = 'bottom')
+  silver_ymax_rating = (silver_rating - ymin) / (ymax - ymin)
   plt.axvline(x = silver_exp_num, linestyle = ':', linewidth = 1, \
-                color = 'black', alpha = 0.8)
-
+                color = 'black', alpha = 0.8, ymax = silver_ymax_rating)
 
   bronze_label = '{v:.2f}'.format(v = bronze_exp_num)
   plt.axhline(y = bronze_rating, linestyle = '--', linewidth = 1, \
                 color = 'black', alpha = 0.8)
   plt.text(x = xmax - 1, y = bronze_rating, s = 'Bronze', alpha = 0.8, fontsize = 'large', \
                 horizontalalignment = 'right', verticalalignment = 'bottom')
+  bronze_ymax_rating = (bronze_rating - ymin) / (ymax - ymin)
   plt.axvline(x = bronze_exp_num, linestyle = ':', linewidth = 1, \
-                color = 'black', alpha = 0.8)
-
+                color = 'black', alpha = 0.8, ymax = bronze_ymax_rating)
 
   fig.tight_layout()
   plt.show()
