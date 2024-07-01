@@ -101,8 +101,6 @@ first_date = min(daily_ratings.keys())
 last_date = max(daily_ratings.keys())
 
 def is_aggregation_window_start(d):
-  if d.year in SKIP_YEARS:
-    return False
   return AGGREGATION_WINDOW == 'monthly' and d.day == 1 \
       or AGGREGATION_WINDOW == 'quarterly' and d.day == 1 and d.month in [1, 4, 7, 10] \
       or AGGREGATION_WINDOW == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
@@ -125,30 +123,29 @@ def aggregate_values(values, agg_type):
     return values[-1]
 
 def get_aggregate_ratings(daily_ratings):
-  if not AGGREGATION_WINDOW:
+  if not AGGREGATION_WINDOW or not PLAYER_AGGREGATE:
     return daily_ratings
 
   aggregate_ratings = {}
 
-  if PLAYER_AGGREGATE:
-    bucket_values = {}
-    last_window_start = first_date
-    for d in daily_ratings:
-      if d not in aggregate_ratings:
-        aggregate_ratings[d] = {}
-      if d == last_date or is_aggregation_window_start(d):
-        for p in bucket_values:
-          aggregate_ratings[last_window_start][p] = \
-                  aggregate_values(bucket_values[p], PLAYER_AGGREGATE)
-        bucket_values = {}
-        last_window_start = d
-      else:
-        aggregate_ratings[d] = aggregate_ratings[last_window_start]
+  bucket_values = {}
+  last_window_start = first_date
+  for d in daily_ratings:
+    if d not in aggregate_ratings:
+      aggregate_ratings[d] = {}
+    if d == last_date or is_aggregation_window_start(d):
+      for p in bucket_values:
+        aggregate_ratings[last_window_start][p] = \
+                aggregate_values(bucket_values[p], PLAYER_AGGREGATE)
+      bucket_values = {}
+      last_window_start = d
+    else:
+      aggregate_ratings[d] = aggregate_ratings[last_window_start]
 
-      for p in daily_ratings[d]:
-        if p not in bucket_values:
-          bucket_values[p] = []
-        bucket_values[p].append(daily_ratings[d][p])
+    for p in daily_ratings[d]:
+      if p not in bucket_values:
+        bucket_values[p] = []
+      bucket_values[p].append(daily_ratings[d][p])
 
   return aggregate_ratings
 
@@ -161,6 +158,12 @@ while d <= last_date:
   if d >= START_DATE and d <= END_DATE and is_aggregation_window_start(d):
     dates_to_show.append(d)
   d += ONE_DAY
+
+for i, d in enumerate(dates_to_show):
+  if d.year in SKIP_YEARS:
+    del dates_to_show[i]
+if dates_to_show[-1] == END_DATE:
+  dates_to_show.pop()
 
 metrics_bins = {}
 rating_stops = list(range(THRESHOLD, MAX_RATING, RATING_STEP))
@@ -232,8 +235,9 @@ for r in actual_rating_stops:
                                 key = lambda item: item[1][r], reverse = True))
 
 
-graph_metrics = {'starts': [], 'ends': [], \
-                  'widths': [], 'lines': [], 'avgs': []}
+graph_metrics = {'starts': [], 'ends': [], 'widths': [], \
+                  'starts_in': [], 'ends_in': [], 'widths_in': [], \
+                   'lines': [], 'avgs': []}
 
 cum_metrics_bins = {}
 for r in actual_rating_stops:
@@ -253,40 +257,48 @@ for r in reversed(actual_rating_stops):
     start = np.percentile(cum_metrics_bins[r], 10, method = 'nearest')
     end = np.percentile(cum_metrics_bins[r], 90, method = 'nearest')
     width = end - start
+    start_in = np.percentile(cum_metrics_bins[r], 20, method = 'nearest')
+    end_in = np.percentile(cum_metrics_bins[r], 80, method = 'nearest')
+    width_in = end_in - start_in
     line = (min(cum_metrics_bins[r]), max(cum_metrics_bins[r]))
     avg = np.average(cum_metrics_bins[r])
   else:
     start = np.percentile(metrics_bins[r], 10, method = 'nearest')
     end = np.percentile(metrics_bins[r], 90, method = 'nearest')
     width = end - start
+    start_in = np.percentile(metrics_bins[r], 20, method = 'nearest')
+    end_in = np.percentile(metrics_bins[r], 80, method = 'nearest')
+    width_in = end_in - start_in
     line = (min(metrics_bins[r]), max(metrics_bins[r]))
     avg = np.average(metrics_bins[r])
 
   graph_metrics['starts'].append(start)
   graph_metrics['ends'].append(end)
   graph_metrics['widths'].append(width)
+  graph_metrics['starts_in'].append(start_in)
+  graph_metrics['ends_in'].append(end_in)
+  graph_metrics['widths_in'].append(width_in)
   graph_metrics['lines'].append(line)
   graph_metrics['avgs'].append(avg)
 
-(gold, silver, bronze) = (-1, -1, -1)
+medal_indices = {'gold': -1, 'silver': -1, 'bronze': -1}
 for i, av in enumerate(graph_metrics['avgs']):
-  if gold == -1 and av > AVG_MEDAL_CUMULATIVE_COUNTS['gold'] \
-          and graph_metrics['lines'][i - 1][0] >= 1:
-    gold = i - 1
-  if silver == -1 and av > AVG_MEDAL_CUMULATIVE_COUNTS['silver'] \
-          and graph_metrics['lines'][i - 1][0] >= 1:
-    silver = i - 1
-  if bronze == -1 and av > AVG_MEDAL_CUMULATIVE_COUNTS['bronze'] \
-          and graph_metrics['lines'][i - 1][0] >= 1:
-    bronze = i - 1
+  for medal in medal_indices:
+    if medal_indices[medal] == -1:
+      medal_desired =  AVG_MEDAL_CUMULATIVE_COUNTS[medal]
+      if av > medal_desired:
+        if av - medal_desired > medal_desired - graph_metrics['avgs'][i -1]:
+          medal_indices[medal] = i - 1
+        else:
+          medal_indices[medal] = i
 
-gold_rating = list(reversed(actual_rating_stops))[gold]
-silver_rating = list(reversed(actual_rating_stops))[silver]
-bronze_rating = list(reversed(actual_rating_stops))[bronze]
+gold_rating = list(reversed(actual_rating_stops))[medal_indices['gold']]
+silver_rating = list(reversed(actual_rating_stops))[medal_indices['silver']]
+bronze_rating = list(reversed(actual_rating_stops))[medal_indices['bronze']]
 
-gold_exp_num = graph_metrics['avgs'][gold]
-silver_exp_num = graph_metrics['avgs'][silver]
-bronze_exp_num = graph_metrics['avgs'][bronze]
+gold_exp_num = graph_metrics['avgs'][medal_indices['gold']]
+silver_exp_num = graph_metrics['avgs'][medal_indices['silver']]
+bronze_exp_num = graph_metrics['avgs'][medal_indices['bronze']]
 
 print ('\nGold:\t{g}\tSilver:\t{s}\tBronze:\t{b}'.format(
                     g = gold_rating, s = silver_rating, b = bronze_rating))
@@ -329,11 +341,15 @@ if SHOW_GRAPH:
 
   ax.barh(y = list(reversed(actual_rating_stops)), width = graph_metrics['widths'], \
             align = 'center', height = 0.9 * RATING_STEP, left = graph_metrics['starts'], \
-            color = 'green', alpha = 0.4, \
+            color = 'darkgrey', alpha = 0.4, \
           )
+  ax.barh(y = list(reversed(actual_rating_stops)), width = graph_metrics['widths_in'], \
+          align = 'center', height = 0.8 * RATING_STEP, left = graph_metrics['starts_in'], \
+          color = 'green', alpha = 0.5, \
+        )
   plt.plot(graph_metrics['avgs'], list(reversed(actual_rating_stops)), \
-                    linewidth = 0, alpha = 0.8, \
-                    marker = 'x', markerfacecolor = 'blue', \
+                    linewidth = 0, alpha = 0.5, \
+                    marker = 'x', markeredgecolor = 'blue', \
                     markersize = 8, markeredgewidth = 2)
   for i, r in enumerate(reversed(actual_rating_stops)):
     plt.plot(list(graph_metrics['lines'][i]), [r, r], linewidth = 2, \
