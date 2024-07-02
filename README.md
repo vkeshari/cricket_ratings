@@ -71,37 +71,34 @@ Shows players that were in the top N ratings for the longest time.
 + NUM_TOP    : Count days when player's rating is in the top NUM_TOP
 + MAX_PLAYERS: Self-explanatory
 
-Note: All utils below aggregate ratings over time windows. Each util uses only one of PLAYER_AGGREGATE or BIN_AGGREGATE.
+Note: All utils below aggregate ratings over time windows.
 Common aggregation params:
 + AGGREGATION_WINDOW: ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
 + PLAYER_AGGREGATE  : ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 + BIN_AGGREGATE     : ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 + CHANGED_DAYS_ONLY : Only aggregate over days when there was at least one change in ratings globally
-+ SKIP_YEARS        : When calculating aggregates, skip these years when no or little international cricket was played (WW1, WW2 and COVID-19)
++ SKIP_YEARS        : When calculating aggregates, skip these years when no or little international cricket was played (during WW1, WW2 and COVID-19)
 
-'top_by_ratio.py'
-Aggregates each player's ratings over the specified time period, calculates their rating's ratio vs the top rated player, groups the players into bins by their rating ratio, and then ranks the players by aggregation window counts where the player appears in bins of decreasing order of ratio values (the ratio values are cutoffs for medals).
-+ TOP_PLAYERS         : Only show these many ranked players
-+ RATIO_STOPS         : Count players for medals starting at these specific rating ratio values
-+ SHOW_METRICS        : Show metrics used to calculate ranks
++ SHOW_GRAPH : Self-explanatory
++ GRAPH_CUMULATIVES: Calculate cumulative counts in each bin
+
++ SHOW_TOP_PLAYERS    : Self-explanatory
++ TOP_PLAYERS         : Only show these many top ranked players
++ BY_MEDAL_PERCENTAGES: Rank players by percentage of aggregation windows with each medal instead of counts
++ AVG_MEDAL_CUMULATIVE_COUNTS: Average no. of cumulative players for each medal
+
+'top_ratings_graph.py' 
+Aggregates each player's ratings over the specified time period, groups the players into cumulative bins by their rating for a range of all possible ratings, and then shows a graph of cumulative player counts by rating cutoff. Also calculates the most likely cutoffs for each medal.
 
 'top_ratios_graph.py' 
-Aggregates each player's ratings over the specified time period, calculates their rating's ratio vs the top rated player, groups the players into cumulative bins by their rating ratio for a range of all possible rating ratios, and then shows a graph of cumulative player counts by ratio cutoff. Also calculates the most likely cutoffs for each medal.
+Same as top_ratings_graph.py but uses players' rating ratio vs top rated player for calculations.
 + MIN_RATIO  : Lower limit of rating ratio for metrics and graph
 + MAX_RATIO  : Upper limit of rating ratio for metrics and graph
 + RATIO_STEP : Show metrics and graph at this rating ratio increment
-+ CUMULATIVES: Calculate cumulative counts in each bin
-+ SHOW_GRAPH : Self-explanatory
-
 + THRESHOLD_RELATIVE: Calculate players' rating ratios relative to THRESHOLD instead of to 0
-+ AVG_MEDAL_CUMULATIVE_COUNTS: Average no. of cumulative players for each medal
-+ BY_MEDAL_PERCENTAGES: Rank players by percentage of aggregation windows with each medal insted of counts
-
-'top_ratings_graph.py' 
-Same as above but uses ratings instead of ratings ratio.
 
 'top_exp_graph.py'
-Same as above but uses a fitted exponential curve to aggregated ratings histogram before aggregating player ratings over bins by standard deviation (sigma) instead of ratings ratio.
+Same as top_ratings_graph.py but uses a fitted exponential curve to aggregated ratings histogram before aggregating player ratings over bins by standard deviation (sigma) instead of ratings.
 + MIN_SIGMA   : Calculate player counts starting at this standard deviation value above THRESHOLD
 + MAX_SIGMA   : Calculate player counts up to this standard deviation value above THRESHOLD
 + EXP_BIN_SIZE: Split ratings into continuous bins of this size during counting
@@ -115,3 +112,6 @@ Aggregates each player's ratings over the specified time period, then counts how
 
 'player_aggregates_ratio.py'
 Aggregates each player's ratings over the specified time period, calculates their rating's ratio vs the top rated player, then groups the players into bins by their rating ratio.
+
+'top_by_ratio.py'
+Aggregates each player's ratings over the specified time period, calculates their rating's ratio vs the top rated player, groups the players into bins by their rating ratio, and then ranks the players by aggregation window counts where the player appears in bins of decreasing order of ratio values (the ratio values are cutoffs for medals).

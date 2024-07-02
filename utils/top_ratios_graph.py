@@ -36,7 +36,7 @@ RATIO_STEP = 0.01
 
 RATIO_BINS = round((MAX_RATIO - MIN_RATIO) / RATIO_STEP)
 
-CUMULATIVES = True
+GRAPH_CUMULATIVES = True
 BY_MEDAL_PERCENTAGES = False
 CHANGED_DAYS_ONLY = True
 
@@ -72,6 +72,8 @@ assert not set(AVG_MEDAL_CUMULATIVE_COUNTS.keys()) - {'gold', 'silver', 'bronze'
     'AVG_MEDAL_CUMULATIVE_COUNTS keys must be gold silver and bronze'
 for amcc in AVG_MEDAL_CUMULATIVE_COUNTS.values():
   assert amcc > 0, "All values in AVG_MEDAL_CUMULATIVE_COUNTS must be positive"
+
+assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
@@ -305,7 +307,7 @@ for r in reversed(actual_ratio_stops):
     cum_metrics_bins[r][i] += v
   last_r = r
 
-  if CUMULATIVES:
+  if GRAPH_CUMULATIVES:
     (outer, inner, line, avg) = get_graph_metrics(cum_metrics_bins[r])
   else:
     (outer, inner, line, avg) = get_graph_metrics(metrics_bins[r])

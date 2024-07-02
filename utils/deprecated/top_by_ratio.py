@@ -1,3 +1,7 @@
+# DEPRECATED
+import sys
+sys.exit("DEPRECATED: Use top_exp_graph.py")
+
 import math
 
 from datetime import date, timedelta, datetime
