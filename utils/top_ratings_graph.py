@@ -106,8 +106,11 @@ def get_daily_ratings():
     last_daily_ratings = {}
     for d in daily_ratings:
       changed = False
-      if last_daily_ratings \
-            and sorted(daily_ratings[d].keys()) == sorted(last_daily_ratings.keys()):
+      if not last_daily_ratings:
+        changed = True
+      elif not sorted(daily_ratings[d].keys()) == sorted(last_daily_ratings.keys()):
+        changed = True
+      else:
         for p in daily_ratings[d]:
           if not daily_ratings[d][p] == last_daily_ratings[p]:
             changed = True
@@ -124,6 +127,19 @@ print("Daily ratings data built for " + str(len(daily_ratings)) + " days" )
 
 first_date = min(daily_ratings.keys())
 last_date = max(daily_ratings.keys())
+
+dates_to_show = []
+d = first_date
+while d <= last_date:
+  if d >= START_DATE and d <= END_DATE and is_aggregation_window_start(d):
+    dates_to_show.append(d)
+  d += ONE_DAY
+
+bin_by_date = np.searchsorted(dates_to_show, list(daily_ratings.keys()), side = 'right')
+date_to_bucket = {}
+for i, d in enumerate(daily_ratings.keys()):
+  if bin_by_date[i] > 0:
+    date_to_bucket[d] = dates_to_show[bin_by_date[i] - 1]
 
 def aggregate_values(values, agg_type):
   if agg_type == 'avg':
@@ -143,38 +159,27 @@ def get_aggregate_ratings(daily_ratings):
   if not AGGREGATION_WINDOW or not PLAYER_AGGREGATE:
     return daily_ratings
 
-  aggregate_ratings = {}
+  aggregate_buckets = {d: {} for d in dates_to_show}
 
-  bucket_values = {}
-  last_window_start = first_date
   for d in daily_ratings:
-    if d not in aggregate_ratings:
-      aggregate_ratings[d] = {}
-    if d == last_date or is_aggregation_window_start(d):
-      for p in bucket_values:
-        aggregate_ratings[last_window_start][p] = \
-                aggregate_values(bucket_values[p], PLAYER_AGGREGATE)
-      bucket_values = {}
-      last_window_start = d
-    else:
-      aggregate_ratings[d] = aggregate_ratings[last_window_start]
-
+    if not d in date_to_bucket:
+      continue
+    bucket = date_to_bucket[d]
     for p in daily_ratings[d]:
-      if p not in bucket_values:
-        bucket_values[p] = []
-      bucket_values[p].append(daily_ratings[d][p])
+      if p not in aggregate_buckets[bucket]:
+        aggregate_buckets[bucket][p] = []
+      aggregate_buckets[bucket][p].append(daily_ratings[d][p])
+
+  aggregate_ratings = {d: {} for d in dates_to_show}
+  for d in aggregate_buckets:
+    for p in aggregate_buckets[d]:
+      aggregate_ratings[d][p] = aggregate_values(aggregate_buckets[d][p], PLAYER_AGGREGATE)
 
   return aggregate_ratings
 
 aggregate_ratings = get_aggregate_ratings(daily_ratings)
-print(AGGREGATION_WINDOW + " aggregate ratings built")
-
-dates_to_show = []
-d = first_date
-while d <= last_date:
-  if d >= START_DATE and d <= END_DATE and is_aggregation_window_start(d):
-    dates_to_show.append(d)
-  d += ONE_DAY
+print(AGGREGATION_WINDOW + " aggregate ratings built for " \
+                          + str(len(aggregate_ratings)) + " days")
 
 for i, d in enumerate(dates_to_show):
   if d.year in SKIP_YEARS:
