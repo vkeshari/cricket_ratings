@@ -67,11 +67,13 @@ Shows players that had the highest ratings at retirement.
 
 'time_at_top.py'
 Shows players that were in the top N ratings for the longest time.
-+ NUM_TOP    : Count days when player's rating is in the top NUM_TOP
++ NUM_TOP: Count days when player's rating is in the top NUM_TOP
 
 'single_day_changes.py'
 Shows the largest single-day gains and drops in ratings.
-+ NUM_TOP    : Show these many gains and drops in ratings
++ NUM_TOP   : Show these many gains and drops in ratings
++ BIN_WIDTH : Show histogram of rating changes with bins of this width
++ MAX_CHANGE: Only show changes less than this value on histogram
 
 Note: All utils below aggregate ratings over time windows.
 Common aggregation params:
@@ -81,7 +83,7 @@ Common aggregation params:
 + CHANGED_DAYS_ONLY : Only aggregate over days when there was at least one change in ratings globally
 + SKIP_YEARS        : When calculating aggregates, skip these years when no or little international cricket was played (during WW1, WW2 and COVID-19)
 
-+ SHOW_GRAPH : Self-explanatory
++ SHOW_GRAPH       : Self-explanatory
 + GRAPH_CUMULATIVES: Calculate cumulative counts in each bin
 
 + SHOW_TOP_PLAYERS    : Self-explanatory
@@ -94,9 +96,9 @@ Aggregates each player's ratings over the specified time period, groups the play
 
 'top_ratios_graph.py' 
 Same as top_ratings_graph.py but uses players' rating ratio vs top rated player for calculations.
-+ MIN_RATIO  : Lower limit of rating ratio for metrics and graph
-+ MAX_RATIO  : Upper limit of rating ratio for metrics and graph
-+ RATIO_STEP : Show metrics and graph at this rating ratio increment
++ MIN_RATIO         : Lower limit of rating ratio for metrics and graph
++ MAX_RATIO         : Upper limit of rating ratio for metrics and graph
++ RATIO_STEP        : Show metrics and graph at this rating ratio increment
 + THRESHOLD_RELATIVE: Calculate players' rating ratios relative to THRESHOLD instead of to 0
 
 'top_exp_graph.py'
