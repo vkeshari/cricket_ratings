@@ -1,6 +1,6 @@
 # DEPRECATED
 import sys
-sys.exit("DEPRECATED: Use top_exp_graph.py")
+sys.exit("DEPRECATED: Use top_ratios_graph.py")
 
 import math
 

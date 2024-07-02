@@ -46,10 +46,9 @@ Bar charts only:
 
 'rating_histogram.py'
 Reads player ratings timelines from build_players.py and created an animated histogram of rating distribution over time.
-
-MAX_RATING: Maximum rating to show (x-axis max).
-THRESHOLD : Minimum rating to show (x-axis min).
-BIN_SIZE  : Group players into bins of this size on histogram.
++ MAX_RATING: Maximum rating to show (x-axis max).
++ THRESHOLD : Minimum rating to show (x-axis min).
++ BIN_SIZE  : Group players into bins of this size on histogram.
 
 Aggregation:
 Aggregate ratings over a window by player or by bin using a numeric measure.
@@ -69,7 +68,6 @@ Shows players that had the highest ratings at retirement.
 'time_at_top.py'
 Shows players that were in the top N ratings for the longest time.
 + NUM_TOP    : Count days when player's rating is in the top NUM_TOP
-+ MAX_PLAYERS: Self-explanatory
 
 Note: All utils below aggregate ratings over time windows.
 Common aggregation params:
