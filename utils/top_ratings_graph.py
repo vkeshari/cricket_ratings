@@ -13,7 +13,7 @@ TYPE = 'batting'
 FORMAT = 't20'
 
 # Graph date range
-START_DATE = date(2021, 1, 1)
+START_DATE = date(2009, 1, 1)
 END_DATE = date(2024, 1, 1)
 SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 
@@ -257,13 +257,27 @@ for r in actual_rating_stops:
                                 key = lambda item: item[1][r], reverse = True))
 
 
-graph_metrics = {'starts': [], 'ends': [], 'widths': [], \
-                  'starts_in': [], 'ends_in': [], 'widths_in': [], \
-                   'lines': [], 'avgs': []}
+graph_metrics = {'outers': [], 'inners': [], 'lines': [], 'avgs': []}
+
+def get_graph_metrics(data):
+  outer_interval = {}
+  outer_interval['start'] = np.percentile(data, 10, method = 'nearest')
+  outer_interval['end'] = np.percentile(data, 90, method = 'nearest')
+  outer_interval['width'] = outer_interval['end'] - outer_interval['start']
+  inner_interval = {}
+  inner_interval['start'] = np.percentile(data, 25, method = 'nearest')
+  inner_interval['end'] = np.percentile(data, 75, method = 'nearest')
+  inner_interval['width'] = inner_interval['end'] - inner_interval['start']
+  line = (min(data), max(data))
+  avg = np.average(data)
+
+  return outer_interval, inner_interval, line, avg
 
 cum_metrics_bins = {}
 for r in actual_rating_stops:
   cum_metrics_bins[r] = [0] * len(dates_to_show)
+
+x_max_max = -1
 
 last_r = -1
 for r in reversed(actual_rating_stops):
@@ -276,54 +290,52 @@ for r in reversed(actual_rating_stops):
   last_r = r
 
   if CUMULATIVES:
-    start = np.percentile(cum_metrics_bins[r], 10, method = 'nearest')
-    end = np.percentile(cum_metrics_bins[r], 90, method = 'nearest')
-    width = end - start
-    start_in = np.percentile(cum_metrics_bins[r], 20, method = 'nearest')
-    end_in = np.percentile(cum_metrics_bins[r], 80, method = 'nearest')
-    width_in = end_in - start_in
-    line = (min(cum_metrics_bins[r]), max(cum_metrics_bins[r]))
-    avg = np.average(cum_metrics_bins[r])
+    (outer, inner, line, avg) = get_graph_metrics(cum_metrics_bins[r])
   else:
-    start = np.percentile(metrics_bins[r], 10, method = 'nearest')
-    end = np.percentile(metrics_bins[r], 90, method = 'nearest')
-    width = end - start
-    start_in = np.percentile(metrics_bins[r], 20, method = 'nearest')
-    end_in = np.percentile(metrics_bins[r], 80, method = 'nearest')
-    width_in = end_in - start_in
-    line = (min(metrics_bins[r]), max(metrics_bins[r]))
-    avg = np.average(metrics_bins[r])
+    (outer, inner, line, avg) = get_graph_metrics(metrics_bins[r])
 
-  graph_metrics['starts'].append(start)
-  graph_metrics['ends'].append(end)
-  graph_metrics['widths'].append(width)
-  graph_metrics['starts_in'].append(start_in)
-  graph_metrics['ends_in'].append(end_in)
-  graph_metrics['widths_in'].append(width_in)
+  if line[1] > x_max_max:
+    x_max_max = line[1]
+
+  graph_metrics['outers'].append(outer)
+  graph_metrics['inners'].append(inner)
   graph_metrics['lines'].append(line)
   graph_metrics['avgs'].append(avg)
 
-medal_indices = {'gold': -1, 'silver': -1, 'bronze': -1}
+all_medals = AVG_MEDAL_CUMULATIVE_COUNTS.keys()
+medal_indices = {medal: -1 for medal in all_medals}
 for i, av in enumerate(graph_metrics['avgs']):
   for medal in medal_indices:
     if medal_indices[medal] == -1:
       medal_desired =  AVG_MEDAL_CUMULATIVE_COUNTS[medal]
       if av > medal_desired:
-        if av - medal_desired > medal_desired - graph_metrics['avgs'][i -1]:
+        if av - medal_desired > medal_desired - graph_metrics['avgs'][i - 1]:
           medal_indices[medal] = i - 1
         else:
           medal_indices[medal] = i
 
-gold_rating = list(reversed(actual_rating_stops))[medal_indices['gold']]
-silver_rating = list(reversed(actual_rating_stops))[medal_indices['silver']]
-bronze_rating = list(reversed(actual_rating_stops))[medal_indices['bronze']]
+medal_thresholds = {}
+for medal in all_medals:
+  medal_thresholds[medal] = list(reversed(actual_rating_stops))[medal_indices[medal]]
 
-gold_exp_num = graph_metrics['avgs'][medal_indices['gold']]
-silver_exp_num = graph_metrics['avgs'][medal_indices['silver']]
-bronze_exp_num = graph_metrics['avgs'][medal_indices['bronze']]
+exp_nums = {}
+for medal in all_medals:
+  exp_nums[medal] = graph_metrics['avgs'][medal_indices[medal]]
 
-print ('\nGold:\t{g}\tSilver:\t{s}\tBronze:\t{b}'.format(
-                    g = gold_rating, s = silver_rating, b = bronze_rating))
+print()
+for medal in all_medals:
+  print (medal + ':\t{m:.2f}'.format(m = medal_thresholds[medal]))
+
+def plot_medal_indicators(medal):
+  medal_label = '{v:.2f}'.format(v = exp_nums[medal])
+  plt.axhline(y = medal_thresholds[medal], linestyle = '--', linewidth = 1, \
+                color = 'black', alpha = 0.8)
+  plt.text(x = xmax - 1, y = medal_thresholds[medal], \
+                s = medal, alpha = 0.8, fontsize = 'large', \
+                horizontalalignment = 'right', verticalalignment = 'bottom')
+  medal_ymax_rating = (medal_thresholds[medal] - ymin) / (ymax - ymin)
+  plt.axvline(x = exp_nums[medal], linestyle = ':', linewidth = 1, \
+                color = 'black', alpha = 0.8, ymax = medal_ymax_rating)
 
 if SHOW_GRAPH:
   from matplotlib import pyplot as plt
@@ -336,7 +348,8 @@ if SHOW_GRAPH:
                           + ' to ' + str(END_DATE) + ')'
   ax.set_title(TITLE_TEXT, fontsize ='xx-large')
 
-  ax.set_ylabel('Rating', fontsize ='x-large')
+  ylabel = 'Rating (' + AGGREGATION_WINDOW + ' ' + PLAYER_AGGREGATE + ')'
+  ax.set_ylabel(ylabel, fontsize ='x-large')
   ax.set_xlabel('No. of players above rating', fontsize ='x-large')
 
   ymin = THRESHOLD - RATING_STEP
@@ -346,67 +359,50 @@ if SHOW_GRAPH:
   ax.set_yticklabels([str(r) for r in actual_rating_stops], \
                           fontsize ='medium')
 
-  xmax = int(graph_metrics['ends'][-1]) + 2
+  xmax = x_max_max + 1
   ax.set_xlim(0, xmax)
   xticks = list(range(0, xmax + 1, 1))
   ax.set_xticks(xticks)
 
   xlabwidth = 1
-  if graph_metrics['ends'][-1] > 25:
+  if xmax > 25:
     xlabwidth = 2
-  if graph_metrics['ends'][-1] > 50:
+  if xmax > 50:
     xlabwidth = 5
-  if graph_metrics['ends'][-1] > 100:
+  if xmax > 100:
     xlabwidth = 10
   xticklabels = [str(x) if x % xlabwidth == 0 else '' for x in xticks]
   ax.set_xticklabels(xticklabels, fontsize ='medium')
 
   ax.grid(True, which = 'both', axis = 'x', alpha = 0.5)
 
-  ax.barh(y = list(reversed(actual_rating_stops)), width = graph_metrics['widths'], \
-            align = 'center', height = 0.9 * RATING_STEP, left = graph_metrics['starts'], \
+  outer_starts = [interval['start'] for interval in graph_metrics['outers']]
+  outer_widths = [interval['width'] for interval in graph_metrics['outers']]
+  ax.barh(y = list(reversed(actual_rating_stops)), width = outer_widths, \
+            align = 'center', height = 0.9 * RATING_STEP, left = outer_starts, \
             color = 'darkgrey', alpha = 0.4, \
           )
-  ax.barh(y = list(reversed(actual_rating_stops)), width = graph_metrics['widths_in'], \
-          align = 'center', height = 0.8 * RATING_STEP, left = graph_metrics['starts_in'], \
+
+  inner_starts = [interval['start'] for interval in graph_metrics['inners']]
+  inner_widths = [interval['width'] for interval in graph_metrics['inners']]
+  ax.barh(y = list(reversed(actual_rating_stops)), width = inner_widths, \
+          align = 'center', height = 0.8 * RATING_STEP, left = inner_starts, \
           color = 'green', alpha = 0.5, \
         )
+  
   plt.plot(graph_metrics['avgs'], list(reversed(actual_rating_stops)), \
                     linewidth = 0, alpha = 0.5, \
                     marker = 'x', markeredgecolor = 'blue', \
                     markersize = 8, markeredgewidth = 2)
+  
   for i, r in enumerate(reversed(actual_rating_stops)):
     plt.plot(list(graph_metrics['lines'][i]), [r, r], linewidth = 2, \
                       color = 'black', alpha = 0.9, \
                       marker = 'o', markerfacecolor = 'red', \
                       markersize = 3, markeredgewidth = 0)
 
-  gold_label = '{v:.2f}'.format(v = gold_exp_num)
-  plt.axhline(y = gold_rating, linestyle = '--', linewidth = 1, \
-                color = 'black', alpha = 0.8)
-  plt.text(x = xmax - 1, y = gold_rating, s = 'Gold', alpha = 0.8, fontsize = 'large', \
-                horizontalalignment = 'right', verticalalignment = 'bottom')
-  gold_ymax_rating = (gold_rating - ymin) / (ymax - ymin)
-  plt.axvline(x = gold_exp_num, linestyle = ':', linewidth = 1, \
-                color = 'black', alpha = 0.8, ymax = gold_ymax_rating)
-
-  silver_label = '{v:.2f}'.format(v = silver_exp_num)
-  plt.axhline(y = silver_rating, linestyle = '--', linewidth = 1, \
-                color = 'black', alpha = 0.8)
-  plt.text(x = xmax - 1, y = silver_rating, s = 'Silver', alpha = 0.8, fontsize = 'large', \
-                horizontalalignment = 'right', verticalalignment = 'bottom')
-  silver_ymax_rating = (silver_rating - ymin) / (ymax - ymin)
-  plt.axvline(x = silver_exp_num, linestyle = ':', linewidth = 1, \
-                color = 'black', alpha = 0.8, ymax = silver_ymax_rating)
-
-  bronze_label = '{v:.2f}'.format(v = bronze_exp_num)
-  plt.axhline(y = bronze_rating, linestyle = '--', linewidth = 1, \
-                color = 'black', alpha = 0.8)
-  plt.text(x = xmax - 1, y = bronze_rating, s = 'Bronze', alpha = 0.8, fontsize = 'large', \
-                horizontalalignment = 'right', verticalalignment = 'bottom')
-  bronze_ymax_rating = (bronze_rating - ymin) / (ymax - ymin)
-  plt.axvline(x = bronze_exp_num, linestyle = ':', linewidth = 1, \
-                color = 'black', alpha = 0.8, ymax = bronze_ymax_rating)
+  for medal in all_medals:
+    plot_medal_indicators(medal)
 
   fig.tight_layout()
   plt.show()
