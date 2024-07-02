@@ -45,6 +45,9 @@ AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
 
+SHOW_TOP_PLAYERS = True
+TOP_PLAYERS = 25
+
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
 
@@ -211,7 +214,7 @@ if SHOW_BIN_COUNTS:
     h += '\t' + '{b:.2f}'.format(b = b)
   print(h)
 
-player_medals = {}
+player_counts_by_step = {}
 player_periods = {}
 
 for d in dates_to_show:
@@ -252,26 +255,22 @@ for d in dates_to_show:
 
   for i, r in enumerate(actual_ratio_stops):
     for p in bin_players[i]:
-      if p not in player_medals:
-        player_medals[p] = {}
+      if p not in player_counts_by_step:
+        player_counts_by_step[p] = {}
         for rs in actual_ratio_stops:
-          player_medals[p][rs] = 0
-      player_medals[p][r] += 1
+          player_counts_by_step[p][rs] = 0
+      player_counts_by_step[p][r] += 1
 
 if BY_MEDAL_PERCENTAGES:
-  for p in player_medals:
-    for r in player_medals[p]:
-      player_medals[p][r] = 100 * player_medals[p][r] / player_periods[p]
+  for p in player_counts_by_step:
+    for r in player_counts_by_step[p]:
+      player_counts_by_step[p][r] = 100 * player_counts_by_step[p][r] / player_periods[p]
 
   if SHOW_BIN_COUNTS:
     s = str(d)
     for b in bin_counts[ : -1]:
       s += '\t' + str(b)
     print (s)
-
-for r in actual_ratio_stops:
-  player_medals = dict(sorted(player_medals.items(),
-                                key = lambda item: item[1][r], reverse = True))
 
 
 graph_metrics = {'outers': [], 'inners': [], 'lines': [], 'avgs': []}
@@ -343,12 +342,64 @@ print()
 for medal in all_medals:
   print (medal + ':\t{m:.2f}'.format(m = medal_thresholds[medal]))
 
+
+def readable_name(p):
+  sep = p.find('_')
+  return p[sep+1:].split('.')[0].replace('_', ' ')
+
+def country(p):
+  return p.split('_')[0]
+
+def full_readable_name(p):
+  return readable_name(p) + ' (' + country(p) + ')'
+
+player_medals = {}
+for p in player_counts_by_step:
+  if p not in player_medals:
+    player_medals[p] = {medal: 0 for medal in all_medals}
+  for r in sorted(player_counts_by_step[p].keys()):
+    if r < medal_thresholds['bronze']:
+      continue
+    elif r < medal_thresholds['silver']:
+      player_medals[p]['bronze'] += player_counts_by_step[p][r]
+    elif r < medal_thresholds['gold']:
+      player_medals[p]['silver'] += player_counts_by_step[p][r]
+    else:
+      player_medals[p]['gold'] += player_counts_by_step[p][r]
+
+for medal in ['bronze', 'silver', 'gold']:
+  player_medals = dict(sorted(player_medals.items(),
+                                key = lambda item: item[1][medal], reverse = True))
+
+if SHOW_TOP_PLAYERS:
+  print('\n=== Top ' + str(TOP_PLAYERS) + ' Players ===')
+  print('SPAN,\tMEDALS,\tGOLD,\tSILVER,\tBRONZE,\tPLAYER NAME')
+
+  for i, p in enumerate(player_medals):
+    s = str(player_periods[p]) + ','
+    total_medals = sum(player_medals[p].values())
+    if BY_MEDAL_PERCENTAGES:
+      s += '\t{v:.2f}'.format(v = total_medals) + ','
+    else:
+      s += '\t' + str(total_medals) + ','
+    for medal in ['gold', 'silver', 'bronze']:
+      if BY_MEDAL_PERCENTAGES:
+        s += '\t{v:.2f}'.format(v = player_medals[p][medal]) + ','
+      else:
+        s += '\t' + str(player_medals[p][medal]) + ','
+    s += '\t' + full_readable_name(p)
+    print (s)
+
+    if i >= TOP_PLAYERS:
+      break
+
+
 def plot_medal_indicators(medal):
   medal_label = '{v:.2f}'.format(v = exp_nums[medal])
   plt.axhline(y = medal_thresholds[medal], linestyle = '--', linewidth = 1, \
                 color = 'black', alpha = 0.8)
   plt.text(x = xmax - 1, y = medal_thresholds[medal], \
-                s = medal, alpha = 0.8, fontsize = 'large', \
+                s = medal.upper(), alpha = 0.8, fontsize = 'large', \
                 horizontalalignment = 'right', verticalalignment = 'bottom')
   medal_ymax_ratio = (medal_thresholds[medal] - ymin) / (ymax - ymin)
   plt.axvline(x = exp_nums[medal], linestyle = ':', linewidth = 1, \
