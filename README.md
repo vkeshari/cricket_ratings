@@ -69,6 +69,10 @@ Shows players that had the highest ratings at retirement.
 Shows players that were in the top N ratings for the longest time.
 + NUM_TOP    : Count days when player's rating is in the top NUM_TOP
 
+'single_day_changes.py'
+Shows the largest single-day gains and drops in ratings.
++ NUM_TOP    : Show these many gains and drops in ratings
+
 Note: All utils below aggregate ratings over time windows.
 Common aggregation params:
 + AGGREGATION_WINDOW: ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
