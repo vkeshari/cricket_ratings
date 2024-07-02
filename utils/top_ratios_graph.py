@@ -56,8 +56,9 @@ assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
 assert END_DATE <= date.today(), "Future END_DATE requested"
 
-assert THRESHOLD >= 0, "THRESHOLD must not be negative"
 assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
+assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
+      "THRESHOLD must be between 0 and MAX_RATING"
 
 assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
       "Invalid AGGREGATION_WINDOW provided"
@@ -263,10 +264,10 @@ for d in dates_to_show:
           player_counts_by_step[p][rs] = 0
       player_counts_by_step[p][r] += 1
 
-if BY_MEDAL_PERCENTAGES:
-  for p in player_counts_by_step:
-    for r in player_counts_by_step[p]:
-      player_counts_by_step[p][r] = 100 * player_counts_by_step[p][r] / player_periods[p]
+  if BY_MEDAL_PERCENTAGES:
+    for p in player_counts_by_step:
+      for r in player_counts_by_step[p]:
+        player_counts_by_step[p][r] = 100 * player_counts_by_step[p][r] / player_periods[p]
 
   if SHOW_BIN_COUNTS:
     s = str(d)
