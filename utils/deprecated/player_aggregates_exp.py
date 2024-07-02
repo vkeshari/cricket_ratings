@@ -1,8 +1,12 @@
+# DEPRECATED
+import sys
+sys.exit("DEPRECATED: Use top_exp_graph.py")
+
 import math
 
 from datetime import date, timedelta, datetime
 from os import listdir
-from scipy import optimize
+from pathlib import Path
 import numpy as np
 
 ONE_DAY = timedelta(days = 1)
@@ -25,7 +29,10 @@ BIN_SIZE = 50
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
 AGGREGATION_WINDOW = 'quarterly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
-BIN_AGGREGATE = 'avg'
+PLAYER_AGGREGATE = 'max'
+
+MAX_SIGMA = 3
+SIGMA_PERCENTAGES = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -42,17 +49,28 @@ assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, "BIN_SIZE must split ratings ra
 
 assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
       "Invalid AGGREGATION_WINDOW provided"
-assert BIN_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
+assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
       "Invalid PLAYER_AGGREGATE provided"
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
 print (str(THRESHOLD) + ' : ' + str(BIN_SIZE) + ' : ' + str(MAX_RATING))
-print (AGGREGATION_WINDOW + ' / ' + BIN_AGGREGATE)
+if AGGREGATION_WINDOW:
+  print (AGGREGATION_WINDOW + ' / ' + PLAYER_AGGREGATE)
 
 def string_to_date(s):
   dt = datetime.strptime(s, '%Y%m%d')
   return date(dt.year, dt.month, dt.day)
+
+def readable_name(p):
+  sep = p.find('_')
+  return p[sep+1:].split('.')[0].replace('_', ' ')
+
+def country(p):
+  return p.split('_')[0]
+
+def full_readable_name(p):
+  return readable_name(p) + ' (' + country(p) + ')'
 
 def get_daily_ratings():
   daily_ratings = {}
@@ -94,7 +112,7 @@ def is_aggregation_window_start(d):
       or AGGREGATION_WINDOW == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
       or AGGREGATION_WINDOW == 'yearly' and d.day == 1 and d.month == 1 \
       or AGGREGATION_WINDOW == 'decadal' and d.day == 1 and d.month == 1 \
-                                      and d.year % 10 == 1
+                                        and d.year % 10 == 1
 
 def aggregate_values(values, agg_type):
   if agg_type == 'avg':
@@ -116,83 +134,96 @@ def get_aggregate_ratings(daily_ratings):
 
   aggregate_ratings = {}
 
-  bucket_values = {}
-  last_window_start = first_date
-  for d in daily_ratings:
-    if d not in aggregate_ratings:
-      aggregate_ratings[d] = {}
-    if d == last_date or is_aggregation_window_start(d):
-      for b in bucket_values:
-        aggregate_ratings[last_window_start][b] = \
-                aggregate_values(bucket_values[b], BIN_AGGREGATE)
-      bucket_values = {}
-      last_window_start = d
-    else:
-      aggregate_ratings[d] = aggregate_ratings[last_window_start]
+  if PLAYER_AGGREGATE:
+    bucket_values = {}
+    last_window_start = first_date
+    for d in daily_ratings:
+      if d not in aggregate_ratings:
+        aggregate_ratings[d] = {}
+      if d == last_date or is_aggregation_window_start(d):
+        for p in bucket_values:
+          aggregate_ratings[last_window_start][p] = \
+                  aggregate_values(bucket_values[p], PLAYER_AGGREGATE)
+        bucket_values = {}
+        last_window_start = d
+      else:
+        aggregate_ratings[d] = aggregate_ratings[last_window_start]
 
-    day_bin_counts = {}
-    day_player_total = 0 # used to normalize
-    for p in daily_ratings[d]:
-      player_rating = daily_ratings[d][p]
-      player_bin_number = int((player_rating - THRESHOLD) / BIN_SIZE)
-      if player_bin_number < 0:
-        continue
-      player_bin = THRESHOLD + player_bin_number * BIN_SIZE
-
-      if player_bin not in day_bin_counts:
-        day_bin_counts[player_bin] = 0
-      day_bin_counts[player_bin] += 1
-      day_player_total += 1
-
-    for b in day_bin_counts:
-      if b not in bucket_values:
-        bucket_values[b] = []
-      bucket_values[b].append(day_bin_counts[b] / day_player_total)
+      for p in daily_ratings[d]:
+        if p not in bucket_values:
+          bucket_values[p] = []
+        bucket_values[p].append(daily_ratings[d][p])
 
   return aggregate_ratings
 
 aggregate_ratings = get_aggregate_ratings(daily_ratings)
-print(AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + " aggregate ratings built")
+print(AGGREGATION_WINDOW + " aggregate ratings built")
 
-print('\n=== Percentage of players in each bin ===')
+dates_to_show = []
+d = first_date
+while d <= last_date:
+  if d >= START_DATE and d <= END_DATE and is_aggregation_window_start(d):
+    dates_to_show.append(d)
+  d += ONE_DAY
+
+print('\n=== Player count in each bin ===')
 h = 'AGG DATE START'
 for b in bins:
   h += '\t' + str(b)
 print(h)
-d = first_date
-while d <= last_date:
-  if d >= START_DATE and d <= END_DATE and is_aggregation_window_start(d):
-    s = str(d)
-    for b in bins:
-      if b not in aggregate_ratings[d]:
-        aggregate_ratings[d][b] = 0
-      s += '\t{v:.2f}'.format(v = aggregate_ratings[d][b] * 100)
-    print(s)
-  d += ONE_DAY
 
-def exp_func(x, a, b):
-  return a * np.exp(-x / b)
+for d in dates_to_show:
+  s = str(d)
+  for b in bins:
+    bin_ratings = [r for r in aggregate_ratings[d].values() \
+                            if r >= b and r < b + BIN_SIZE]
+    s += '\t{v}'.format(v = len(bin_ratings))
+  print(s)
 
-print('\n=== Exponential curve fit ===')
-print('AGG DATE START\tOPT PARAMS')
-d = first_date
-while d <= last_date:
-  if d >= START_DATE and d <= END_DATE and is_aggregation_window_start(d):
-    s = str(d)
-    for b in bins:
-      if b not in aggregate_ratings[d]:
-        aggregate_ratings[d][b] = 0
+print('\n=== Mean and sigma values (assuming exponential distribution) ===')
+h = 'AGG DATE START\tSTDEV\tTHRSH\tMEAN'
+for i in range(1, MAX_SIGMA + 1):
+  h += '\tSTD' + str(i)
+print(h)
 
-    xs = [((b + BIN_SIZE / 2 ) - THRESHOLD) / (MAX_RATING - THRESHOLD) for b in bins]
-    ys = [item[1] for item in sorted(aggregate_ratings[d].items())]
-    (a, b), _ = optimize.curve_fit(exp_func, xs, ys)
+for d in dates_to_show:
+  ratings_in_range = [v for v in aggregate_ratings[d].values() \
+                          if v >= THRESHOLD and v <= MAX_RATING]
+  mean = aggregate_values(sorted(ratings_in_range), 'median')
+  stdev = mean - THRESHOLD
 
-    mean = THRESHOLD + (MAX_RATING - THRESHOLD) * b
-    sig1 = THRESHOLD + (MAX_RATING - THRESHOLD) * 2 * b
-    sig2 = THRESHOLD + (MAX_RATING - THRESHOLD) * 3 * b
-    sig3 = THRESHOLD + (MAX_RATING - THRESHOLD) * 4 * b
-    s += ('\ta: {a:.2f}\tb: {b:.2f}\tmean: {m:.2f}' \
-              + '\tsig1: {s1}\tsig2: {s2}\tsig3: {s3}') \
-          .format(a = a, b = b, m = mean, s1 = int(sig1), s2 = int(sig2), s3 = int(sig3))
-    print(s)
-  d += ONE_DAY
+  s = str(d) + '\t' + str(int(stdev)) + '\t' + str(THRESHOLD) + '\t' + str(int(mean))
+  for i in range(1, MAX_SIGMA + 1):
+    s += '\t' + str(int(mean + i * stdev))
+  print(s)
+
+print('\n=== Player count in each exponential sigma bin ===')
+h = 'AGG DATE START\tTOTAL\tTHRSH\tMEAN'
+for i in range(1, MAX_SIGMA + 1):
+  h += '\tSTD' + str(i)
+print(h)
+
+for d in dates_to_show:
+  ratings_in_range = [v for v in aggregate_ratings[d].values() \
+                          if v >= THRESHOLD and v <= MAX_RATING]
+  mean = aggregate_values(sorted(ratings_in_range), 'median')
+  stdev = mean - THRESHOLD
+
+  s = str(d) + '\t' + str(len(ratings_in_range))
+  bin_counts = {}
+  for t in range(MAX_SIGMA + 2):
+    bin_counts[t] = 0
+  for r in ratings_in_range:
+    r_bin = int((r - THRESHOLD) / stdev)
+    if r_bin > MAX_SIGMA + 1:
+      r_bin = MAX_SIGMA + 1
+    if SIGMA_PERCENTAGES:
+      bin_counts[r_bin] += 100 / len(ratings_in_range)
+    else:
+      bin_counts[r_bin] += 1
+
+  for t in sorted(bin_counts.keys()):
+    sigma_value_format = '{c:.2f}' if SIGMA_PERCENTAGES else '{c}'
+    s += '\t' + sigma_value_format.format(c = bin_counts[t])
+  print(s)
+

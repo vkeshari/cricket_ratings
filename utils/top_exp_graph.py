@@ -40,6 +40,7 @@ SIGMA_BINS = round((MAX_SIGMA - MIN_SIGMA) / SIGMA_STEP)
 
 CUMULATIVES = True
 BY_MEDAL_PERCENTAGES = False
+CHANGED_DAYS_ONLY = True
 
 AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
@@ -86,6 +87,14 @@ def string_to_date(s):
   dt = datetime.strptime(s, '%Y%m%d')
   return date(dt.year, dt.month, dt.day)
 
+def is_aggregation_window_start(d):
+  return AGGREGATION_WINDOW == 'monthly' and d.day == 1 \
+      or AGGREGATION_WINDOW == 'quarterly' and d.day == 1 and d.month in [1, 4, 7, 10] \
+      or AGGREGATION_WINDOW == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
+      or AGGREGATION_WINDOW == 'yearly' and d.day == 1 and d.month == 1 \
+      or AGGREGATION_WINDOW == 'decadal' and d.day == 1 and d.month == 1 \
+                                        and d.year % 10 == 1
+
 def get_daily_ratings():
   daily_ratings = {}
 
@@ -111,6 +120,22 @@ def get_daily_ratings():
     daily_ratings[d] = dict(sorted(daily_ratings[d].items(), \
                                     key = lambda item: item[1], reverse = True))
 
+  if CHANGED_DAYS_ONLY:
+    changed_daily_ratings = {}
+    last_daily_ratings = {}
+    for d in daily_ratings:
+      changed = False
+      if last_daily_ratings \
+            and sorted(daily_ratings[d].keys()) == sorted(last_daily_ratings.keys()):
+        for p in daily_ratings[d]:
+          if not daily_ratings[d][p] == last_daily_ratings[p]:
+            changed = True
+            break
+      if changed or is_aggregation_window_start(d):
+        changed_daily_ratings[d] = daily_ratings[d]
+      last_daily_ratings = daily_ratings[d]
+    daily_ratings = changed_daily_ratings
+
   return daily_ratings
 
 daily_ratings = get_daily_ratings()
@@ -118,14 +143,6 @@ print("Daily ratings data built for " + str(len(daily_ratings)) + " days" )
 
 first_date = min(daily_ratings.keys())
 last_date = max(daily_ratings.keys())
-
-def is_aggregation_window_start(d):
-  return AGGREGATION_WINDOW == 'monthly' and d.day == 1 \
-      or AGGREGATION_WINDOW == 'quarterly' and d.day == 1 and d.month in [1, 4, 7, 10] \
-      or AGGREGATION_WINDOW == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
-      or AGGREGATION_WINDOW == 'yearly' and d.day == 1 and d.month == 1 \
-      or AGGREGATION_WINDOW == 'decadal' and d.day == 1 and d.month == 1 \
-                                        and d.year % 10 == 1
 
 def aggregate_values(values, agg_type):
   if agg_type == 'avg':
@@ -187,9 +204,8 @@ def get_exp_medians(daily_ratings):
   exp_bin_stops = list(range(THRESHOLD, MAX_RATING, EXP_BIN_SIZE)) + [MAX_RATING]
 
   current_bucket = {}
-  d = first_date
   last_d = EPOCH
-  while d <= last_date:
+  for d in daily_ratings:
     if d in dates_to_show and current_bucket:
       bucket_days = len(current_bucket)
       cum_counts = [0] * (len(exp_bin_stops) - 1)
@@ -205,8 +221,6 @@ def get_exp_medians(daily_ratings):
       current_bucket[d] = np.histogram(list(daily_ratings[d].values()), \
                                         bins = exp_bin_stops
                                       )[0]
-
-    d += ONE_DAY
 
   for d in exp_buckets:
     bin_vals = exp_buckets[d]

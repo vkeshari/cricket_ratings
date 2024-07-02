@@ -76,30 +76,14 @@ Common aggregation params:
 + AGGREGATION_WINDOW: ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
 + PLAYER_AGGREGATE  : ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 + BIN_AGGREGATE     : ['', 'avg', 'median', 'min', 'max', 'first', 'last']
-+ SKIP_YEARS        : When calculating aggregates, skip these years when no international cricket was played (WW1, WW2 and COVID-19)
-
-'hist_aggregates.py'
-Aggregates each bin of the histogram of rating distribution over the specified time period, then calculates mean and standard deviation for ratings assuming an exponential distribution of ratings.
-+ BIN_SIZE: Split ratings into continuous bins of this size
-
-'player_aggregates_exp.py'
-Aggregates each player's ratings over the specified time period, then counts how many players fall into each standard deviation assuming exponential distribution of ratings.
-+ MAX_SIGMA        : Calculate player counts up to this standard deviation value above mean
-+ SIGMA_PERCENTAGES: Show percentages in each standard deviation instead of counts
-
-'player_aggregates_ratio.py'
-Aggregates each player's ratings over the specified time period, calculates their rating's ratio vs the top rated player, then groups the players into bins by their rating ratio.
-+ MIN_RATIO         : Only players with a rating ratio vs top ranked player greater than this value are counted
-+ RATIO_STEP        : Buckets of this size of players' rating ratio vs top ranked player are created
-+ RATIO_STOPS       : Also show metrics for players binned into bins starting at these specific rating ratio values
-+ THRESHOLD_RELATIVE: Calculate players' rating ratios relative to THRESHOLD instead of 0
-+ SHOW_PERCENTAGES  : Show percentage of players in each bin instead of counts
++ CHANGED_DAYS_ONLY : Only aggregate over days when there was at least one change in ratings globally
++ SKIP_YEARS        : When calculating aggregates, skip these years when no or little international cricket was played (WW1, WW2 and COVID-19)
 
 'top_by_ratio.py'
 Aggregates each player's ratings over the specified time period, calculates their rating's ratio vs the top rated player, groups the players into bins by their rating ratio, and then ranks the players by aggregation window counts where the player appears in bins of decreasing order of ratio values (the ratio values are cutoffs for medals).
 + TOP_PLAYERS         : Only show these many ranked players
++ RATIO_STOPS         : Count players for medals starting at these specific rating ratio values
 + SHOW_METRICS        : Show metrics used to calculate ranks
-+ BY_MEDAL_PERCENTAGES: Rank players by percentage of aggregation windows with each medal insted of counts
 
 'top_ratios_graph.py' 
 Aggregates each player's ratings over the specified time period, calculates their rating's ratio vs the top rated player, groups the players into cumulative bins by their rating ratio for a range of all possible rating ratios, and then shows a graph of cumulative player counts by ratio cutoff. Also calculates the most likely cutoffs for each medal.
@@ -108,7 +92,26 @@ Aggregates each player's ratings over the specified time period, calculates thei
 + RATIO_STEP : Show metrics and graph at this rating ratio increment
 + CUMULATIVES: Calculate cumulative counts in each bin
 + SHOW_GRAPH : Self-explanatory
-+ AVG_MEDAL_CUMULATIVE_COUNTS: Maximum average no. of cumulative players for each medal
+
++ THRESHOLD_RELATIVE: Calculate players' rating ratios relative to THRESHOLD instead of to 0
++ AVG_MEDAL_CUMULATIVE_COUNTS: Average no. of cumulative players for each medal
++ BY_MEDAL_PERCENTAGES: Rank players by percentage of aggregation windows with each medal insted of counts
 
 'top_ratings_graph.py' 
 Same as above but uses ratings instead of ratings ratio.
+
+'top_exp_graph.py'
+Same as above but uses a fitted exponential curve to aggregated ratings histogram before aggregating player ratings over bins by standard deviation (sigma) instead of ratings ratio.
++ MIN_SIGMA   : Calculate player counts starting at this standard deviation value above THRESHOLD
++ MAX_SIGMA   : Calculate player counts up to this standard deviation value above THRESHOLD
++ EXP_BIN_SIZE: Split ratings into continuous bins of this size during counting
+
+# DEPRECATED Utils #
+'hist_aggregates.py'
+Aggregates each bin of the histogram of rating distribution over the specified time period, then calculates mean and standard deviation for ratings assuming an exponential distribution of ratings.
+
+'player_aggregates_exp.py'
+Aggregates each player's ratings over the specified time period, then counts how many players fall into each standard deviation assuming exponential distribution of ratings.
+
+'player_aggregates_ratio.py'
+Aggregates each player's ratings over the specified time period, calculates their rating's ratio vs the top rated player, then groups the players into bins by their rating ratio.
