@@ -1,5 +1,7 @@
-from datetime import date, datetime
-from os import listdir
+from common.data import get_daily_ratings
+from common.output import readable_name_and_country
+
+from datetime import date
 
 # ['batting', 'bowling', 'allrounder']
 TYPE = 'batting'
@@ -38,97 +40,14 @@ if COMPARE_RANKS:
 if COMPARE_PLAYERS:
   assert not COMPARE_RANKS, "Both COMPARE_RANKS and COMPARE_PLAYERS cannot be set"
 
-assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
+assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both'], \
+        "Invalid CHANGED_DAYS_CRITERIA"
 
 print (FORMAT + ' : ' + TYPE)
 print (str(START_DATE) + ' : ' + str(END_DATE))
 
 for i, p in enumerate(COMPARE_PLAYERS):
   COMPARE_PLAYERS[i] = p + '.data'
-
-def string_to_date(s):
-  dt = datetime.strptime(s, '%Y%m%d')
-  return date(dt.year, dt.month, dt.day)
-
-def get_days_with_change(daily_data):
-  changed_days = set()
-  last_daily_data = {}
-  for d in daily_data:
-    changed = False
-    if not last_daily_data:
-      changed = True
-    elif not sorted(daily_data[d].keys()) == sorted(last_daily_data.keys()):
-      changed = True
-    else:
-      for p in daily_data[d]:
-        if not daily_data[d][p] == last_daily_data[p]:
-          changed = True
-          break
-    if changed:
-      changed_days.add(d)
-    last_daily_data = daily_data[d]
-
-  return changed_days
-
-def get_daily_ratings():
-  daily_ratings = {}
-  daily_ranks = {}
-  dates_parsed = set()
-
-  player_files = listdir('players/' + TYPE + '/' + FORMAT)
-  for p in player_files:
-    lines = []
-    with open('players/' + TYPE + '/' + FORMAT + '/' + p, 'r') as f:
-      lines += f.readlines()
-
-    for l in lines:
-      parts = l.split(',')
-      d = string_to_date(parts[0])
-      if d not in dates_parsed:
-        dates_parsed.add(d)
-        daily_ratings[d] = {}
-        daily_ranks[d] = {}
-
-      rating = eval(parts[2])
-      if TYPE == 'allrounder' and ALLROUNDERS_GEOM_MEAN:
-        rating = int(math.sqrt(rating * 1000))
-      daily_ratings[d][p] = rating
-
-      rank = eval(parts[1])
-      daily_ranks[d][p] = rank
-
-  daily_ratings = dict(sorted(daily_ratings.items()))
-  daily_ranks = dict(sorted(daily_ranks.items()))
-  for d in dates_parsed:
-    daily_ratings[d] = dict(sorted(daily_ratings[d].items(), \
-                                    key = lambda item: item[1], reverse = True))
-    daily_ranks[d] = dict(sorted(daily_ranks[d].items(), \
-                                    key = lambda item: item[1]))
-
-  if CHANGED_DAYS_CRITERIA:
-    rating_change_days = set()
-    rank_change_days = set()
-    if CHANGED_DAYS_CRITERIA in {'rating', 'either', 'both'}:
-      rating_change_days = get_days_with_change(daily_ratings)
-    if CHANGED_DAYS_CRITERIA in {'rank', 'either', 'both'}:
-      rank_change_days = get_days_with_change(daily_ranks)
-
-    change_days = set()
-    if CHANGED_DAYS_CRITERIA in {'rating', 'rank', 'either'}:
-      change_days = rating_change_days | rank_change_days
-    elif CHANGED_DAYS_CRITERIA == 'both':
-      change_days = rating_change_days & rank_change_days
-
-    daily_ratings = dict(filter(lambda item: item[0] in change_days, \
-                              daily_ratings.items()))
-    daily_ranks = dict(filter(lambda item: item[0] in change_days, \
-                            daily_ranks.items()))
-
-  return daily_ratings, daily_ranks
-
-daily_ratings, daily_ranks = get_daily_ratings()
-print("Daily ranks data built for " + str(len(daily_ratings)) + " days" )
-
 
 def get_compare_stats(daily_ratings, daily_ranks, \
                         compare_players, compare_ranks, start_date, end_date):
@@ -172,19 +91,14 @@ def get_compare_stats(daily_ratings, daily_ranks, \
 
   return compare_stats
 
+daily_ratings, daily_ranks = get_daily_ratings(TYPE, FORMAT, \
+                                  changed_days_criteria = CHANGED_DAYS_CRITERIA, \
+                                  allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
+
 compare_stats = get_compare_stats(daily_ratings, daily_ranks, \
                                   COMPARE_PLAYERS, COMPARE_RANKS, START_DATE, END_DATE)
 print("Compare stats built with " + str(len(compare_stats)) + " keys")
 
-def readable_name(p):
-  sep = p.find('_')
-  return p[sep + 1 : ].split('.')[0].replace('_', ' ')
-
-def country(p):
-  return p.split('_')[0]
-
-def readable_name_and_country(p):
-  return readable_name(p) + ' (' + country(p) + ')'
 
 from matplotlib import pyplot as plt, cm
 import numpy as np
@@ -200,7 +114,6 @@ ax.set_title("Comparison of " + FORMAT + ' ' + TYPE + ' ' + "players" \
 if COMPARE_PLAYERS:
   color_stops = np.linspace(0, 1, len(COMPARE_PLAYERS) + 1)
   colors = colorscale(color_stops)
-  ax.grid(True, which = 'both', axis = 'x', alpha = 0.5)
 
   for i, p in enumerate(COMPARE_PLAYERS):
     (xs, ys) = [], []

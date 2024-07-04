@@ -1,8 +1,11 @@
-import math
+from common.aggregation import aggregate_values, \
+                                get_aggregate_ratings, \
+                                is_aggregation_window_start
+from common.data import get_daily_ratings
+from common.output import string_to_date, readable_name_and_country
 
-from datetime import date, timedelta, datetime
-from os import listdir
-from pathlib import Path
+from datetime import date, timedelta
+
 import numpy as np
 
 ONE_DAY = timedelta(days = 1)
@@ -75,98 +78,10 @@ print (str(START_DATE) + ' to ' + str(END_DATE))
 print (str(THRESHOLD) + ' : ' + str(MAX_RATING))
 print (AGGREGATION_WINDOW + ' / ' + PLAYER_AGGREGATE)
 
-def string_to_date(s):
-  dt = datetime.strptime(s, '%Y%m%d')
-  return date(dt.year, dt.month, dt.day)
-
-def is_aggregation_window_start(d, agg_window):
-  if not agg_window:
-    return True
-  return agg_window == 'monthly' and d.day == 1 \
-      or agg_window == 'quarterly' and d.day == 1 and d.month in [1, 4, 7, 10] \
-      or agg_window == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
-      or agg_window == 'yearly' and d.day == 1 and d.month == 1 \
-      or agg_window == 'decadal' and d.day == 1 and d.month == 1 \
-                                        and d.year % 10 == 1
-
-def get_days_with_change(daily_data):
-  changed_days = set()
-  last_daily_data = {}
-  for d in daily_data:
-    changed = False
-    if not last_daily_data:
-      changed = True
-    elif not sorted(daily_data[d].keys()) == sorted(last_daily_data.keys()):
-      changed = True
-    else:
-      for p in daily_data[d]:
-        if not daily_data[d][p] == last_daily_data[p]:
-          changed = True
-          break
-    if changed:
-      changed_days.add(d)
-    last_daily_data = daily_data[d]
-
-  return changed_days
-
-def get_daily_ratings():
-  daily_ratings = {}
-  daily_ranks = {}
-  dates_parsed = set()
-
-  player_files = listdir('players/' + TYPE + '/' + FORMAT)
-  for p in player_files:
-    lines = []
-    with open('players/' + TYPE + '/' + FORMAT + '/' + p, 'r') as f:
-      lines += f.readlines()
-
-    for l in lines:
-      parts = l.split(',')
-      d = string_to_date(parts[0])
-      if d not in dates_parsed:
-        dates_parsed.add(d)
-        daily_ratings[d] = {}
-        daily_ranks[d] = {}
-
-      rating = eval(parts[2])
-      if TYPE == 'allrounder' and ALLROUNDERS_GEOM_MEAN:
-        rating = int(math.sqrt(rating * 1000))
-      daily_ratings[d][p] = rating
-
-      rank = eval(parts[1])
-      daily_ranks[d][p] = rank
-
-  daily_ratings = dict(sorted(daily_ratings.items()))
-  daily_ranks = dict(sorted(daily_ranks.items()))
-  for d in dates_parsed:
-    daily_ratings[d] = dict(sorted(daily_ratings[d].items(), \
-                                    key = lambda item: item[1], reverse = True))
-    daily_ranks[d] = dict(sorted(daily_ranks[d].items(), \
-                                    key = lambda item: item[1]))
-
-  if CHANGED_DAYS_CRITERIA:
-    rating_change_days = set()
-    rank_change_days = set()
-    if CHANGED_DAYS_CRITERIA in {'rating', 'either', 'both'}:
-      rating_change_days = get_days_with_change(daily_ratings)
-    if CHANGED_DAYS_CRITERIA in {'rank', 'either', 'both'}:
-      rank_change_days = get_days_with_change(daily_ranks)
-
-    change_days = set()
-    if CHANGED_DAYS_CRITERIA in {'rating', 'rank', 'either'}:
-      change_days = rating_change_days | rank_change_days
-    elif CHANGED_DAYS_CRITERIA == 'both':
-      change_days = rating_change_days & rank_change_days
-
-    daily_ratings = dict(filter(lambda item: item[0] in change_days, \
-                              daily_ratings.items()))
-    daily_ranks = dict(filter(lambda item: item[0] in change_days, \
-                            daily_ranks.items()))
-
-  return daily_ratings, daily_ranks
-
-daily_ratings, _ = get_daily_ratings()
-print("Daily ratings data built for " + str(len(daily_ratings)) + " days" )
+daily_ratings, _ = get_daily_ratings(TYPE, FORMAT, \
+                          changed_days_criteria = CHANGED_DAYS_CRITERIA, \
+                          agg_window = AGGREGATION_WINDOW, \
+                          allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
 first_date = min(daily_ratings.keys())
 last_date = max(daily_ratings.keys())
@@ -185,45 +100,10 @@ for i, d in enumerate(daily_ratings.keys()):
   if bin_by_date[i] > 0:
     date_to_bucket[d] = dates_to_show[bin_by_date[i] - 1]
 
-def aggregate_values(values, agg_type):
-  if agg_type == 'avg':
-    return np.average(values)
-  if agg_type == 'median':
-    return np.percentile(values, 50, method = 'nearest')
-  if agg_type == 'min':
-    return min(values)
-  if agg_type == 'max':
-    return max(values)
-  if agg_type == 'first':
-    return values[0]
-  if agg_type == 'last':
-    return values[-1]
-
-def get_aggregate_ratings(daily_ratings):
-  if not AGGREGATION_WINDOW or not PLAYER_AGGREGATE:
-    return daily_ratings
-
-  aggregate_buckets = {d: {} for d in dates_to_show}
-
-  for d in daily_ratings:
-    if not d in date_to_bucket:
-      continue
-    bucket = date_to_bucket[d]
-    for p in daily_ratings[d]:
-      if p not in aggregate_buckets[bucket]:
-        aggregate_buckets[bucket][p] = []
-      aggregate_buckets[bucket][p].append(daily_ratings[d][p])
-
-  aggregate_ratings = {d: {} for d in dates_to_show}
-  for d in aggregate_buckets:
-    for p in aggregate_buckets[d]:
-      aggregate_ratings[d][p] = aggregate_values(aggregate_buckets[d][p], PLAYER_AGGREGATE)
-
-  return aggregate_ratings
-
-aggregate_ratings = get_aggregate_ratings(daily_ratings)
-print(AGGREGATION_WINDOW + " aggregate ratings built for " \
-                          + str(len(aggregate_ratings)) + " days")
+aggregate_ratings = get_aggregate_ratings(daily_ratings, agg_dates = dates_to_show, \
+                                          date_to_agg_date = date_to_bucket, \
+                                          aggregation_window = AGGREGATION_WINDOW, \
+                                          player_aggregate = PLAYER_AGGREGATE)
 
 for i, d in enumerate(dates_to_show):
   if d.year in SKIP_YEARS:
@@ -367,16 +247,6 @@ for medal in all_medals:
   print (medal + ':\t{m:.2f}'.format(m = medal_thresholds[medal]))
 
 
-def readable_name(p):
-  sep = p.find('_')
-  return p[sep + 1 : ].split('.')[0].replace('_', ' ')
-
-def country(p):
-  return p.split('_')[0]
-
-def full_readable_name(p):
-  return readable_name(p) + ' (' + country(p) + ')'
-
 player_medals = {}
 for p in player_counts_by_step:
   if p not in player_medals:
@@ -413,7 +283,7 @@ if SHOW_TOP_PLAYERS:
         s += '\t{v:.2f}'.format(v = player_medals[p][medal]) + ','
       else:
         s += '\t' + str(player_medals[p][medal]) + ','
-    s += '\t' + full_readable_name(p)
+    s += '\t' + readable_name_and_country(p)
     print (s)
 
     if i >= TOP_PLAYERS:
