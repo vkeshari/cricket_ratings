@@ -63,7 +63,8 @@ All utils read data from player ratings timelines created by build_players.py
 
 'top_final_ratings.py'
 Shows players that had the highest ratings at retirement.
-+ MAX_PLAYERS: Self-explanatory
++ MAX_PLAYERS  : Self-explanatory
++ BY_FINAL_RANK: Sort by final rank instead of final rating
 
 'time_at_top.py'
 Shows players that were in the top N ratings for the longest time.

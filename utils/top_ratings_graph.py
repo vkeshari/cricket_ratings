@@ -74,16 +74,40 @@ def string_to_date(s):
   dt = datetime.strptime(s, '%Y%m%d')
   return date(dt.year, dt.month, dt.day)
 
-def is_aggregation_window_start(d):
-  return AGGREGATION_WINDOW == 'monthly' and d.day == 1 \
-      or AGGREGATION_WINDOW == 'quarterly' and d.day == 1 and d.month in [1, 4, 7, 10] \
-      or AGGREGATION_WINDOW == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
-      or AGGREGATION_WINDOW == 'yearly' and d.day == 1 and d.month == 1 \
-      or AGGREGATION_WINDOW == 'decadal' and d.day == 1 and d.month == 1 \
+def is_aggregation_window_start(d, agg_window):
+  if not agg_window:
+    return True
+  return agg_window == 'monthly' and d.day == 1 \
+      or agg_window == 'quarterly' and d.day == 1 and d.month in [1, 4, 7, 10] \
+      or agg_window == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
+      or agg_window == 'yearly' and d.day == 1 and d.month == 1 \
+      or agg_window == 'decadal' and d.day == 1 and d.month == 1 \
                                         and d.year % 10 == 1
+
+def get_changed_data(daily_data):
+  changed_daily_data = {}
+  last_daily_data = {}
+  for d in daily_data:
+    changed = False
+    if not last_daily_data:
+      changed = True
+    elif not sorted(daily_data[d].keys()) == sorted(last_daily_data.keys()):
+      changed = True
+    else:
+      for p in daily_data[d]:
+        if not daily_data[d][p] == last_daily_data[p]:
+          changed = True
+          break
+    if changed or is_aggregation_window_start(d, AGGREGATION_WINDOW):
+      changed_daily_data[d] = daily_data[d]
+    last_daily_data = daily_data[d]
+
+  return changed_daily_data
 
 def get_daily_ratings():
   daily_ratings = {}
+  daily_ranks = {}
+  dates_parsed = set()
 
   player_files = listdir('players/' + TYPE + '/' + FORMAT)
   for p in player_files:
@@ -94,41 +118,34 @@ def get_daily_ratings():
     for l in lines:
       parts = l.split(',')
       d = string_to_date(parts[0])
-      if d not in daily_ratings:
+      if d not in dates_parsed:
+        dates_parsed.add(d)
         daily_ratings[d] = {}
+        daily_ranks[d] = {}
 
       rating = eval(parts[2])
       if TYPE == 'allrounder' and ALLROUNDERS_GEOM_MEAN:
         rating = int(math.sqrt(rating * 1000))
       daily_ratings[d][p] = rating
 
+      rank = eval(parts[1])
+      daily_ranks[d][p] = rank
+
   daily_ratings = dict(sorted(daily_ratings.items()))
-  for d in daily_ratings:
+  daily_ranks = dict(sorted(daily_ranks.items()))
+  for d in dates_parsed:
     daily_ratings[d] = dict(sorted(daily_ratings[d].items(), \
                                     key = lambda item: item[1], reverse = True))
+    daily_ranks[d] = dict(sorted(daily_ranks[d].items(), \
+                                    key = lambda item: item[1]))
 
   if CHANGED_DAYS_ONLY:
-    changed_daily_ratings = {}
-    last_daily_ratings = {}
-    for d in daily_ratings:
-      changed = False
-      if not last_daily_ratings:
-        changed = True
-      elif not sorted(daily_ratings[d].keys()) == sorted(last_daily_ratings.keys()):
-        changed = True
-      else:
-        for p in daily_ratings[d]:
-          if not daily_ratings[d][p] == last_daily_ratings[p]:
-            changed = True
-            break
-      if changed or is_aggregation_window_start(d):
-        changed_daily_ratings[d] = daily_ratings[d]
-      last_daily_ratings = daily_ratings[d]
-    daily_ratings = changed_daily_ratings
+    daily_ratings = get_changed_data(daily_ratings)
+    daily_ranks = get_changed_data(daily_ranks)
 
-  return daily_ratings
+  return daily_ratings, daily_ranks
 
-daily_ratings = get_daily_ratings()
+daily_ratings, _ = get_daily_ratings()
 print("Daily ratings data built for " + str(len(daily_ratings)) + " days" )
 
 first_date = min(daily_ratings.keys())
@@ -137,7 +154,8 @@ last_date = max(daily_ratings.keys())
 dates_to_show = []
 d = first_date
 while d <= last_date:
-  if d >= START_DATE and d <= END_DATE and is_aggregation_window_start(d):
+  if d >= START_DATE and d <= END_DATE \
+          and is_aggregation_window_start(d, AGGREGATION_WINDOW):
     dates_to_show.append(d)
   d += ONE_DAY
 
@@ -353,9 +371,11 @@ for p in player_counts_by_step:
     else:
       player_medals[p]['gold'] += player_counts_by_step[p][r]
 
-for medal in ['bronze', 'silver', 'gold']:
-  player_medals = dict(sorted(player_medals.items(),
-                                key = lambda item: item[1][medal], reverse = True))
+player_medals = dict(sorted(player_medals.items(),
+                              key = lambda item: (item[1]['gold'], \
+                                                  item[1]['silver'],
+                                                  item[1]['bronze']), \
+                              reverse = True))
 
 if SHOW_TOP_PLAYERS:
   print('\n=== Top ' + str(TOP_PLAYERS) + ' Players ===')

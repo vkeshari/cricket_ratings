@@ -2,13 +2,13 @@ from datetime import date, datetime
 from os import listdir
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = ''
+TYPE = 'batting'
 # ['test', 'odi', 't20']
-FORMAT = ''
+FORMAT = 't20'
 PLAYERS_DIR = 'players/' + TYPE + '/' + FORMAT
 
 MAX_PLAYERS = 25
-NUM_TOP = 10
+NUM_TOP = 1
 
 assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
@@ -64,10 +64,12 @@ sorted_top_ratings = dict(sorted(top_ratings.items(),
 print ("Players by longest time spent in top " + str(NUM_TOP) + ' rankings :' \
         + '\t' + FORMAT + '\t' + TYPE)
 
-for i, p in enumerate(sorted_top_ratings)[ : MAX_PLAYERS]:
+for i, p in enumerate(sorted_top_ratings):
   days_at_top = sorted_top_ratings[p]['days_at_top']
   min_rank = sorted_top_ratings[p]['min_rank']
   max_rating = sorted_top_ratings[p]['max_rating']
   print (str(i + 1) + '\tMax Rating: ' + str(max_rating) + '\t\tBest Rank: ' \
           + str(min_rank) + '\tDays in top ' + str(NUM_TOP) + ': ' + str(days_at_top) \
           + '\t' + readable_name_and_country(p))
+  if i == MAX_PLAYERS - 1:
+    break

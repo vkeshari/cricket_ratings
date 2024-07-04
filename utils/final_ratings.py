@@ -2,12 +2,13 @@ from datetime import date, datetime
 from os import listdir
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = ''
+TYPE = 'batting'
 # ['test', 'odi', 't20']
-FORMAT = ''
+FORMAT = 't20'
 PLAYERS_DIR = 'players/' + TYPE + '/' + FORMAT
 
 MAX_PLAYERS = 25
+BY_FINAL_RANK = False
 
 EPOCH = date(year = 1901, month = 1, day = 1)
 
@@ -68,6 +69,7 @@ def get_last_ratings(players_dir):
     final_ratings[p] = {'last_date': d, 'rank': rank, 'final': rating, \
                         'max_rating': max_rating, 'min_rank': min_rank}
 
+  # Remove players that haven't retired
   actual_final_ratings = {k: v for (k, v) in final_ratings.items()
                           if v['last_date'] < max_d}
 
@@ -75,12 +77,20 @@ def get_last_ratings(players_dir):
 
 final_ratings = get_last_ratings(PLAYERS_DIR)
 
-sorted_final_ratings = dict(sorted(final_ratings.items(),
-                                    key = lambda item: item[1]['final'],
-                                    reverse = True))
+
+if BY_FINAL_RANK:
+  sorted_final_ratings = dict(sorted(final_ratings.items(),
+                                      key = lambda item: (-item[1]['rank'], \
+                                                          item[1]['final']), \
+                                      reverse = True))
+else:
+  sorted_final_ratings = dict(sorted(final_ratings.items(),
+                                      key = lambda item: item[1]['final'],
+                                      reverse = True))
+
 
 print ("Players by final career rating at retirement:" + '\t' + FORMAT + '\t' + TYPE)
-for i, p in enumerate(sorted_final_ratings)[ : MAX_PLAYERS]:
+for i, p in enumerate(sorted_final_ratings):
   final_rank = sorted_final_ratings[p]['rank']
   final_rating = sorted_final_ratings[p]['final']
   max_rating = sorted_final_ratings[p]['max_rating']
@@ -89,3 +99,5 @@ for i, p in enumerate(sorted_final_ratings)[ : MAX_PLAYERS]:
   print (str(i + 1) + '\tRetired: ' + date_to_string(last_date)
           + '\tFinal Rank: ' + str(final_rank) + '\tFinal Rating: ' + str(final_rating) \
           + '\t' + readable_name_and_country(p))
+  if i == MAX_PLAYERS - 1:
+    break
