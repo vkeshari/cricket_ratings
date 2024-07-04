@@ -131,7 +131,7 @@ top_decreases = reversed(all_changes[-NUM_SHOW : ])
 
 def readable_name(p):
   sep = p.find('_')
-  return p[sep+1:].split('.')[0].replace('_', ' ')
+  return p[sep + 1 : ].split('.')[0].replace('_', ' ')
 
 def country(p):
   return p.split('_')[0]
