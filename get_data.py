@@ -3,16 +3,16 @@ from pathlib import Path
 from datetime import date, timedelta
 
 # ['batting', 'bowling']
-TYPE = 'batting'
+TYPE = {'batting', 'bowling'}
 # ['test', 'odi', 't20']
-FORMAT = 't20'
+FORMAT = {'test', 'odi', 't20'}
 
-START_DATE = date(2021, 1, 1)
+START_DATE = date(2024, 1, 1)
 TODAY = date.today()
 ONE_DAY = timedelta(days = 1)
 
-assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
-assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
+assert not set(TYPE) - {'batting', 'bowling', 'allrounder'}, "Invalid TYPE provided"
+assert not set(FORMAT) - {'test', 'odi', 't20'}, "Invalid FORMAT provided"
 assert START_DATE < TODAY, "START_DATE must be in the past"
 
 ID_TAG_PREFIX = '<td class="'
@@ -43,11 +43,10 @@ def date_to_parts(d):
     dy = '0' + dy
   return (yr, mn, dy)
 
-def get_data(d):
+def get_data(d, frmt, typ):
   (yr, mn, dy) = date_to_parts(d)
-  print (yr + '\t' + mn + '\t' + dy)
-  url = 'http://www.relianceiccrankings.com/datespecific/' + FORMAT + '/' \
-        + TYPE  + '/' + yr + '/' + mn + '/' + dy + '/'
+  url = 'http://www.relianceiccrankings.com/datespecific/' + frmt + '/' \
+        + typ  + '/' + yr + '/' + mn + '/' + dy + '/'
 
   text = ''
   while not text:
@@ -98,9 +97,9 @@ def parse_html(h):
     pos = h.find(ID_TAG_PREFIX)
   return data
 
-def write_data(d, data):
+def write_data(d, frmt, typ, data):
   (yr, mn, dy) = date_to_parts(d)
-  filename = 'data/' + TYPE + '/' + FORMAT + '/' + yr + mn + dy + '.csv'
+  filename = 'data/' + typ + '/' + frmt + '/' + yr + mn + dy + '.csv'
 
   output_file = Path(filename)
   output_file.parent.mkdir(exist_ok = True, parents = True)
@@ -110,15 +109,19 @@ def write_data(d, data):
       f.write(p)
   print('\t' + filename + '\t' + str(len(data)))
 
+
 d = START_DATE
 while (d < TODAY):
-  text = get_data(d)
-  players = parse_html(text)
+  print (d)
+  for frmt in FORMAT:
+    for typ in TYPE:
+      text = get_data(d, frmt, typ)
+      players = parse_html(text)
 
-  if not players:
-    print("\tNO PLAYERS FOUND")
-    break
+      if not players:
+        print("\tNO PLAYERS FOUND for " + frmt + " " + typ)
+        break
 
-  write_data(d, players)
+      write_data(d, frmt, typ, players)
   d += ONE_DAY
 

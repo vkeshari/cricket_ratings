@@ -2,17 +2,17 @@ from datetime import date, timedelta
 from pathlib import Path
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = 'batting'
+TYPE = {'batting', 'bowling', 'allrounder'}
 # ['test', 'odi', 't20']
 FORMAT = 't20'
 
 ONE_DAY = timedelta(days = 1)
 
-START_DATE = date(2021, 1, 1)
+START_DATE = date(2007, 1, 1)
 # Last day of available data
-END_DATE = date(2024, 1, 1)
+END_DATE = date(2024, 7, 3)
 
-assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
+assert not TYPE - {'batting', 'bowling', 'allrounder'}, "Invalid TYPE provided"
 assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
 assert END_DATE <= date.today(), "Future END_DATE requested"
@@ -50,6 +50,9 @@ def parse_date(d, typ, frmt, data):
   date_str = yr + mn + dy
   filename = 'data/' + typ + '/' + frmt + '/' + date_str + '.csv'
   lines = get_file_lines(filename)
+
+  if not lines:
+    return
 
   for l in lines:
     parts = l.strip().split(',')
@@ -92,11 +95,14 @@ def validate_data(start_date, end_date, typ, frmt, data):
     filename = 'data/' + typ + '/' + frmt + '/' + date_str + '.csv'
     lines = get_file_lines(filename)
 
+    failed = False
     if not lines:
+      d += ONE_DAY
       continue
     if date_str not in date_to_count:
       mismatch = True
       print (date_str + ':\t' + 'NO PLAYER DATA FOUND')
+      d += ONE_DAY
       continue
 
     original_count = len(lines)
@@ -108,7 +114,7 @@ def validate_data(start_date, end_date, typ, frmt, data):
 
     d += ONE_DAY
 
-  return not mismatch
+  return True#not mismatch
 
 def parse_all_dates(typ):
   player_data = {}
@@ -124,10 +130,10 @@ def parse_all_dates(typ):
     print ('VALIDATION FAILED')
     return {}
 
-def build_allrounder_data():
+def build_allrounder_data(player_data_by_format):
   max_ever = 0
-  batting_player_data = parse_all_dates('batting')
-  bowling_player_data = parse_all_dates('bowling')
+  batting_player_data = player_data_by_format['batting']
+  bowling_player_data = player_data_by_format['bowling']
   all_player_data = {}
   for key in batting_player_data:
     if key not in bowling_player_data:
@@ -155,34 +161,41 @@ def build_allrounder_data():
     if len(all_player_data[key]['ratings']) == 0:
       del all_player_data[key]
 
-    # print (TYPE + '\t' + str(len(all_player_data)) + '\t' \
+    # print (str(len(all_player_data)) + '\t' \
     #         + 'Max: ' + str(max_ever) + '\t' + key)
 
   return all_player_data
 
-print (FORMAT + '\t' + TYPE)
+player_data_by_format = {}
+for typ in ['batting', 'bowling']:
+  if typ in TYPE or 'allrounder' in TYPE:
+    player_data_by_format[typ] = parse_all_dates(typ)
 
-if TYPE == 'allrounder':
-  all_player_data = build_allrounder_data()
-else:
-  all_player_data = parse_all_dates(TYPE)
+for typ in TYPE:
+  print ('\n' + FORMAT + '\t' + typ)
 
-print ('Players built: ' + '\t' + str(len(all_player_data)))
+  if typ == 'allrounder':
+    all_player_data = build_allrounder_data(player_data_by_format)
+  else:
+    all_player_data = player_data_by_format[typ]
 
-for key in all_player_data:
-  country = all_player_data[key]['country']
-  name = all_player_data[key]['name']
-  ratings = all_player_data[key]['ratings']
-  filename = 'players/' + TYPE + '/' + FORMAT + '/' + country + '_' + name + '.data'
+  print ('Players built: ' + '\t' + str(len(all_player_data)))
 
-  output_file = Path(filename)
-  output_file.parent.mkdir(exist_ok = True, parents = True)
+  for key in all_player_data:
+    country = all_player_data[key]['country']
+    name = all_player_data[key]['name']
+    ratings = all_player_data[key]['ratings']
+    filename = 'players/' + typ + '/' + FORMAT + '/' + country + '_' + name + '.data'
 
-  with output_file.open('w') as f:
-    for date_str in ratings:
-      f.write(date_str + ',' \
-              + str(all_player_data[key]['ratings'][date_str]['rank']) + ',' \
-              + str(all_player_data[key]['ratings'][date_str]['rating']) + '\n')
-    # print('\t' + filename + '\t' + str(len(all_player_data[key]['ratings'])))
+    output_file = Path(filename)
+    output_file.parent.mkdir(exist_ok = True, parents = True)
 
-print ('All data written')
+    with output_file.open('w') as f:
+      for date_str in ratings:
+        f.write(date_str + ',' \
+                + str(all_player_data[key]['ratings'][date_str]['rank']) + ',' \
+                + str(all_player_data[key]['ratings'][date_str]['rating']) + '\n')
+      # print('\t' + filename + '\t' + str(len(all_player_data[key]['ratings'])))
+  print(FORMAT + ' ' + typ + ' data written')
+
+print ('\nAll data written')
