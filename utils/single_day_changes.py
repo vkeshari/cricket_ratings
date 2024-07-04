@@ -117,7 +117,7 @@ for d in daily_ratings:
     if last_player_ratings[p] > 0:
       rating = daily_ratings[d][p]
       last_rating = last_player_ratings[p]
-      if rating >= THRESHOLD or  last_rating >= THRESHOLD:
+      if rating >= THRESHOLD or last_rating >= THRESHOLD:
         change = rating - last_rating
         if not change == 0:
           all_changes.append((change, rating, d, p))

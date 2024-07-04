@@ -10,7 +10,8 @@ PLAYERS_DIR = 'players/' + TYPE + '/' + FORMAT
 MAX_PLAYERS = 25
 NUM_TOP = 1
 
-CHANGED_DAYS_ONLY = False
+# ['', 'rating', 'rank', 'either', 'both']
+CHANGED_DAYS_CRITERIA = ''
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -20,12 +21,14 @@ assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
 assert MAX_PLAYERS > 0, "MAX_PLAYERS must be positive"
 assert NUM_TOP > 0, "NUM_TOP must be positive"
 
+assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
+
 def string_to_date(s):
   dt = datetime.strptime(s, '%Y%m%d')
   return date(dt.year, dt.month, dt.day)
 
-def get_changed_data(daily_data):
-  changed_daily_data = {}
+def get_days_with_change(daily_data):
+  changed_days = set()
   last_daily_data = {}
   for d in daily_data:
     changed = False
@@ -39,10 +42,10 @@ def get_changed_data(daily_data):
           changed = True
           break
     if changed:
-      changed_daily_data[d] = daily_data[d]
+      changed_days.add(d)
     last_daily_data = daily_data[d]
 
-  return changed_daily_data
+  return changed_days
 
 def get_daily_ratings():
   daily_ratings = {}
@@ -79,9 +82,24 @@ def get_daily_ratings():
     daily_ranks[d] = dict(sorted(daily_ranks[d].items(), \
                                     key = lambda item: item[1]))
 
-  if CHANGED_DAYS_ONLY:
-    daily_ratings = get_changed_data(daily_ratings)
-    daily_ranks = get_changed_data(daily_ranks)
+  if CHANGED_DAYS_CRITERIA:
+    rating_change_days = set()
+    rank_change_days = set()
+    if CHANGED_DAYS_CRITERIA in {'rating', 'either', 'both'}:
+      rating_change_days = get_days_with_change(daily_ratings)
+    if CHANGED_DAYS_CRITERIA in {'rank', 'either', 'both'}:
+      rank_change_days = get_days_with_change(daily_ranks)
+
+    change_days = set()
+    if CHANGED_DAYS_CRITERIA in {'rating', 'rank', 'either'}:
+      change_days = rating_change_days | rank_change_days
+    elif CHANGED_DAYS_CRITERIA == 'both':
+      change_days = rating_change_days & rank_change_days
+
+    daily_ratings = dict(filter(lambda item: item[0] in change_days, \
+                              daily_ratings.items()))
+    daily_ranks = dict(filter(lambda item: item[0] in change_days, \
+                            daily_ranks.items()))
 
   return daily_ratings, daily_ranks
 
@@ -117,8 +135,10 @@ def get_top_player_stats(daily_ratings, daily_ranks, num_top):
 
 top_player_stats = get_top_player_stats(daily_ratings, daily_ranks, NUM_TOP)
 
-sorted_top_stats = dict(sorted(top_player_stats.items(),
-                                    key = lambda item: item[1]['days_at_top'],
+sorted_top_stats = dict(sorted(top_player_stats.items(), \
+                                    key = lambda item: (item[1]['days_at_top'], \
+                                                        item[1]['min_rank'],
+                                                        item[1]['max_rating']), \
                                     reverse = True))
 
 def readable_name(p):
