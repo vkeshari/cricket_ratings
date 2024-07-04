@@ -21,7 +21,8 @@ SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 THRESHOLD = 500
 MAX_RATING = 1000
 
-CHANGED_DAYS_ONLY = True
+# ['', 'rating', 'rank', 'either', 'both']
+CHANGED_DAYS_CRITERIA = 'rating'
 
 SHOW_TOP_CHANGES = True
 NUM_SHOW = 20
@@ -42,6 +43,8 @@ assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
 assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
       "THRESHOLD must be between 0 and MAX_RATING"
 
+assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
+
 assert NUM_SHOW >= 5, "NUM_SHOW should be at least 5"
 assert BIN_WIDTH >= 5 and BIN_WIDTH <= 100, "BIN_WIDTH must be between 5 and 100"
 assert MAX_CHANGE >= 100 and MAX_CHANGE <= 500, "MAX_CHANGE must be between 100 and 500"
@@ -55,8 +58,30 @@ def string_to_date(s):
   dt = datetime.strptime(s, '%Y%m%d')
   return date(dt.year, dt.month, dt.day)
 
+def get_days_with_change(daily_data):
+  changed_days = set()
+  last_daily_data = {}
+  for d in daily_data:
+    changed = False
+    if not last_daily_data:
+      changed = True
+    elif not sorted(daily_data[d].keys()) == sorted(last_daily_data.keys()):
+      changed = True
+    else:
+      for p in daily_data[d]:
+        if not daily_data[d][p] == last_daily_data[p]:
+          changed = True
+          break
+    if changed:
+      changed_days.add(d)
+    last_daily_data = daily_data[d]
+
+  return changed_days
+
 def get_daily_ratings():
   daily_ratings = {}
+  daily_ranks = {}
+  dates_parsed = set()
 
   player_files = listdir('players/' + TYPE + '/' + FORMAT)
   for p in player_files:
@@ -67,41 +92,49 @@ def get_daily_ratings():
     for l in lines:
       parts = l.split(',')
       d = string_to_date(parts[0])
-      if d not in daily_ratings:
+      if d not in dates_parsed:
+        dates_parsed.add(d)
         daily_ratings[d] = {}
+        daily_ranks[d] = {}
 
       rating = eval(parts[2])
       if TYPE == 'allrounder' and ALLROUNDERS_GEOM_MEAN:
         rating = int(math.sqrt(rating * 1000))
       daily_ratings[d][p] = rating
 
+      rank = eval(parts[1])
+      daily_ranks[d][p] = rank
+
   daily_ratings = dict(sorted(daily_ratings.items()))
-  for d in daily_ratings:
+  daily_ranks = dict(sorted(daily_ranks.items()))
+  for d in dates_parsed:
     daily_ratings[d] = dict(sorted(daily_ratings[d].items(), \
                                     key = lambda item: item[1], reverse = True))
+    daily_ranks[d] = dict(sorted(daily_ranks[d].items(), \
+                                    key = lambda item: item[1]))
 
-  if CHANGED_DAYS_ONLY:
-    changed_daily_ratings = {}
-    last_daily_ratings = {}
-    for d in daily_ratings:
-      changed = False
-      if not last_daily_ratings:
-        changed = True
-      elif not sorted(daily_ratings[d].keys()) == sorted(last_daily_ratings.keys()):
-        changed = True
-      else:
-        for p in daily_ratings[d]:
-          if not daily_ratings[d][p] == last_daily_ratings[p]:
-            changed = True
-            break
-      if changed:
-        changed_daily_ratings[d] = daily_ratings[d]
-      last_daily_ratings = daily_ratings[d]
-    daily_ratings = changed_daily_ratings
+  if CHANGED_DAYS_CRITERIA:
+    rating_change_days = set()
+    rank_change_days = set()
+    if CHANGED_DAYS_CRITERIA in {'rating', 'either', 'both'}:
+      rating_change_days = get_days_with_change(daily_ratings)
+    if CHANGED_DAYS_CRITERIA in {'rank', 'either', 'both'}:
+      rank_change_days = get_days_with_change(daily_ranks)
 
-  return daily_ratings
+    change_days = set()
+    if CHANGED_DAYS_CRITERIA in {'rating', 'rank', 'either'}:
+      change_days = rating_change_days | rank_change_days
+    elif CHANGED_DAYS_CRITERIA == 'both':
+      change_days = rating_change_days & rank_change_days
 
-daily_ratings = get_daily_ratings()
+    daily_ratings = dict(filter(lambda item: item[0] in change_days, \
+                              daily_ratings.items()))
+    daily_ranks = dict(filter(lambda item: item[0] in change_days, \
+                            daily_ranks.items()))
+
+  return daily_ratings, daily_ranks
+
+daily_ratings, _ = get_daily_ratings()
 print("Daily ratings data built for " + str(len(daily_ratings)) + " days" )
 
 first_date = min(daily_ratings.keys())

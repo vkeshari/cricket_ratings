@@ -22,6 +22,9 @@ THRESHOLD = 500
 MAX_RATING = 1000
 RATING_STEP = 20
 
+# ['', 'rating', 'rank', 'either', 'both']
+CHANGED_DAYS_CRITERIA = 'rating'
+
 # Aggregation
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
 AGGREGATION_WINDOW = 'yearly'
@@ -52,6 +55,8 @@ assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
 assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
       "THRESHOLD must be between 0 and MAX_RATING"
 assert RATING_STEP >= 10, "RATING_STEP must be at least 10"
+
+assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
 assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
       "Invalid AGGREGATION_WINDOW provided"
@@ -84,8 +89,8 @@ def is_aggregation_window_start(d, agg_window):
       or agg_window == 'decadal' and d.day == 1 and d.month == 1 \
                                         and d.year % 10 == 1
 
-def get_changed_data(daily_data):
-  changed_daily_data = {}
+def get_days_with_change(daily_data):
+  changed_days = set()
   last_daily_data = {}
   for d in daily_data:
     changed = False
@@ -98,11 +103,11 @@ def get_changed_data(daily_data):
         if not daily_data[d][p] == last_daily_data[p]:
           changed = True
           break
-    if changed or is_aggregation_window_start(d, AGGREGATION_WINDOW):
-      changed_daily_data[d] = daily_data[d]
+    if changed:
+      changed_days.add(d)
     last_daily_data = daily_data[d]
 
-  return changed_daily_data
+  return changed_days
 
 def get_daily_ratings():
   daily_ratings = {}
@@ -139,9 +144,24 @@ def get_daily_ratings():
     daily_ranks[d] = dict(sorted(daily_ranks[d].items(), \
                                     key = lambda item: item[1]))
 
-  if CHANGED_DAYS_ONLY:
-    daily_ratings = get_changed_data(daily_ratings)
-    daily_ranks = get_changed_data(daily_ranks)
+  if CHANGED_DAYS_CRITERIA:
+    rating_change_days = set()
+    rank_change_days = set()
+    if CHANGED_DAYS_CRITERIA in {'rating', 'either', 'both'}:
+      rating_change_days = get_days_with_change(daily_ratings)
+    if CHANGED_DAYS_CRITERIA in {'rank', 'either', 'both'}:
+      rank_change_days = get_days_with_change(daily_ranks)
+
+    change_days = set()
+    if CHANGED_DAYS_CRITERIA in {'rating', 'rank', 'either'}:
+      change_days = rating_change_days | rank_change_days
+    elif CHANGED_DAYS_CRITERIA == 'both':
+      change_days = rating_change_days & rank_change_days
+
+    daily_ratings = dict(filter(lambda item: item[0] in change_days, \
+                              daily_ratings.items()))
+    daily_ranks = dict(filter(lambda item: item[0] in change_days, \
+                            daily_ranks.items()))
 
   return daily_ratings, daily_ranks
 

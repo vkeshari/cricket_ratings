@@ -11,7 +11,7 @@ MAX_PLAYERS = 25
 NUM_TOP = 1
 
 # ['', 'rating', 'rank', 'either', 'both']
-CHANGED_DAYS_CRITERIA = ''
+CHANGED_DAYS_CRITERIA = 'either'
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
