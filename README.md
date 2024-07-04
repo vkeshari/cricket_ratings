@@ -79,7 +79,6 @@ Note: All utils below aggregate ratings over time windows.
 Common aggregation params:
 + AGGREGATION_WINDOW: ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
 + PLAYER_AGGREGATE  : ['', 'avg', 'median', 'min', 'max', 'first', 'last']
-+ BIN_AGGREGATE     : ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 + CHANGED_DAYS_ONLY : Only aggregate over days when there was at least one change in ratings globally
 + SKIP_YEARS        : When calculating aggregates, skip these years when no or little international cricket was played (during WW1, WW2 and COVID-19)
 
@@ -102,10 +101,12 @@ Same as top_ratings_graph.py but uses players' rating ratio vs top rated player 
 + THRESHOLD_RELATIVE: Calculate players' rating ratios relative to THRESHOLD instead of to 0
 
 'top_exp_graph.py'
-Same as top_ratings_graph.py but uses a fitted exponential curve to aggregated ratings histogram before aggregating player ratings over bins by standard deviation (sigma) for calculations.
-+ MIN_SIGMA   : Calculate player counts starting at this standard deviation value above THRESHOLD
-+ MAX_SIGMA   : Calculate player counts up to this standard deviation value above THRESHOLD
-+ EXP_BIN_SIZE: Split ratings into continuous bins of this size during counting
+Same as top_ratings_graph.py but uses a exponential curve fit to aggregated ratings histogram before aggregating player ratings over bins by standard deviation (sigma) for calculations.
++ MIN_SIGMA    : Calculate player counts starting at this standard deviation value above THRESHOLD
++ MAX_SIGMA    : Calculate player counts up to this standard deviation value above THRESHOLD
++ SIGMA_STEP   : Show metrics and graph at this sigma increment
++ EXP_BIN_SIZE : Split ratings into continuous bins of this size during counting
++ BIN_AGGREGATE: ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 
 # DEPRECATED Utils #
 'hist_aggregates.py'
