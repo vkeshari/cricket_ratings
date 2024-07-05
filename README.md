@@ -114,17 +114,20 @@ Compare two or more players over time by name or by rank.
 Aggregates each player's ratings over the specified time period, groups the players into cumulative bins by their rating for a range of all possible ratings, and then shows a graph of cumulative player counts by rating cutoff. Also calculates the most likely cutoffs for each medal.
 
 ### `top_ratios_graph.py`
-Same as top_ratings_graph.py but uses players' rating ratio vs top rated player for calculations.
+Same as `top_ratings_graph.py` but uses players' rating ratio vs top rated player for calculations.
 + `MIN_RATIO`         : Lower limit of rating ratio for metrics and graph
 + `MAX_RATIO`         : Upper limit of rating ratio for metrics and graph
 + `RATIO_STEP`        : Show metrics and graph at this rating ratio increment
 + `THRESHOLD_RELATIVE`: Calculate players' rating ratios relative to `THRESHOLD` instead of to `0`
 
-### `top_exp_graph.py`
-Same as top_ratings_graph.py but uses a exponential curve fit to aggregated ratings histogram before aggregating player ratings over bins by standard deviation (sigma) for calculations.
+### `top_normal_graph.py`
+Same as `top_ratings_graph.py` but rescales aggregated player ratings to a normal distribution a before over bins by standard deviation (sigma) for calculations.
 + `MIN_SIGMA`    : Calculate player counts starting at this standard deviation value above `THRESHOLD`
 + `MAX_SIGMA`    : Calculate player counts up to this standard deviation value above `THRESHOLD`
 + `SIGMA_STEP`   : Show metrics and graph at this sigma increment
+
+### `top_exp_graph.py`
+Same as `top_normal_graph.py` but fits an exponential curve to aggregated ratings histogram before aggregating player ratings over histogram bins by standard deviation (sigma) for calculations.
 + `EXP_BIN_SIZE` : Split ratings into continuous bins of this size during counting
 + `BIN_AGGREGATE`: `['', 'avg', 'median', 'min', 'max', 'first', 'last']`
 

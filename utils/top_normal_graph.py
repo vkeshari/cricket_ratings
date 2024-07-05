@@ -8,25 +8,25 @@ from common.interval_metrics import get_graph_metrics, get_medal_stats, \
 from common.output import string_to_date, readable_name_and_country
 
 from datetime import date, timedelta
+from sklearn.preprocessing import power_transform
 
 import numpy as np
 
 ONE_DAY = timedelta(days = 1)
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = 'batting'
+TYPE = 'bowling'
 # ['test', 'odi', 't20']
-FORMAT = 't20'
+FORMAT = 'odi'
 
 # Graph date range
-START_DATE = date(2009, 1, 1)
+START_DATE = date(1981, 1, 1)
 END_DATE = date(2024, 1, 1)
 SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
 MAX_RATING = 1000
-RATING_STEP = 20
 
 # ['', 'rating', 'rank', 'either', 'both']
 CHANGED_DAYS_CRITERIA = 'rating'
@@ -36,6 +36,13 @@ CHANGED_DAYS_CRITERIA = 'rating'
 AGGREGATION_WINDOW = 'yearly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = 'max'
+
+MAX_SIGMA = 3.0
+MIN_SIGMA = 0.0
+# [0.05, 0.1, 0.2, 0.5]
+SIGMA_STEP = 0.1
+
+SIGMA_BINS = round((MAX_SIGMA - MIN_SIGMA) / SIGMA_STEP)
 
 GRAPH_CUMULATIVES = True
 BY_MEDAL_PERCENTAGES = False
@@ -50,6 +57,8 @@ TRUNCATE_AT_BRONZE = True
 SHOW_TOP_PLAYERS = True
 TOP_PLAYERS = 25
 
+EPOCH = date(1900, 1, 1)
+
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
 
@@ -61,7 +70,6 @@ assert END_DATE <= date.today(), "Future END_DATE requested"
 assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
 assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
       "THRESHOLD must be between 0 and MAX_RATING"
-assert RATING_STEP >= 10, "RATING_STEP must be at least 10"
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
@@ -69,6 +77,11 @@ assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'd
       "Invalid AGGREGATION_WINDOW provided"
 assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
       "Invalid PLAYER_AGGREGATE provided"
+
+assert MAX_SIGMA >= 1.0, "MAX_SIGMA must greater than 1.0"
+assert MIN_SIGMA >= 0.0 and MIN_SIGMA < MAX_SIGMA, \
+      "MIN_SIGMA must be between 0.0 and MAX_SIGMA"
+assert SIGMA_STEP in [0.05, 0.1, 0.2, 0.5], "Invalid SIGMA_STEP provided"
 
 assert not AVG_MEDAL_CUMULATIVE_COUNTS.keys() ^ {'gold', 'silver', 'bronze'}, \
     'AVG_MEDAL_CUMULATIVE_COUNTS keys must be gold silver and bronze'
@@ -118,57 +131,85 @@ for i, d in enumerate(dates_to_show):
 if dates_to_show[-1] == END_DATE:
   dates_to_show.pop()
 
+
+def get_normalized_ratings(aggregate_ratings, dates_to_show):
+  normalized_ratings = {}
+
+  for d in dates_to_show:
+    day_ratings = aggregate_ratings[d]
+    day_ratings = {p: (r - THRESHOLD) / (MAX_RATING - THRESHOLD) \
+                              for (p, r) in day_ratings.items() if r >= THRESHOLD}
+    day_ratings = dict(sorted(day_ratings.items(), key = lambda item: item[1], reverse = True))
+
+    day_vals = np.array(list(day_ratings.values()))
+    normalized_vals = power_transform(day_vals.reshape(-1, 1)).reshape(1, -1).flatten()
+
+    normalized_ratings[d] = {}
+    for i, p in enumerate(day_ratings.keys()):
+      normalized_ratings[d][p] = normalized_vals[i]
+
+  return normalized_ratings
+
+aggregate_ratings = get_normalized_ratings(aggregate_ratings, dates_to_show)
+
 metrics_bins = {}
-rating_stops = list(range(THRESHOLD, MAX_RATING, RATING_STEP))
-actual_rating_stops = rating_stops[ : -1]
-for r in actual_rating_stops:
+sigma_stops = np.linspace(MIN_SIGMA, MAX_SIGMA, SIGMA_BINS + 1)
+actual_sigma_stops = sigma_stops[ : -1]
+for r in actual_sigma_stops:
   metrics_bins[r] = []
 
 if SHOW_BIN_COUNTS:
-  print('\n=== Player count in each rating bin ===')
+  print('\n=== Player count in each rating sigma bin ===')
   h = 'AGG START DATE'
-  for b in actual_rating_stops:
-    h += '\t' + str(b)
+  for b in actual_sigma_stops:
+    h += '\t' + '{b:.2f}'.format(b = b)
   print(h)
 
 player_counts_by_step = {}
 player_periods = {}
 
-for d in dates_to_show:
-  ratings_in_range = {k: v for k, v in aggregate_ratings[d].items() \
-                      if v >= THRESHOLD and v <= MAX_RATING}
+for i, d in enumerate(dates_to_show):
+  if d.year in SKIP_YEARS:
+    del dates_to_show[i]
+if dates_to_show[-1] == END_DATE:
+  dates_to_show.pop()
 
-  bin_counts = [0] * len(rating_stops)
+for d in dates_to_show:
+  ratings_in_range = {k: v for k, v in aggregate_ratings[d].items() if v >= 0}
+
+  bin_counts = [0] * len(sigma_stops)
   bin_players = []
-  for r in rating_stops:
+  for r in sigma_stops:
     bin_players.append([])
   for p in ratings_in_range:
     rating = ratings_in_range[p]
     if p not in player_periods:
       player_periods[p] = 0
     player_periods[p] += 1
-    if rating < rating_stops[0]:
+
+    rating_sigma = rating
+    if rating_sigma < sigma_stops[0]:
       continue
-    for i, r in enumerate(rating_stops):
-      if rating < r:
+    for i, r in enumerate(sigma_stops):
+      if rating_sigma < r:
         bin_counts[i - 1] += 1
         bin_players[i - 1].append(p)
         break
-      if rating == r:
+      if rating_sigma == r:
         bin_counts[i] += 1
         bin_players[i].append(p)
         break
   bin_counts[-2] += bin_counts[-1]
   bin_players[-2] += bin_players[-1]
 
-  for i, r in enumerate(actual_rating_stops):
+  for i, r in enumerate(actual_sigma_stops):
     metrics_bins[r].append(bin_counts[i])
 
-  for i, r in enumerate(actual_rating_stops):
+  for i, r in enumerate(actual_sigma_stops):
     for p in bin_players[i]:
       if p not in player_counts_by_step:
         player_counts_by_step[p] = {}
-        for rs in actual_rating_stops:
+        for rs in actual_sigma_stops:
           player_counts_by_step[p][rs] = 0
       player_counts_by_step[p][r] += 1
 
@@ -184,7 +225,7 @@ for d in dates_to_show:
     print (s)
 
 
-reversed_stops = list(reversed(actual_rating_stops))
+reversed_stops = list(reversed(actual_sigma_stops))
 
 graph_metrics = get_graph_metrics(metrics_bins, stops = reversed_stops, \
                                   dates = dates_to_show, cumulatives = GRAPH_CUMULATIVES)
@@ -205,16 +246,17 @@ if SHOW_GRAPH:
                         'START_DATE': START_DATE, 'END_DATE': END_DATE, \
                         'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
                         'PLAYER_AGGREGATE': PLAYER_AGGREGATE, \
-                        'LABEL_KEY': 'rating', 'LABEL_TEXT': 'Rating', \
-                        'DTYPE': 'int', \
+                        'LABEL_KEY': 'std dev', 'LABEL_TEXT': 'Gaussian std devs', \
+                        'DTYPE': 'float', \
                         }
 
   if SHOW_MEDALS and TRUNCATE_AT_BRONZE:
-    yparams_min = medal_stats['bronze']['threshold'] - RATING_STEP
+    yparams_min = medal_stats['bronze']['threshold'] - SIGMA_STEP
   else:
-    yparams_min = THRESHOLD
-  graph_yparams = {'min': yparams_min, 'max': MAX_RATING, 'step': RATING_STEP}
+    yparams_min = MIN_SIGMA
+  graph_yparams = {'min': yparams_min, 'max': MAX_SIGMA, 'step': SIGMA_STEP}
 
   plot_interval_graph(graph_metrics, stops = reversed_stops, \
                       annotations = graph_annotations, yparams = graph_yparams, \
                       medal_stats = medal_stats, show_medals = SHOW_MEDALS)
+

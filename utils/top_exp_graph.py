@@ -89,7 +89,7 @@ assert MIN_SIGMA >= 0.0 and MIN_SIGMA < MAX_SIGMA, \
       "MIN_SIGMA must be between 0.0 and MAX_SIGMA"
 assert SIGMA_STEP in [0.05, 0.1, 0.2, 0.5], "Invalid SIGMA_STEP provided"
 
-assert not set(AVG_MEDAL_CUMULATIVE_COUNTS.keys()) - {'gold', 'silver', 'bronze'}, \
+assert not AVG_MEDAL_CUMULATIVE_COUNTS.keys() ^ {'gold', 'silver', 'bronze'}, \
     'AVG_MEDAL_CUMULATIVE_COUNTS keys must be gold silver and bronze'
 for amcc in AVG_MEDAL_CUMULATIVE_COUNTS.values():
   assert amcc > 0, "All values in AVG_MEDAL_CUMULATIVE_COUNTS must be positive"
