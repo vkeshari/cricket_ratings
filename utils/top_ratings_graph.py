@@ -2,6 +2,7 @@ from common.aggregation import aggregate_values, \
                                 get_aggregate_ratings, \
                                 is_aggregation_window_start
 from common.data import get_daily_ratings
+from common.interval_graph import plot_interval_graph
 from common.output import string_to_date, readable_name_and_country
 
 from datetime import date, timedelta
@@ -23,7 +24,7 @@ SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
 MAX_RATING = 1000
-RATING_STEP = 20
+RATING_STEP = 10
 
 # ['', 'rating', 'rank', 'either', 'both']
 CHANGED_DAYS_CRITERIA = 'rating'
@@ -41,6 +42,8 @@ AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
+SHOW_MEDALS = True
+TRUNCATE_AT_BRONZE = True
 
 SHOW_TOP_PLAYERS = True
 TOP_PLAYERS = 25
@@ -71,6 +74,9 @@ for amcc in AVG_MEDAL_CUMULATIVE_COUNTS.values():
   assert amcc > 0, "All values in AVG_MEDAL_CUMULATIVE_COUNTS must be positive"
 
 assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
+
+if TRUNCATE_AT_BRONZE:
+  assert SHOW_MEDALS, "SHOW_MEDALS must be enabled if TRUNCATE_AT_BRONZE is enabled"
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
@@ -196,8 +202,6 @@ cum_metrics_bins = {}
 for r in actual_rating_stops:
   cum_metrics_bins[r] = [0] * len(dates_to_show)
 
-x_max_max = -1
-
 last_r = -1
 for r in reversed(actual_rating_stops):
   for i, v in enumerate(metrics_bins[r]):
@@ -212,9 +216,6 @@ for r in reversed(actual_rating_stops):
     (outer, inner, line, avg) = get_graph_metrics(cum_metrics_bins[r])
   else:
     (outer, inner, line, avg) = get_graph_metrics(metrics_bins[r])
-
-  if line[1] > x_max_max:
-    x_max_max = line[1]
 
   graph_metrics['outers'].append(outer)
   graph_metrics['inners'].append(inner)
@@ -288,84 +289,23 @@ if SHOW_TOP_PLAYERS:
     if i >= TOP_PLAYERS:
       break
 
-
-def plot_medal_indicators(medal):
-  medal_label = '{v:.2f}'.format(v = exp_nums[medal])
-  plt.axhline(y = medal_thresholds[medal], linestyle = '--', linewidth = 1, \
-                color = 'black', alpha = 0.8)
-  plt.text(x = xmax - 1, y = medal_thresholds[medal], \
-                s = medal.upper(), alpha = 0.8, fontsize = 'large', \
-                horizontalalignment = 'right', verticalalignment = 'bottom')
-  medal_ymax_rating = (medal_thresholds[medal] - ymin) / (ymax - ymin)
-  plt.axvline(x = exp_nums[medal], linestyle = ':', linewidth = 1, \
-                color = 'black', alpha = 0.8, ymax = medal_ymax_rating)
-
 if SHOW_GRAPH:
-  from matplotlib import pyplot as plt
+  graph_stops = list(reversed(actual_rating_stops))
+  graph_annotations = {'TYPE': TYPE, 'FORMAT': FORMAT, \
+                        'START_DATE': START_DATE, 'END_DATE': END_DATE, \
+                        'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
+                        'PLAYER_AGGREGATE': PLAYER_AGGREGATE, \
+                        'LABEL_KEY': 'rating', 'LABEL_TEXT': 'Rating', \
+                        'DTYPE': 'int', \
+                        }
+  graph_medal_params = {'medals': all_medals, 'thresholds': medal_thresholds, \
+                        'exp_nums': exp_nums}
+  if SHOW_MEDALS and TRUNCATE_AT_BRONZE:
+    yparams_min = medal_thresholds['bronze'] - RATING_STEP
+  else:
+    yparams_min = THRESHOLD
+  graph_yparams = {'min': yparams_min, 'max': MAX_RATING, 'step': RATING_STEP}
 
-  resolution = tuple([7.2, 7.2])
-  fig, ax = plt.subplots(figsize = resolution)
-
-  TITLE_TEXT = "No. of players above rating\n " \
-                + FORMAT + ' ' + TYPE + ' (' + str(START_DATE) \
-                          + ' to ' + str(END_DATE) + ')'
-  ax.set_title(TITLE_TEXT, fontsize ='xx-large')
-
-  ylabel = 'Rating (' + AGGREGATION_WINDOW + ' ' + PLAYER_AGGREGATE + ')'
-  ax.set_ylabel(ylabel, fontsize ='x-large')
-  ax.set_xlabel('No. of players above rating', fontsize ='x-large')
-
-  ymin = THRESHOLD - RATING_STEP
-  ymax = MAX_RATING
-  ax.set_ylim(ymin, ymax)
-  ax.set_yticks(actual_rating_stops)
-  ax.set_yticklabels([str(r) for r in actual_rating_stops], \
-                          fontsize ='medium')
-
-  xmax = x_max_max + 1
-  ax.set_xlim(0, xmax)
-  xticks = list(range(0, xmax + 1, 1))
-  ax.set_xticks(xticks)
-
-  xlabwidth = 1
-  if xmax > 25:
-    xlabwidth = 2
-  if xmax > 50:
-    xlabwidth = 5
-  if xmax > 100:
-    xlabwidth = 10
-  xticklabels = [str(x) if x % xlabwidth == 0 else '' for x in xticks]
-  ax.set_xticklabels(xticklabels, fontsize ='medium')
-
-  ax.grid(True, which = 'both', axis = 'x', alpha = 0.5)
-
-  outer_starts = [interval['start'] for interval in graph_metrics['outers']]
-  outer_widths = [interval['width'] for interval in graph_metrics['outers']]
-  ax.barh(y = list(reversed(actual_rating_stops)), width = outer_widths, \
-            align = 'center', height = 0.9 * RATING_STEP, left = outer_starts, \
-            color = 'darkgrey', alpha = 0.4, \
-          )
-
-  inner_starts = [interval['start'] for interval in graph_metrics['inners']]
-  inner_widths = [interval['width'] for interval in graph_metrics['inners']]
-  ax.barh(y = list(reversed(actual_rating_stops)), width = inner_widths, \
-          align = 'center', height = 0.8 * RATING_STEP, left = inner_starts, \
-          color = 'green', alpha = 0.5, \
-        )
-  
-  plt.plot(graph_metrics['avgs'], list(reversed(actual_rating_stops)), \
-                    linewidth = 0, alpha = 0.5, \
-                    marker = 'x', markeredgecolor = 'blue', \
-                    markersize = 8, markeredgewidth = 2)
-  
-  for i, r in enumerate(reversed(actual_rating_stops)):
-    plt.plot(list(graph_metrics['lines'][i]), [r, r], linewidth = 2, \
-                      color = 'black', alpha = 0.9, \
-                      marker = 'o', markerfacecolor = 'red', \
-                      markersize = 3, markeredgewidth = 0)
-
-  for medal in all_medals:
-    plot_medal_indicators(medal)
-
-  fig.tight_layout()
-  plt.show()
+  plot_interval_graph(graph_metrics, stops = graph_stops, \
+                      annotations = graph_annotations, yparams = graph_yparams, \
+                      medal_params = graph_medal_params, show_medals = SHOW_MEDALS)
