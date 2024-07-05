@@ -45,6 +45,7 @@ def get_file_lines(filename):
 
   return lines
 
+
 def parse_date(d, typ, frmt, data):
   (yr, mn, dy) = date_to_parts(d)
   date_str = yr + mn + dy
@@ -74,7 +75,6 @@ def parse_date(d, typ, frmt, data):
     data[key]['ratings'][date_str]['rank'] = rank
     data[key]['ratings'][date_str]['rating'] = rating
 
-  #print (typ + '\t' + frmt + '\t' + date_str + '\t' + str(len(data)) + ' players')
 
 def validate_data(start_date, end_date, typ, frmt, data):
   print ('VALIDATING DATA: ' + frmt + '\t' + typ)
@@ -114,7 +114,8 @@ def validate_data(start_date, end_date, typ, frmt, data):
 
     d += ONE_DAY
 
-  return True#not mismatch
+  return not mismatch
+
 
 def parse_all_dates(typ):
   player_data = {}
@@ -129,6 +130,7 @@ def parse_all_dates(typ):
   else:
     print ('VALIDATION FAILED')
     return {}
+
 
 def build_allrounder_data(player_data_by_format):
   max_ever = 0
@@ -161,10 +163,8 @@ def build_allrounder_data(player_data_by_format):
     if len(all_player_data[key]['ratings']) == 0:
       del all_player_data[key]
 
-    # print (str(len(all_player_data)) + '\t' \
-    #         + 'Max: ' + str(max_ever) + '\t' + key)
-
   return all_player_data
+
 
 player_data_by_format = {}
 for typ in ['batting', 'bowling']:
@@ -195,7 +195,6 @@ for typ in TYPE:
         f.write(date_str + ',' \
                 + str(all_player_data[key]['ratings'][date_str]['rank']) + ',' \
                 + str(all_player_data[key]['ratings'][date_str]['rating']) + '\n')
-      # print('\t' + filename + '\t' + str(len(all_player_data[key]['ratings'])))
   print(FORMAT + ' ' + typ + ' data written')
 
 print ('\nAll data written')

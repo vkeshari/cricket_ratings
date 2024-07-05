@@ -43,6 +43,7 @@ def date_to_parts(d):
     dy = '0' + dy
   return (yr, mn, dy)
 
+
 def get_data(d, frmt, typ):
   (yr, mn, dy) = date_to_parts(d)
   url = 'http://www.relianceiccrankings.com/datespecific/' + frmt + '/' \
@@ -57,6 +58,7 @@ def get_data(d, frmt, typ):
       print (yr + '\t' + mn + '\t' + dy + '\t' + 'Retrying')
   
   return text
+
 
 def parse_html(h):
   data = []
@@ -96,6 +98,7 @@ def parse_html(h):
 
     pos = h.find(ID_TAG_PREFIX)
   return data
+
 
 def write_data(d, frmt, typ, data):
   (yr, mn, dy) = date_to_parts(d)

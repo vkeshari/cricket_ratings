@@ -2,7 +2,7 @@
 > **Note**: You must attribute references to this or any derivative work to the original author.
 
 Crawl data from ICC player rankings website. Create animated graphs of player ratings over time. Aggregate metrics over time. Create graphs for aggregated metrics. Find top players from aggregated metrics.
-> **WARNING:** Code is semi-polished: It does the job but can be refactored to be more efficient and readable.
+> :warning: **WARNING:** Code is semi-polished: It does the job but can be refactored to be more efficient and readable.
 
 ### Common Parameters:
 + `FORMAT`: `['test', 'odi', 't20']`
@@ -16,7 +16,7 @@ Crawl data from ICC player rankings website. Create animated graphs of player ra
 + `odi` : `1975-01-01` for data, `1981-01-01` for graphs
 + `t20` : `2007-01-01` for data, `2009-01-01` for graphs
 
-> **Note:** no international cricket was played during WW1 and WW2. It is recommended to skip years `1913-1920`, `1940-1945` and `2020` for data analysis.
+> :pencil2: **Note:** no international cricket was played during WW1 and WW2. It is recommended to skip years `1913-1920`, `1940-1945` and `2020` for data analysis.
 
 ## Data
 
@@ -27,7 +27,7 @@ Crawls ICC player ratings website for data and stores it in CSV format, one file
 ### `build_players.py`
 Reads stored ratings data from get_data.py and creates rating timelines, one file per player.
 + `END_DATE`  : Set it to the last date you have data for.
-> **Known issue:** Two test players from India are named Cottari Nayudu from `1934-01-09` to `1936-12-07`. Data is overwritten.
+> :warning: **Known issue:** Two test players from India are named Cottari Nayudu from `1934-01-09` to `1936-12-07`. Data is overwritten.
 
 ## Graphs
 
@@ -69,7 +69,7 @@ Aggregate ratings over a window by player or by bin using a numeric measure.
 
 ## Utils
 `./utils/*.py`
-> **Note:** Run these from the repository root folder.
+> :pencil2: **Note:** Run these from the repository root folder.
 All utils read data from player ratings timelines created by build_players.py
 
 ### `top_final_ratings.py`
@@ -87,11 +87,17 @@ Shows the largest single-day gains and drops in ratings.
 + `BIN_WIDTH` : Show histogram of rating changes with bins of this width
 + `MAX_CHANGE`: Only show changes less than this value on histogram
 
-> **Note:** All utils below aggregate ratings over time windows.
+### `compare_players.py`
+Compare two or more players over time by name or by rank.
++ `COMPARE_PLAYERS`: Compare these players. See filenames under `players/*/*` for format.
++ `COMPARE_RANKS`  : Compare players who are at these ranks at any time.
+
+
+> :pencil2: **Note:** All utils below aggregate ratings over time windows.
 Common aggregation params:
 + `AGGREGATION_WINDOW`: `['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']`
 + `PLAYER_AGGREGATE`  : `['', 'avg', 'median', 'min', 'max', 'first', 'last']`
-+ `CHANGED_DAYS_ONLY` : Only aggregate over days when there was at least one change in ratings globally
++ `CHANGED_DAYS_CRITERIA` : Only aggregate over days when there was at least one change in ratings, ranks, either or both globally
 + `SKIP_YEARS`        : When calculating aggregates, skip these years when no or little international cricket was played (during WW1, WW2 and COVID-19)
 
 + `SHOW_GRAPH`       : Self-explanatory
@@ -121,7 +127,7 @@ Same as top_ratings_graph.py but uses a exponential curve fit to aggregated rati
 + `BIN_AGGREGATE`: `['', 'avg', 'median', 'min', 'max', 'first', 'last']`
 
 ## DEPRECATED Utils
-> **WARNING:** There is no guarantee that these will run or produce accurate results.
+> :warning: **WARNING:** There is no guarantee that these will run or produce accurate results.
 ### `hist_aggregates.py`
 Aggregates each bin of the histogram of rating distribution over the specified time period, then calculates mean and standard deviation for ratings assuming an exponential distribution of ratings.
 
