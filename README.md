@@ -92,16 +92,18 @@ Compare two or more players over time by name or by rank.
 + `COMPARE_PLAYERS`: Compare these players. See filenames under `players/*/*` for format.
 + `COMPARE_RANKS`  : Compare players who are at these ranks at any time.
 
-
 > :pencil2: **Note:** All utils below aggregate ratings over time windows.
-Common aggregation params:
+
+### Common aggregation params
 + `AGGREGATION_WINDOW`: `['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']`
 + `PLAYER_AGGREGATE`  : `['', 'avg', 'median', 'min', 'max', 'first', 'last']`
 + `CHANGED_DAYS_CRITERIA` : Only aggregate over days when there was at least one change in ratings, ranks, either or both globally
 + `SKIP_YEARS`        : When calculating aggregates, skip these years when no or little international cricket was played (during WW1, WW2 and COVID-19)
 
-+ `SHOW_GRAPH`       : Self-explanatory
-+ `GRAPH_CUMULATIVES`: Calculate cumulative counts in each bin
++ `SHOW_GRAPH`        : Self-explanatory
++ `GRAPH_CUMULATIVES` : Calculate cumulative counts in each bin
++ `SHOW_MEDALS`       : Show medal thresholds on graph
++ `TRUNCATE_AT_BRONZE`: Only show part of the graph up to threshold for bronze medal
 
 + `SHOW_TOP_PLAYERS`    : Self-explanatory
 + `TOP_PLAYERS`         : Only show these many top ranked players
