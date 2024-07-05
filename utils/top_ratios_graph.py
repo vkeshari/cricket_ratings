@@ -1,6 +1,5 @@
-from common.aggregation import aggregate_values, \
-                                get_aggregate_ratings, \
-                                is_aggregation_window_start
+from common.aggregation import aggregate_values, is_aggregation_window_start, \
+                                get_aggregate_ratings, get_metrics_by_stops
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
 from common.interval_metrics import get_graph_metrics, get_medal_stats, \
@@ -46,7 +45,6 @@ RATIO_STEP = 0.01
 RATIO_BINS = round((MAX_RATIO - MIN_RATIO) / RATIO_STEP)
 
 GRAPH_CUMULATIVES = True
-BY_MEDAL_PERCENTAGES = False
 
 AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
@@ -57,6 +55,7 @@ TRUNCATE_AT_BRONZE = True
 
 SHOW_TOP_PLAYERS = True
 TOP_PLAYERS = 25
+BY_MEDAL_PERCENTAGES = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -129,77 +128,25 @@ for i, d in enumerate(dates_to_show):
 if dates_to_show[-1] == END_DATE:
   dates_to_show.pop()
 
-metrics_bins = {}
+
+def get_aggregate_ratios(aggregate_ratings):
+  for d in aggregate_ratings:
+    max_rating = max(aggregate_ratings[d].values())
+    for p in aggregate_ratings[d]:
+      aggregate_ratings[d][p] = aggregate_ratings[d][p] / max_rating
+  return aggregate_ratings
+
+aggregate_ratings = get_aggregate_ratios(aggregate_ratings)
+
 ratio_stops = np.linspace(MIN_RATIO, MAX_RATIO, RATIO_BINS + 1)
 actual_ratio_stops = ratio_stops[ : -1]
-for r in actual_ratio_stops:
-  metrics_bins[r] = []
 
-if SHOW_BIN_COUNTS:
-  print('\n=== Player count in each rating ratio bin ===')
-  h = 'AGG START DATE'
-  for b in actual_ratio_stops:
-    h += '\t' + '{b:.2f}'.format(b = b)
-  print(h)
-
-player_counts_by_step = {}
-player_periods = {}
-
-for d in dates_to_show:
-  ratings_in_range = {k: v for k, v in aggregate_ratings[d].items() \
-                      if v >= THRESHOLD and v <= MAX_RATING}
-  
-  max_rating = max(ratings_in_range.values())
-
-  bin_counts = [0] * len(ratio_stops)
-  bin_players = []
-  for r in ratio_stops:
-    bin_players.append([])
-  for p in ratings_in_range:
-    rating = ratings_in_range[p]
-    if p not in player_periods:
-      player_periods[p] = 0
-    player_periods[p] += 1
-    if THRESHOLD_RELATIVE:
-      rating_ratio = (rating - THRESHOLD) / (max_rating - THRESHOLD)
-    else:
-      rating_ratio = rating / max_rating
-    if rating_ratio < ratio_stops[0]:
-      continue
-    for i, r in enumerate(ratio_stops):
-      if rating_ratio < r:
-        bin_counts[i - 1] += 1
-        bin_players[i - 1].append(p)
-        break
-      if rating_ratio == r:
-        bin_counts[i] += 1
-        bin_players[i].append(p)
-        break
-  bin_counts[-2] += bin_counts[-1]
-  bin_players[-2] += bin_players[-1]
-
-  for i, r in enumerate(actual_ratio_stops):
-    metrics_bins[r].append(bin_counts[i])
-
-  for i, r in enumerate(actual_ratio_stops):
-    for p in bin_players[i]:
-      if p not in player_counts_by_step:
-        player_counts_by_step[p] = {}
-        for rs in actual_ratio_stops:
-          player_counts_by_step[p][rs] = 0
-      player_counts_by_step[p][r] += 1
-
-  if BY_MEDAL_PERCENTAGES:
-    for p in player_counts_by_step:
-      for r in player_counts_by_step[p]:
-        player_counts_by_step[p][r] = 100 * player_counts_by_step[p][r] / player_periods[p]
-
-  if SHOW_BIN_COUNTS:
-    s = str(d)
-    for b in bin_counts[ : -1]:
-      s += '\t' + str(b)
-    print (s)
-
+metrics_bins, player_counts_by_step, player_periods = \
+        get_metrics_by_stops(aggregate_ratings, stops = ratio_stops, \
+                              dates = dates_to_show, \
+                              by_percentage = BY_MEDAL_PERCENTAGES, \
+                              show_bin_counts = SHOW_BIN_COUNTS, \
+                            )
 
 reversed_stops = list(reversed(actual_ratio_stops))
 

@@ -65,19 +65,20 @@ def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, \
   return aggregate_ratings
 
 
-def get_metrics_by_aggregate_window(aggregate_ratings, stops, dates, \
-                                    by_percentage = False, show_bin_counts = False):
-  assert not set(dates) ^ aggregate_ratings.keys(), \
-          "Date mismatch between provided dates and aggregate_ratings"
+def get_metrics_by_stops(aggregate_ratings, stops, dates, \
+                            by_percentage = False, show_bin_counts = False):
+  assert not set(dates) - aggregate_ratings.keys(), \
+          "Not all dates are present in aggregate_ratings"
 
   actual_stops = stops[ : -1]
   metrics_bins = {s : [] for s in actual_stops}
 
   if show_bin_counts:
-    print('\n=== Player count in each rating sigma bin ===')
+    print('\n=== Player count in each bin ===')
     h = 'AGG START DATE'
     for b in actual_stops:
       h += '\t' + '{b:.2f}'.format(b = b)
+    h += '\tTOTAL'
     print(h)
 
   player_counts_by_step = {}
@@ -94,14 +95,16 @@ def get_metrics_by_aggregate_window(aggregate_ratings, stops, dates, \
 
     for i, p in enumerate(ratings_in_range.keys()):
       player_bin = int(value_to_bin[i])
-      if player_bin < 0 or player_bin >= len(actual_stops):
+      if player_bin < 0 or player_bin > len(actual_stops):
         continue
-      player_bin_sigma = actual_stops[player_bin]
-      bin_counts[player_bin_sigma] += 1
+      if player_bin == len(actual_stops):
+        player_bin = len(actual_stops) - 1
+      player_bin_stop = actual_stops[player_bin]
+      bin_counts[player_bin_stop] += 1
 
       if p not in player_counts_by_step:
         player_counts_by_step[p] = {s: 0 for s in actual_stops}
-      player_counts_by_step[p][player_bin_sigma] += 1
+      player_counts_by_step[p][player_bin_stop] += 1
 
       if p not in player_periods:
         player_periods[p] = 0

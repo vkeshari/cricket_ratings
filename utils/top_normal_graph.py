@@ -1,5 +1,5 @@
 from common.aggregation import aggregate_values, is_aggregation_window_start, \
-                                get_aggregate_ratings, get_metrics_by_aggregate_window
+                                get_aggregate_ratings, get_metrics_by_stops
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
 from common.interval_metrics import get_graph_metrics, get_medal_stats, \
@@ -155,11 +155,11 @@ sigma_stops = np.linspace(MIN_SIGMA, MAX_SIGMA, SIGMA_BINS + 1)
 actual_sigma_stops = sigma_stops[ : -1]
 
 metrics_bins, player_counts_by_step, player_periods = \
-        get_metrics_by_aggregate_window(aggregate_ratings, stops = sigma_stops, \
-                                        dates = dates_to_show, \
-                                        by_percentage = BY_MEDAL_PERCENTAGES, \
-                                        show_bin_counts = SHOW_BIN_COUNTS, \
-                                        )
+        get_metrics_by_stops(aggregate_ratings, stops = sigma_stops, \
+                              dates = dates_to_show, \
+                              by_percentage = BY_MEDAL_PERCENTAGES, \
+                              show_bin_counts = SHOW_BIN_COUNTS, \
+                            )
 
 reversed_stops = list(reversed(actual_sigma_stops))
 
