@@ -27,7 +27,7 @@ def plot_medal_indicators(medal, medal_threshold, exp_num, ylims, xlims):
 
 
 def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
-                            medal_params, show_medals = False):
+                            medal_stats, show_medals = False):
   assert graph_metrics, "No graph_metrics provided"
   assert not {'lines', 'avgs', 'outers', 'inners'} - graph_metrics.keys(), \
           "Not all graph metrics provided"
@@ -41,11 +41,12 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   assert yparams, "No yparams provided"
   assert not {'min', 'max', 'step'} - yparams.keys(), "Not all yparams provided"
   if show_medals:
-    assert medal_params, "No medal_params provided"
-    assert not {'medals', 'thresholds', 'exp_nums'} - medal_params.keys(), \
-          "Not all medal params provided"
-    for param in {'medals', 'thresholds', 'exp_nums'}:
-      assert medal_params[param], param + " not provided in medal_params"
+    assert medal_stats, "No medal_stats provided"
+    assert not {'gold', 'silver', 'bronze'} - medal_stats.keys(), \
+          "medal_stats keys are not gold, silver and bronze"
+    for medal in medal_stats:
+      for metric in {'threshold', 'exp_num'}:
+        assert medal_stats[medal][metric], "No " + metric + " in medal_stats for " + medal
 
   graph_metrics, stops = filter_to_ymin(yparams['min'], graph_metrics, stops)
 
@@ -124,10 +125,10 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
                       markersize = 3, markeredgewidth = 0)
 
   if show_medals:
-    for medal in medal_params['medals']:
+    for medal in medal_stats:
       plot_medal_indicators(medal, \
-                            medal_threshold = medal_params['thresholds'][medal], \
-                            exp_num = medal_params['exp_nums'][medal], \
+                            medal_threshold = medal_stats[medal]['threshold'], \
+                            exp_num = medal_stats[medal]['exp_num'], \
                             ylims = {'ymin': ymin, 'ymax': ymax}, \
                             xlims = {'xmax': xmax}
                             )
