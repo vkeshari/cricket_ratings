@@ -30,10 +30,12 @@ Reads stored ratings data from get_data.py and creates rating timelines, one fil
 ## Graphs
 
 Recommended threshold for bar charts: `500`
+
 Recommended thresholds for line charts:
 + Batting - Test: `750`, ODI: `750`, T20: `700`
 + Bowling - Test: `700`, ODI: `700`, T20: `600`
 + Country specific graph - `100` less than usual
+
 Recommended thresholds for all allrounder charts: `0`
 
 
@@ -44,6 +46,7 @@ Reads player ratings timelines from build_players.py and creates an animated gra
 + `THRESHOLD`     : Minimum rating to show (y-axis min).
 + `Y_BUFFER`      : Ratings are calculated for this buffer below the THRESHOLD but not shown.
 + `GRAPH_SMOOTH`  : Fit a monotonic spline curve on data
+
 Bar charts only:
 + `TOP_PLAYERS`     : Total no. of bars shown
 + `MIN_RATING_SCALE`: Bars start at this value
