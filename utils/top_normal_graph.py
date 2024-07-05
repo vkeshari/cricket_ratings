@@ -15,12 +15,12 @@ import numpy as np
 ONE_DAY = timedelta(days = 1)
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = 'bowling'
+TYPE = 'batting'
 # ['test', 'odi', 't20']
-FORMAT = 'odi'
+FORMAT = 't20'
 
 # Graph date range
-START_DATE = date(1981, 1, 1)
+START_DATE = date(2021, 1, 1)
 END_DATE = date(2024, 1, 1)
 SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 
@@ -37,7 +37,7 @@ AGGREGATION_WINDOW = 'yearly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = 'max'
 
-MAX_SIGMA = 3.0
+MAX_SIGMA = 2.5
 MIN_SIGMA = 0.0
 # [0.05, 0.1, 0.2, 0.5]
 SIGMA_STEP = 0.1
@@ -45,7 +45,6 @@ SIGMA_STEP = 0.1
 SIGMA_BINS = round((MAX_SIGMA - MIN_SIGMA) / SIGMA_STEP)
 
 GRAPH_CUMULATIVES = True
-BY_MEDAL_PERCENTAGES = False
 
 AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
@@ -56,6 +55,7 @@ TRUNCATE_AT_BRONZE = True
 
 SHOW_TOP_PLAYERS = True
 TOP_PLAYERS = 25
+BY_MEDAL_PERCENTAGES = False
 
 EPOCH = date(1900, 1, 1)
 
@@ -152,11 +152,9 @@ def get_normalized_ratings(aggregate_ratings, dates_to_show):
 
 aggregate_ratings = get_normalized_ratings(aggregate_ratings, dates_to_show)
 
-metrics_bins = {}
 sigma_stops = np.linspace(MIN_SIGMA, MAX_SIGMA, SIGMA_BINS + 1)
 actual_sigma_stops = sigma_stops[ : -1]
-for r in actual_sigma_stops:
-  metrics_bins[r] = []
+metrics_bins = {s : [] for s in actual_sigma_stops}
 
 if SHOW_BIN_COUNTS:
   print('\n=== Player count in each rating sigma bin ===')
@@ -168,61 +166,43 @@ if SHOW_BIN_COUNTS:
 player_counts_by_step = {}
 player_periods = {}
 
-for i, d in enumerate(dates_to_show):
-  if d.year in SKIP_YEARS:
-    del dates_to_show[i]
-if dates_to_show[-1] == END_DATE:
-  dates_to_show.pop()
-
 for d in dates_to_show:
+  bin_counts = {s: 0 for s in actual_sigma_stops}
   ratings_in_range = {k: v for k, v in aggregate_ratings[d].items() if v >= 0}
 
-  bin_counts = [0] * len(sigma_stops)
-  bin_players = []
-  for r in sigma_stops:
-    bin_players.append([])
-  for p in ratings_in_range:
-    rating = ratings_in_range[p]
+  values = list(ratings_in_range.values())
+  value_to_bin = np.searchsorted(a = sigma_stops, v = values, side = 'right')
+  value_to_bin = [v - 1 for v in value_to_bin]
+
+  for i, p in enumerate(ratings_in_range.keys()):
+    player_bin = int(value_to_bin[i])
+    if player_bin < 0 or player_bin >= len(actual_sigma_stops):
+      continue
+    player_bin_sigma = actual_sigma_stops[player_bin]
+    bin_counts[player_bin_sigma] += 1
+
+    if p not in player_counts_by_step:
+      player_counts_by_step[p] = {s: 0 for s in actual_sigma_stops}
+    player_counts_by_step[p][player_bin_sigma] += 1
+
     if p not in player_periods:
       player_periods[p] = 0
     player_periods[p] += 1
 
-    rating_sigma = rating
-    if rating_sigma < sigma_stops[0]:
-      continue
-    for i, r in enumerate(sigma_stops):
-      if rating_sigma < r:
-        bin_counts[i - 1] += 1
-        bin_players[i - 1].append(p)
-        break
-      if rating_sigma == r:
-        bin_counts[i] += 1
-        bin_players[i].append(p)
-        break
-  bin_counts[-2] += bin_counts[-1]
-  bin_players[-2] += bin_players[-1]
-
-  for i, r in enumerate(actual_sigma_stops):
-    metrics_bins[r].append(bin_counts[i])
-
-  for i, r in enumerate(actual_sigma_stops):
-    for p in bin_players[i]:
-      if p not in player_counts_by_step:
-        player_counts_by_step[p] = {}
-        for rs in actual_sigma_stops:
-          player_counts_by_step[p][rs] = 0
-      player_counts_by_step[p][r] += 1
-
-  if BY_MEDAL_PERCENTAGES:
-    for p in player_counts_by_step:
-      for r in player_counts_by_step[p]:
-        player_counts_by_step[p][r] = 100 * player_counts_by_step[p][r] / player_periods[p]
+  for s in actual_sigma_stops:
+    metrics_bins[s].append(bin_counts[s])
 
   if SHOW_BIN_COUNTS:
     s = str(d)
-    for b in bin_counts[ : -1]:
-      s += '\t' + str(b)
+    for b in bin_counts:
+      s += '\t' + str(bin_counts[b])
+    s += '\t' + str(sum(bin_counts.values()))
     print (s)
+
+if BY_MEDAL_PERCENTAGES:
+  for p in player_counts_by_step:
+    for s in player_counts_by_step[p]:
+      player_counts_by_step[p][s] = 100 * player_counts_by_step[p][s] / player_periods[p]
 
 
 reversed_stops = list(reversed(actual_sigma_stops))
