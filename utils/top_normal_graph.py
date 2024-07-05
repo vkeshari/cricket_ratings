@@ -1,6 +1,5 @@
-from common.aggregation import aggregate_values, \
-                                get_aggregate_ratings, \
-                                is_aggregation_window_start
+from common.aggregation import aggregate_values, is_aggregation_window_start, \
+                                get_aggregate_ratings, get_metrics_by_aggregate_window
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
 from common.interval_metrics import get_graph_metrics, get_medal_stats, \
@@ -20,7 +19,7 @@ TYPE = 'batting'
 FORMAT = 't20'
 
 # Graph date range
-START_DATE = date(2021, 1, 1)
+START_DATE = date(2009, 1, 1)
 END_DATE = date(2024, 1, 1)
 SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 
@@ -154,56 +153,13 @@ aggregate_ratings = get_normalized_ratings(aggregate_ratings, dates_to_show)
 
 sigma_stops = np.linspace(MIN_SIGMA, MAX_SIGMA, SIGMA_BINS + 1)
 actual_sigma_stops = sigma_stops[ : -1]
-metrics_bins = {s : [] for s in actual_sigma_stops}
 
-if SHOW_BIN_COUNTS:
-  print('\n=== Player count in each rating sigma bin ===')
-  h = 'AGG START DATE'
-  for b in actual_sigma_stops:
-    h += '\t' + '{b:.2f}'.format(b = b)
-  print(h)
-
-player_counts_by_step = {}
-player_periods = {}
-
-for d in dates_to_show:
-  bin_counts = {s: 0 for s in actual_sigma_stops}
-  ratings_in_range = {k: v for k, v in aggregate_ratings[d].items() if v >= 0}
-
-  values = list(ratings_in_range.values())
-  value_to_bin = np.searchsorted(a = sigma_stops, v = values, side = 'right')
-  value_to_bin = [v - 1 for v in value_to_bin]
-
-  for i, p in enumerate(ratings_in_range.keys()):
-    player_bin = int(value_to_bin[i])
-    if player_bin < 0 or player_bin >= len(actual_sigma_stops):
-      continue
-    player_bin_sigma = actual_sigma_stops[player_bin]
-    bin_counts[player_bin_sigma] += 1
-
-    if p not in player_counts_by_step:
-      player_counts_by_step[p] = {s: 0 for s in actual_sigma_stops}
-    player_counts_by_step[p][player_bin_sigma] += 1
-
-    if p not in player_periods:
-      player_periods[p] = 0
-    player_periods[p] += 1
-
-  for s in actual_sigma_stops:
-    metrics_bins[s].append(bin_counts[s])
-
-  if SHOW_BIN_COUNTS:
-    s = str(d)
-    for b in bin_counts:
-      s += '\t' + str(bin_counts[b])
-    s += '\t' + str(sum(bin_counts.values()))
-    print (s)
-
-if BY_MEDAL_PERCENTAGES:
-  for p in player_counts_by_step:
-    for s in player_counts_by_step[p]:
-      player_counts_by_step[p][s] = 100 * player_counts_by_step[p][s] / player_periods[p]
-
+metrics_bins, player_counts_by_step, player_periods = \
+        get_metrics_by_aggregate_window(aggregate_ratings, stops = sigma_stops, \
+                                        dates = dates_to_show, \
+                                        by_percentage = BY_MEDAL_PERCENTAGES, \
+                                        show_bin_counts = SHOW_BIN_COUNTS, \
+                                        )
 
 reversed_stops = list(reversed(actual_sigma_stops))
 

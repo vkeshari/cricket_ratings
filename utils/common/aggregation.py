@@ -63,3 +63,63 @@ def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, \
                             + str(len(aggregate_ratings)) + " days")
 
   return aggregate_ratings
+
+
+def get_metrics_by_aggregate_window(aggregate_ratings, stops, dates, \
+                                    by_percentage = False, show_bin_counts = False):
+  assert not set(dates) ^ aggregate_ratings.keys(), \
+          "Date mismatch between provided dates and aggregate_ratings"
+
+  actual_stops = stops[ : -1]
+  metrics_bins = {s : [] for s in actual_stops}
+
+  if show_bin_counts:
+    print('\n=== Player count in each rating sigma bin ===')
+    h = 'AGG START DATE'
+    for b in actual_stops:
+      h += '\t' + '{b:.2f}'.format(b = b)
+    print(h)
+
+  player_counts_by_step = {}
+  player_periods = {}
+
+  for d in dates:
+    bin_counts = {s: 0 for s in actual_stops}
+    ratings_in_range = {k: v for k, v in aggregate_ratings[d].items() \
+                            if v >= stops[0] and v <= stops[-1]}
+
+    values = list(ratings_in_range.values())
+    value_to_bin = np.searchsorted(a = stops, v = values, side = 'right')
+    value_to_bin = [v - 1 for v in value_to_bin]
+
+    for i, p in enumerate(ratings_in_range.keys()):
+      player_bin = int(value_to_bin[i])
+      if player_bin < 0 or player_bin >= len(actual_stops):
+        continue
+      player_bin_sigma = actual_stops[player_bin]
+      bin_counts[player_bin_sigma] += 1
+
+      if p not in player_counts_by_step:
+        player_counts_by_step[p] = {s: 0 for s in actual_stops}
+      player_counts_by_step[p][player_bin_sigma] += 1
+
+      if p not in player_periods:
+        player_periods[p] = 0
+      player_periods[p] += 1
+
+    for s in actual_stops:
+      metrics_bins[s].append(bin_counts[s])
+
+    if show_bin_counts:
+      s = str(d)
+      for b in bin_counts:
+        s += '\t' + str(bin_counts[b])
+      s += '\t' + str(sum(bin_counts.values()))
+      print (s)
+
+  if by_percentage:
+    for p in player_counts_by_step:
+      for s in player_counts_by_step[p]:
+        player_counts_by_step[p][s] = 100 * player_counts_by_step[p][s] / player_periods[p]
+
+  return metrics_bins, player_counts_by_step, player_periods
