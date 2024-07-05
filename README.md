@@ -1,4 +1,6 @@
 # cricket_ratings
+> **Note**: You must attribute references to this or any derivative work to the original author.
+
 Crawl data from ICC player rankings website. Create animated graphs of player ratings over time. Aggregate metrics over time. Create graphs for aggregated metrics. Find top players from aggregated metrics.
 > **WARNING:** Code is semi-polished: It does the job but can be refactored to be more efficient and readable.
 
