@@ -1,6 +1,6 @@
 # cricket_ratings
-Crawl data from ICC player rankings website and create animated graphs of player ratings over time.
-> **Warning:** Code is semi-polished: It does the job but can be refactored to be more efficient and readable.
+Crawl data from ICC player rankings website. Create animated graphs of player ratings over time. Aggregate metrics over time. Create graphs for aggregated metrics. Find top players from aggregated metrics.
+> **WARNING:** Code is semi-polished: It does the job but can be refactored to be more efficient and readable.
 
 ### Common Parameters:
 + `FORMAT`: `['test', 'odi', 't20']`
@@ -9,11 +9,11 @@ Crawl data from ICC player rankings website and create animated graphs of player
 + `ALLROUNDERS_GEOM_MEAN`: Use an alternate formula that takes the geometric mean of batting and bowling ratings for a player as their allrounder rating.
 
 ### Recommended start dates by format:
-```
-test: 1901-01-01 for data, 1951-01-01 for graphs
-odi : 1975-01-01 for data, 1981-01-01 for graphs
-t20 : 2007-01-01 for data, 2009-01-01 for graphs
-```
+
++ `test`: `1901-01-01` for data, `1951-01-01` for graphs
++ `odi` : `1975-01-01` for data, `1981-01-01` for graphs
++ `t20` : `2007-01-01` for data, `2009-01-01` for graphs
+
 > **Note:** no international cricket was played during WW1 and WW2. It is recommended to skip years `1913-1920`, `1940-1945` and `2020` for data analysis.
 
 ## Data
@@ -28,14 +28,14 @@ Reads stored ratings data from get_data.py and creates rating timelines, one fil
 > **Known issue:** Two test players from India are named Cottari Nayudu from `1934-01-09` to `1936-12-07`. Data is overwritten.
 
 ## Graphs
-```
-Recommended threshold for bar charts: 500
+
+Recommended threshold for bar charts: `500`
 Recommended thresholds for line charts:
-+ Batting - Test: 750, ODI: 750, T20: 700
-+ Bowling - Test: 700, ODI: 700, T20: 600
-+ Country specific graph - 100 less than usual
-Recommended thresholds for all allrounder charts: 0
-```
++ Batting - Test: `750`, ODI: `750`, T20: `700`
++ Bowling - Test: `700`, ODI: `700`, T20: `600`
++ Country specific graph - `100` less than usual
+Recommended thresholds for all allrounder charts: `0`
+
 
 ### `rating_graph.py`
 Reads player ratings timelines from build_players.py and creates an animated graph of ratings over time.
@@ -56,11 +56,11 @@ Reads player ratings timelines from build_players.py and created an animated his
 
 ## Aggregation
 Aggregate ratings over a window by player or by bin using a numeric measure.
-```
-+ AGGREGATION_WINDOW: ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'] (no aggregation if empty)
-+ PLAYER_AGGREGATE  : ['', 'avg', 'median', 'min', 'max', 'first', 'last']
-+ BIN_AGGREGATE     : ['', 'avg', 'median', 'min', 'max', 'first', 'last']
-```
+
++ `AGGREGATION_WINDOW`: `['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']` (no aggregation if empty)
++ `PLAYER_AGGREGATE`  : `['', 'avg', 'median', 'min', 'max', 'first', 'last']`
++ `BIN_AGGREGATE`     : `['', 'avg', 'median', 'min', 'max', 'first', 'last']`
+
 
 ## Utils
 `./utils/*.py`
@@ -105,7 +105,7 @@ Same as top_ratings_graph.py but uses players' rating ratio vs top rated player 
 + `MIN_RATIO`         : Lower limit of rating ratio for metrics and graph
 + `MAX_RATIO`         : Upper limit of rating ratio for metrics and graph
 + `RATIO_STEP`        : Show metrics and graph at this rating ratio increment
-+ `THRESHOLD_RELATIVE`: Calculate players' rating ratios relative to `THRESHOLD` instead of to 0
++ `THRESHOLD_RELATIVE`: Calculate players' rating ratios relative to `THRESHOLD` instead of to `0`
 
 ### `top_exp_graph.py`
 Same as top_ratings_graph.py but uses a exponential curve fit to aggregated ratings histogram before aggregating player ratings over bins by standard deviation (sigma) for calculations.
@@ -116,7 +116,7 @@ Same as top_ratings_graph.py but uses a exponential curve fit to aggregated rati
 + `BIN_AGGREGATE`: `['', 'avg', 'median', 'min', 'max', 'first', 'last']`
 
 ## DEPRECATED Utils
-> **Note:** There is no guarantee that these will run or produce accurate results.
+> **WARNING:** There is no guarantee that these will run or produce accurate results.
 ### `hist_aggregates.py`
 Aggregates each bin of the histogram of rating distribution over the specified time period, then calculates mean and standard deviation for ratings assuming an exponential distribution of ratings.
 
