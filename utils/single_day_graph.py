@@ -54,7 +54,7 @@ if GRAPH_DATE in daily_ratings:
                             key = lambda item: item[1], reverse = True))
 
   if SHOW_TABLE:
-    print("=== TOP players(" + FORMAT + " " + TYPE + ") on " + str(GRAPH_DATE) + " ===")
+    print("=== TOP players (" + FORMAT + " " + TYPE + ") on " + str(GRAPH_DATE) + " ===")
     print("RANK\tRATING\tPLAYER")
 
     for i, p in enumerate(day_ratings):
@@ -103,7 +103,7 @@ if GRAPH_DATE in daily_ratings:
             alpha = 1, fontsize = 'large', \
             horizontalalignment = 'left', verticalalignment = 'center')
 
-      if rating >= THRESHOLD + (MAX_RATING - THRESHOLD) / 2:
+      if rating >= THRESHOLD + (MAX_RATING - THRESHOLD) * 0.4:
         plt.text(rating + 10, i + 1, \
                   s = str(rating), \
                   alpha = 1, fontsize = 'large', \
