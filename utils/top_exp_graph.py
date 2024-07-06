@@ -200,6 +200,12 @@ def get_exp_medians(daily_ratings):
 exp_medians = get_exp_medians(daily_ratings)
 print(AGGREGATION_WINDOW + " exp medians built")
 
+for i, d in enumerate(dates_to_show):
+  if d.year in SKIP_YEARS:
+    del dates_to_show[i]
+if dates_to_show[-1] == END_DATE:
+  dates_to_show.pop()
+
 
 def get_aggregate_sigmas(aggregate_ratings, exp_medians):
   aggregate_sigmas = {}

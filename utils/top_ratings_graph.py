@@ -131,6 +131,13 @@ aggregate_ratings = get_aggregate_ratings(daily_ratings, agg_dates = dates_to_sh
                                           aggregation_window = AGGREGATION_WINDOW, \
                                           player_aggregate = PLAYER_AGGREGATE)
 
+for i, d in enumerate(dates_to_show):
+  if d.year in SKIP_YEARS:
+    del dates_to_show[i]
+if dates_to_show[-1] == END_DATE:
+  dates_to_show.pop()
+
+
 def filter_by_threshold(aggregate_ratings):
   aggregate_filtered = {}
   for d in aggregate_ratings:
@@ -150,12 +157,6 @@ if SHOW_TOP_STATS:
                   top_players = TOP_PLAYERS, dtype = DTYPE)
 
 if SHOW_TOP_MEDALS or SHOW_GRAPH:
-  for i, d in enumerate(dates_to_show):
-    if d.year in SKIP_YEARS:
-      del dates_to_show[i]
-  if dates_to_show[-1] == END_DATE:
-    dates_to_show.pop()
-
   rating_stops = list(range(THRESHOLD, MAX_RATING, RATING_STEP))
   actual_rating_stops = rating_stops[ : -1]
 
