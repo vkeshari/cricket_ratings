@@ -42,7 +42,7 @@ THRESHOLD_RELATIVE = False
 
 MAX_RATIO = 1.0
 MIN_RATIO = 0.7
-# [0.005, 0.01, 0.02, 0.05, 0.1]
+# [0.01, 0.02, 0.05, 0.1]
 RATIO_STEP = 0.01
 
 RATIO_BINS = round((MAX_RATIO - MIN_RATIO) / RATIO_STEP)
@@ -89,7 +89,7 @@ assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
 
 assert MAX_RATIO == 1.0, "MAX_RATIO must be 1.0"
 assert MIN_RATIO > 0.0 and MIN_RATIO < 1.0, "MIN_RATIO must be between 0.0 and 1.0"
-assert RATIO_STEP in [0.005, 0.01, 0.02, 0.05, 0.1], "Invalid RATIO_STEP provided"
+assert RATIO_STEP in [0.01, 0.02, 0.05, 0.1], "Invalid RATIO_STEP provided"
 
 assert not set(AVG_MEDAL_CUMULATIVE_COUNTS.keys()) - {'gold', 'silver', 'bronze'}, \
       "AVG_MEDAL_CUMULATIVE_COUNTS keys must be gold silver and bronze"
