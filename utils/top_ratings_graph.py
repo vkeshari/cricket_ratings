@@ -39,10 +39,6 @@ AGGREGATION_WINDOW = 'yearly'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 PLAYER_AGGREGATE = 'max'
 
-GRAPH_CUMULATIVES = True
-
-AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
-
 SHOW_BIN_COUNTS = False
 
 SHOW_TOP_STATS = True
@@ -50,12 +46,14 @@ TOP_STATS_SORT = ('max', 'avg')
 
 SHOW_TOP_MEDALS = True
 BY_MEDAL_PERCENTAGES = False
+AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
 SHOW_GRAPH = True
 SHOW_MEDALS = True
 TRIM_EMPTY_ROWS = True
 # ['', 'bronze', 'silver', 'gold']
 TRUNCATE_GRAPH_AT = 'bronze'
+GRAPH_CUMULATIVES = True
 
 TOP_PLAYERS = 25
 

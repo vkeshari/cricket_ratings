@@ -47,10 +47,6 @@ RATIO_STEP = 0.01
 
 RATIO_BINS = round((MAX_RATIO - MIN_RATIO) / RATIO_STEP)
 
-GRAPH_CUMULATIVES = True
-
-AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
-
 SHOW_BIN_COUNTS = False
 
 SHOW_TOP_STATS = True
@@ -58,12 +54,14 @@ TOP_STATS_SORT = ('max', 'avg')
 
 SHOW_TOP_MEDALS = True
 BY_MEDAL_PERCENTAGES = False
+AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
 SHOW_GRAPH = True
 SHOW_MEDALS = True
 TRIM_EMPTY_ROWS = True
 # ['', 'bronze', 'silver', 'gold']
 TRUNCATE_GRAPH_AT = 'bronze'
+GRAPH_CUMULATIVES = True
 
 TOP_PLAYERS = 25
 

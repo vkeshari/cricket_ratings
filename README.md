@@ -40,7 +40,6 @@ Recommended thresholds for line charts:
 
 Recommended thresholds for all allrounder charts: `0`
 
-
 ### `rating_graph.py`
 Reads player ratings timelines from build_players.py and creates an animated graph of ratings over time.
 + `COUNTRY_PREFIX`: Country code (e.g. AUS) or empty for all players.
@@ -59,13 +58,12 @@ Reads player ratings timelines from build_players.py and created an animated his
 + `THRESHOLD` : Minimum rating to show (x-axis min).
 + `BIN_SIZE`  : Group players into bins of this size on histogram.
 
-## Aggregation
+#### Aggregation
 Aggregate ratings over a window by player or by bin using a numeric measure.
 
 + `AGGREGATION_WINDOW`: `['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']` (no aggregation if empty)
 + `PLAYER_AGGREGATE`  : `['', 'avg', 'median', 'min', 'max', 'first', 'last']`
 + `BIN_AGGREGATE`     : `['', 'avg', 'median', 'min', 'max', 'first', 'last']`
-
 
 ## Utils
 `./utils/*.py`
@@ -100,15 +98,27 @@ Compare two or more players over time by name or by rank.
 + `CHANGED_DAYS_CRITERIA` : Only aggregate over days when there was at least one change in ratings, ranks, either or both globally
 + `SKIP_YEARS`        : When calculating aggregates, skip these years when no or little international cricket was played (during WW1, WW2 and COVID-19)
 
-+ `SHOW_GRAPH`        : Self-explanatory
-+ `GRAPH_CUMULATIVES` : Calculate cumulative counts in each bin
-+ `SHOW_MEDALS`       : Show medal thresholds on graph
-+ `TRUNCATE_AT_BRONZE`: Only show part of the graph up to threshold for bronze medal
+#### Debug bin counts
++ `SHOW_BIN_COUNTS`: Show counts for each aggregation window in each bin in range of metric used for scoring
 
-+ `SHOW_TOP_PLAYERS`    : Self-explanatory
-+ `TOP_PLAYERS`         : Only show these many top ranked players
+#### Show top players by stats
++ `SHOW_TOP_STATS`: Show a table of top players by stats over metric used for scoring
++ `TOP_STATS_SORT`: Sort top stats table by these columns
+
+#### Show top players by medals
++ `SHOW_TOP_MEDALS`     : Show a table of top players by medals awarded
 + `BY_MEDAL_PERCENTAGES`: Rank players by percentage of aggregation windows with each medal instead of counts
 + `AVG_MEDAL_CUMULATIVE_COUNTS`: Average no. of cumulative players for each medal
+
+#### Show graph
++ `SHOW_GRAPH`        : Self-explanatory
++ `SHOW_MEDALS`       : Show medal thresholds on graph
++ `TRIM_EMPTY_ROWS`   : Remove rows from the top that have zero players
++ `TRUNCATE_GRAPH_AT` : Only show part of the graph up to threshold for this medal type
++ `GRAPH_CUMULATIVES` : Calculate cumulative counts in each bin
+
+#### Table config
++ `TOP_PLAYERS`         : Only show these many top ranked players in tables
 
 ### `top_ratings_graph.py`
 Aggregates each player's ratings over the specified time period, groups the players into cumulative bins by their rating for a range of all possible ratings, and then shows a graph of cumulative player counts by rating cutoff. Also calculates the most likely cutoffs for each medal.
@@ -144,3 +154,6 @@ Aggregates each player's ratings over the specified time period, calculates thei
 
 ### `top_by_ratio.py`
 Aggregates each player's ratings over the specified time period, calculates their rating's ratio vs the top rated player, groups the players into bins by their rating ratio, and then ranks the players by aggregation window counts where the player appears in bins of decreasing order of ratio values (the ratio values are cutoffs for medals).
+
+### `top_clustering.py`
+Shows results for 1-d clustering with kernel density estimation and gaussian mixture models for each aggregation window.

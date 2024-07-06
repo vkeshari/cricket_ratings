@@ -46,10 +46,6 @@ SIGMA_STEP = 0.05
 
 SIGMA_BINS = round((MAX_SIGMA - MIN_SIGMA) / SIGMA_STEP)
 
-GRAPH_CUMULATIVES = True
-
-AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
-
 SHOW_BIN_COUNTS = False
 
 SHOW_TOP_STATS = True
@@ -57,12 +53,14 @@ TOP_STATS_SORT = ('sum', 'avg')
 
 SHOW_TOP_MEDALS = True
 BY_MEDAL_PERCENTAGES = False
+AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
 SHOW_GRAPH = True
 SHOW_MEDALS = True
 TRIM_EMPTY_ROWS = True
 # ['', 'bronze', 'silver', 'gold']
 TRUNCATE_GRAPH_AT = 'bronze'
+GRAPH_CUMULATIVES = True
 
 TOP_PLAYERS = 25
 
