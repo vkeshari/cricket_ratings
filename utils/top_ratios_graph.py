@@ -52,16 +52,18 @@ GRAPH_CUMULATIVES = True
 AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
 SHOW_BIN_COUNTS = False
-SHOW_GRAPH = True
-SHOW_MEDALS = True
-# ['', 'bronze', 'silver', 'gold']
-TRUNCATE_GRAPH_AT = 'bronze'
+
+SHOW_TOP_STATS = True
+TOP_STATS_SORT = ('max', 'avg')
 
 SHOW_TOP_MEDALS = True
 BY_MEDAL_PERCENTAGES = False
 
-SHOW_TOP_STATS = True
-TOP_STATS_SORT = ('sum', 'avg')
+SHOW_GRAPH = True
+SHOW_MEDALS = True
+TRIM_EMPTY_ROWS = True
+# ['', 'bronze', 'silver', 'gold']
+TRUNCATE_GRAPH_AT = 'bronze'
 
 TOP_PLAYERS = 25
 
@@ -97,8 +99,9 @@ for amcc in AVG_MEDAL_CUMULATIVE_COUNTS.values():
 if SHOW_MEDALS:
   assert SHOW_GRAPH, "SHOW_GRAPH must be enabled if SHOW_MEDALS is enabled"
 assert TRUNCATE_GRAPH_AT in ['', 'bronze', 'silver', 'gold']
-if TRUNCATE_GRAPH_AT:
-  assert SHOW_MEDALS, "SHOW_MEDALS must be enabled if TRUNCATE_GRAPH_AT is enabled"
+if TRIM_EMPTY_ROWS or TRUNCATE_GRAPH_AT:
+  assert SHOW_MEDALS, "SHOW_MEDALS must be enabled if either of" \
+                      + " TRIM_EMPTY_ROWS or TRUNCATE_GRAPH_AT is enabled"
 
 if TOP_STATS_SORT:
   assert SHOW_TOP_STATS, "SHOW_TOP_STATS must be enabled if TOP_STATS_SORT is enabled"
@@ -201,11 +204,18 @@ if SHOW_GRAPH:
                         'DTYPE': DTYPE, \
                         }
 
+  yparams_max = MAX_RATIO
+  if TRIM_EMPTY_ROWS:
+    for i, s in enumerate(reversed_stops):
+      if graph_metrics['lines'][i][1] == 0:
+        yparams_max = s
+      else:
+        break
   if SHOW_MEDALS and TRUNCATE_GRAPH_AT:
     yparams_min = medal_stats[TRUNCATE_GRAPH_AT]['threshold'] - RATIO_STEP
   else:
     yparams_min = MIN_RATIO
-  graph_yparams = {'min': yparams_min, 'max': MAX_RATIO, 'step': RATIO_STEP}
+  graph_yparams = {'min': yparams_min, 'max': yparams_max, 'step': RATIO_STEP}
 
   plot_interval_graph(graph_metrics, stops = reversed_stops, \
                       annotations = graph_annotations, yparams = graph_yparams, \

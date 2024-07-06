@@ -1,15 +1,17 @@
 from matplotlib import pyplot as plt
 
 
-def filter_to_ymin(ymin, graph_metrics, stops):
-  filtered_stops = []
-  for s in stops:
-    if s >= ymin:
-      filtered_stops.append(s)
+def filter_to_yrange(yparams, graph_metrics, stops):
+  filtered_stop_indices = []
+  for i, s in enumerate(stops):
+    if s >= yparams['min'] and s <= yparams['max']:
+      filtered_stop_indices.append(i)
 
+  filtered_stops = [s for i, s in enumerate(stops) if i in filtered_stop_indices]
   filtered_graph_metrics = {}
   for metric in graph_metrics:
-    filtered_graph_metrics[metric] = graph_metrics[metric][ : len(filtered_stops)]
+    filtered_graph_metrics[metric] = [m for i, m in enumerate(graph_metrics[metric]) \
+                                        if i in filtered_stop_indices]
 
   return filtered_graph_metrics, filtered_stops
 
@@ -39,16 +41,16 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
               - annotations.keys(), \
           "Not all annotations provided"
   assert yparams, "No yparams provided"
-  assert not {'min', 'max', 'step'} ^ yparams.keys(), "Not all yparams provided"
+  assert not {'min', 'max', 'step'} ^ yparams.keys(), "yparams must be min, max and step"
   if show_medals:
     assert medal_stats, "No medal_stats provided"
     assert not {'gold', 'silver', 'bronze'} ^ medal_stats.keys(), \
-          "medal_stats keys are not gold, silver and bronze"
+          "medal_stats keys must be gold, silver and bronze"
     for medal in medal_stats:
       for metric in {'threshold', 'exp_num'}:
         assert medal_stats[medal][metric], "No " + metric + " in medal_stats for " + medal
 
-  graph_metrics, stops = filter_to_ymin(yparams['min'], graph_metrics, stops)
+  graph_metrics, stops = filter_to_yrange(yparams, graph_metrics, stops)
 
   resolution = tuple([7.2, 7.2])
   fig, ax = plt.subplots(figsize = resolution)
