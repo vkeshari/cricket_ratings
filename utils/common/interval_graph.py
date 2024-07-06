@@ -39,10 +39,10 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
               - annotations.keys(), \
           "Not all annotations provided"
   assert yparams, "No yparams provided"
-  assert not {'min', 'max', 'step'} - yparams.keys(), "Not all yparams provided"
+  assert not {'min', 'max', 'step'} ^ yparams.keys(), "Not all yparams provided"
   if show_medals:
     assert medal_stats, "No medal_stats provided"
-    assert not {'gold', 'silver', 'bronze'} - medal_stats.keys(), \
+    assert not {'gold', 'silver', 'bronze'} ^ medal_stats.keys(), \
           "medal_stats keys are not gold, silver and bronze"
     for medal in medal_stats:
       for metric in {'threshold', 'exp_num'}:
@@ -126,12 +126,13 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
 
   if show_medals:
     for medal in medal_stats:
-      plot_medal_indicators(medal, \
-                            medal_threshold = medal_stats[medal]['threshold'], \
-                            exp_num = medal_stats[medal]['exp_num'], \
-                            ylims = {'ymin': ymin, 'ymax': ymax}, \
-                            xlims = {'xmax': xmax}
-                            )
+      if ymin < medal_stats[medal]['threshold']:
+        plot_medal_indicators(medal, \
+                              medal_threshold = medal_stats[medal]['threshold'], \
+                              exp_num = medal_stats[medal]['exp_num'], \
+                              ylims = {'ymin': ymin, 'ymax': ymax}, \
+                              xlims = {'xmax': xmax}
+                              )
 
   fig.tight_layout()
   plt.show()

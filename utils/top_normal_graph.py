@@ -3,13 +3,16 @@ from common.aggregation import aggregate_values, is_aggregation_window_start, \
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
 from common.interval_metrics import get_graph_metrics, get_medal_stats, \
-                                    get_player_medals, show_top_players
+                                    get_player_medals, show_top_medals
+from common.player_metrics import get_player_stats, show_top_stats
 from common.output import string_to_date, readable_name_and_country
 
 from datetime import date, timedelta
 from sklearn.preprocessing import power_transform
 
 import numpy as np
+
+DTYPE = 'float'
 
 ONE_DAY = timedelta(days = 1)
 
@@ -39,7 +42,7 @@ PLAYER_AGGREGATE = 'max'
 MAX_SIGMA = 2.5
 MIN_SIGMA = 0.0
 # [0.05, 0.1, 0.2, 0.5]
-SIGMA_STEP = 0.1
+SIGMA_STEP = 0.05
 
 SIGMA_BINS = round((MAX_SIGMA - MIN_SIGMA) / SIGMA_STEP)
 
@@ -50,17 +53,21 @@ AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
 SHOW_MEDALS = True
-TRUNCATE_AT_BRONZE = True
+# ['', 'bronze', 'silver', 'gold']
+TRUNCATE_GRAPH_AT = 'bronze'
 
-SHOW_TOP_PLAYERS = True
-TOP_PLAYERS = 25
+SHOW_TOP_MEDALS = True
 BY_MEDAL_PERCENTAGES = False
 
-EPOCH = date(1900, 1, 1)
+SHOW_TOP_STATS = True
+TOP_STATS_SORT = ('sum', 'avg')
+
+TOP_PLAYERS = 25
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
 
+assert DTYPE in ['int', 'float']
 assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
@@ -83,14 +90,22 @@ assert MIN_SIGMA >= 0.0 and MIN_SIGMA < MAX_SIGMA, \
 assert SIGMA_STEP in [0.05, 0.1, 0.2, 0.5], "Invalid SIGMA_STEP provided"
 
 assert not AVG_MEDAL_CUMULATIVE_COUNTS.keys() ^ {'gold', 'silver', 'bronze'}, \
-    'AVG_MEDAL_CUMULATIVE_COUNTS keys must be gold silver and bronze'
+      "AVG_MEDAL_CUMULATIVE_COUNTS keys must be gold silver and bronze"
 for amcc in AVG_MEDAL_CUMULATIVE_COUNTS.values():
   assert amcc > 0, "All values in AVG_MEDAL_CUMULATIVE_COUNTS must be positive"
 
-assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
+if SHOW_MEDALS:
+  assert SHOW_GRAPH, "SHOW_GRAPH must be enabled if SHOW_MEDALS is enabled"
+assert TRUNCATE_GRAPH_AT in ['', 'bronze', 'silver', 'gold']
+if TRUNCATE_GRAPH_AT:
+  assert SHOW_MEDALS, "SHOW_MEDALS must be enabled if TRUNCATE_GRAPH_AT is enabled"
 
-if TRUNCATE_AT_BRONZE:
-  assert SHOW_MEDALS, "SHOW_MEDALS must be enabled if TRUNCATE_AT_BRONZE is enabled"
+if TOP_STATS_SORT:
+  assert SHOW_TOP_STATS, "SHOW_TOP_STATS must be enabled if TOP_STATS_SORT is enabled"
+  assert not set(TOP_STATS_SORT) - {'span', 'avg', 'max', 'sum'}, \
+      "Invalid sort parameter in TOP_STATS_SORT"
+
+assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
@@ -151,30 +166,37 @@ def get_normalized_ratings(aggregate_ratings, dates_to_show):
 
 aggregate_ratings = get_normalized_ratings(aggregate_ratings, dates_to_show)
 
-sigma_stops = np.linspace(MIN_SIGMA, MAX_SIGMA, SIGMA_BINS + 1)
-actual_sigma_stops = sigma_stops[ : -1]
+if SHOW_TOP_STATS:
+  player_stats = get_player_stats(aggregate_ratings, dates_to_show, \
+                                  top_players = TOP_PLAYERS)
+  show_top_stats(player_stats, sort_by = TOP_STATS_SORT, \
+                  top_players = TOP_PLAYERS, dtype = DTYPE)
 
-metrics_bins, player_counts_by_step, player_periods = \
-        get_metrics_by_stops(aggregate_ratings, stops = sigma_stops, \
-                              dates = dates_to_show, \
-                              by_percentage = BY_MEDAL_PERCENTAGES, \
-                              show_bin_counts = SHOW_BIN_COUNTS, \
-                            )
+if SHOW_TOP_MEDALS or SHOW_GRAPH:
+  sigma_stops = np.linspace(MIN_SIGMA, MAX_SIGMA, SIGMA_BINS + 1)
+  actual_sigma_stops = sigma_stops[ : -1]
 
-reversed_stops = list(reversed(actual_sigma_stops))
+  metrics_bins, player_counts_by_step, player_periods = \
+          get_metrics_by_stops(aggregate_ratings, stops = sigma_stops, \
+                                dates = dates_to_show, \
+                                by_percentage = BY_MEDAL_PERCENTAGES, \
+                                show_bin_counts = SHOW_BIN_COUNTS, \
+                              )
 
-graph_metrics = get_graph_metrics(metrics_bins, stops = reversed_stops, \
-                                  dates = dates_to_show, cumulatives = GRAPH_CUMULATIVES)
+  reversed_stops = list(reversed(actual_sigma_stops))
 
-
-medal_stats = get_medal_stats(graph_metrics, stops = reversed_stops, \
-                              avg_medal_cumulative_counts = AVG_MEDAL_CUMULATIVE_COUNTS)
-
-player_medals = get_player_medals(player_counts_by_step, medal_stats)
+  graph_metrics = get_graph_metrics(metrics_bins, stops = reversed_stops, \
+                                    dates = dates_to_show, cumulatives = GRAPH_CUMULATIVES)
 
 
-if SHOW_TOP_PLAYERS:
-  show_top_players(player_medals, player_periods, top_players = TOP_PLAYERS, \
+  medal_stats = get_medal_stats(graph_metrics, stops = reversed_stops, \
+                                avg_medal_cumulative_counts = AVG_MEDAL_CUMULATIVE_COUNTS)
+
+  player_medals = get_player_medals(player_counts_by_step, medal_stats)
+
+
+if SHOW_TOP_MEDALS:
+  show_top_medals(player_medals, player_periods, top_players = TOP_PLAYERS, \
                     by_percentage = BY_MEDAL_PERCENTAGES)
 
 if SHOW_GRAPH:
@@ -183,11 +205,11 @@ if SHOW_GRAPH:
                         'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
                         'PLAYER_AGGREGATE': PLAYER_AGGREGATE, \
                         'LABEL_KEY': 'std dev', 'LABEL_TEXT': 'Gaussian std devs', \
-                        'DTYPE': 'float', \
+                        'DTYPE': DTYPE, \
                         }
 
-  if SHOW_MEDALS and TRUNCATE_AT_BRONZE:
-    yparams_min = medal_stats['bronze']['threshold'] - SIGMA_STEP
+  if SHOW_MEDALS and TRUNCATE_GRAPH_AT:
+    yparams_min = medal_stats[TRUNCATE_GRAPH_AT]['threshold'] - SIGMA_STEP
   else:
     yparams_min = MIN_SIGMA
   graph_yparams = {'min': yparams_min, 'max': MAX_SIGMA, 'step': SIGMA_STEP}

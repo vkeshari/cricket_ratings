@@ -72,7 +72,7 @@ def get_medal_stats(graph_metrics, stops, avg_medal_cumulative_counts):
   for medal in all_medals:
     medal_stats[medal]['exp_num'] = graph_metrics['avgs'][medal_indices[medal]]
 
-  print()
+  print("\n=== Medal Thresholds ===")
   for medal in all_medals:
     print (medal + ':\t{m:.2f}'.format(m = medal_stats[medal]['threshold']))
 
@@ -106,12 +106,12 @@ def get_player_medals(player_counts_by_step, medal_stats):
   return player_medals
 
 
-def show_top_players(player_medals, player_periods, top_players, by_percentage = False):
-  print('\n=== Top ' + str(top_players) + ' Players ===')
-  print('SPAN,\tMEDALS,\tGOLD,\tSILVER,\tBRONZE,\tPLAYER NAME')
+def show_top_medals(player_medals, player_periods, top_players, by_percentage = False):
+  print('\n=== Top ' + str(top_players) + ' Players by Medals ===')
+  print('RANK\tSPAN,\tMEDALS,\tGOLD,\tSILVER,\tBRONZE,\tPLAYER NAME')
 
   for i, p in enumerate(player_medals):
-    s = str(player_periods[p]) + ','
+    s = str(i + 1) + ',\t' + str(player_periods[p]) + ','
     total_medals = sum(player_medals[p].values())
     if by_percentage:
       s += '\t{v:.2f}'.format(v = total_medals) + ','
@@ -125,5 +125,5 @@ def show_top_players(player_medals, player_periods, top_players, by_percentage =
     s += '\t' + readable_name_and_country(p)
     print (s)
 
-    if i >= top_players:
+    if i >= top_players - 1:
       break
