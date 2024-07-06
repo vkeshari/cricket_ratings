@@ -1,5 +1,5 @@
 from common.data import get_daily_ratings
-from common.output import string_to_date, readable_name_and_country
+from common.output import readable_name_and_country
 
 # ['batting', 'bowling', 'allrounder']
 TYPE = 'batting'
