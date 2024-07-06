@@ -12,6 +12,8 @@ START_DATE = date(2007, 1, 1)
 # Last day of available data
 END_DATE = date(2024, 7, 3)
 
+VALIDATION = True
+
 assert not TYPE - {'batting', 'bowling', 'allrounder'}, "Invalid TYPE provided"
 assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
@@ -124,12 +126,16 @@ def parse_all_dates(typ):
     parse_date(d, typ, FORMAT, player_data)
     d += ONE_DAY
 
-  if validate_data(START_DATE, END_DATE, typ, FORMAT, player_data):
-    print ('VALIDATION SUCCESS')
-    return player_data
-  else:
-    print ('VALIDATION FAILED')
-    return {}
+  if VALIDATION:
+    if validate_data(START_DATE, END_DATE, typ, FORMAT, player_data):
+      print ('VALIDATION SUCCESS')
+      return player_data
+    else:
+      print ('VALIDATION FAILED')
+      return {}
+    else:
+      print ('VALIDATION SKIPPED')
+      return player_data
 
 
 def build_allrounder_data(player_data_by_format):

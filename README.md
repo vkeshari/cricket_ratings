@@ -2,7 +2,6 @@
 > **Note**: You must attribute references to this or any derivative work to the original author.
 
 Crawl data from ICC player rankings website. Create animated graphs of player ratings over time. Aggregate metrics over time. Create graphs for aggregated metrics. Find top players from aggregated metrics.
-> :warning: **WARNING:** Code is semi-polished: It does the job but can be refactored to be more efficient and readable.
 
 ### Common Parameters:
 + `FORMAT`: `['test', 'odi', 't20']`
@@ -21,13 +20,14 @@ Crawl data from ICC player rankings website. Create animated graphs of player ra
 ## Data
 
 ### `get_data.py`
-Crawls ICC player ratings website for data and stores it in CSV format, one file per calendar day.
+Crawls ICC player ratings website for data and stores it in CSV format under `data/`, one file per calendar day.
 + `START_DATE`: Start crawling data from this date. End date is always today's calendar date.
 
 ### `build_players.py`
-Reads stored ratings data from get_data.py and creates rating timelines, one file per player.
+Reads stored ratings data in `data/` and creates rating timelines under `players/`, one file per player.
 + `END_DATE`  : Set it to the last date you have data for.
-> :warning: **Known issue:** Two test players from India are named Cottari Nayudu from `1934-01-09` to `1936-12-07`. Data is overwritten.
++ `VALIDATION`: Validate that built player data in `players/` matches raw data in `data/`
+> :warning: **Known issue:** Two test players from India are named Cottari Nayudu from `1934-01-09` to `1936-12-07`. Data is overwritten if validation is skipped.
 
 ## Graphs
 
@@ -41,7 +41,7 @@ Recommended thresholds for line charts:
 Recommended thresholds for all allrounder charts: `0`
 
 ### `rating_graph.py`
-Reads player ratings timelines from build_players.py and creates an animated graph of ratings over time.
+Reads player ratings timelines from `players/` and creates an animated graph of ratings over time.
 + `COUNTRY_PREFIX`: Country code (e.g. AUS) or empty for all players.
 + `MAX_RATING`    : Maximum rating to show (y-axis max).
 + `THRESHOLD`     : Minimum rating to show (y-axis min).
@@ -53,7 +53,7 @@ Bar charts only:
 + `MIN_RATING_SCALE`: Bars start at this value
 
 ### `rating_histogram.py`
-Reads player ratings timelines from build_players.py and created an animated histogram of rating distribution over time.
+Reads player ratings timelines from `players/` and created an animated histogram of rating distribution over time.
 + `MAX_RATING`: Maximum rating to show (x-axis max).
 + `THRESHOLD` : Minimum rating to show (x-axis min).
 + `BIN_SIZE`  : Group players into bins of this size on histogram.
@@ -68,7 +68,7 @@ Aggregate ratings over a window by player or by bin using a numeric measure.
 ## Utils
 `./utils/*.py`
 > :pencil2: **Note:** Run these from the repository root folder.
-All utils read data from player ratings timelines created by build_players.py
+All utils read data from player ratings timelines in `players/`
 
 ### `top_final_ratings.py`
 Shows players that had the highest ratings at retirement.
