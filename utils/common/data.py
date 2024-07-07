@@ -29,7 +29,7 @@ def get_days_with_change(daily_data, agg_window):
   return changed_days
 
 
-def get_daily_ratings(typ, frmt, changed_days_criteria = [], agg_window = '', \
+def get_daily_ratings(typ, frmt, changed_days_criteria = '', agg_window = '', \
                                   allrounders_geom_mean = False):
   assert typ in ['batting', 'bowling', 'allrounder'], "Invalid type provided"
   assert frmt in ['test', 'odi', 't20'], "Invalid format provided"
