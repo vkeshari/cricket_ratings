@@ -1,4 +1,7 @@
 from datetime import date, datetime
+from matplotlib import cm
+
+import numpy as np
 
 def string_to_date(s):
   dt = datetime.strptime(s, '%Y%m%d')

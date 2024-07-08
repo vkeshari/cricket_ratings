@@ -1,22 +1,23 @@
 from common.data import get_daily_ratings
-from common.output import readable_name_and_country
+from common.output import get_player_colors, readable_name_and_country
 
 from datetime import date
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = 'batting'
+TYPE = 'bowling'
 # ['test', 'odi', 't20']
 FORMAT = 't20'
 PLAYERS_DIR = 'players/' + TYPE + '/' + FORMAT
 
-START_DATE = date(2021, 1, 1)
+START_DATE = date(2009, 1, 1)
 END_DATE = date(2024, 1, 1)
 
 MAX_RATING = 1000
-THRESHOLD = 700
+THRESHOLD = 500
 
 COMPARE_RANKS = [1, 2, 3]
 COMPARE_PLAYERS = []
+COLOR_BY_COUNTRY = False
 
 # ['', 'rating', 'rank', 'either', 'both']
 CHANGED_DAYS_CRITERIA = 'either'
@@ -39,6 +40,9 @@ if COMPARE_RANKS:
   assert not COMPARE_PLAYERS, "Both COMPARE_RANKS and COMPARE_PLAYERS cannot be set"
 if COMPARE_PLAYERS:
   assert not COMPARE_RANKS, "Both COMPARE_RANKS and COMPARE_PLAYERS cannot be set"
+if COLOR_BY_COUNTRY:
+  assert COMPARE_PLAYERS, \
+      "COLOR_BY_COUNTRY can only be set when COMPARE_PLAYERS is provided"
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both'], \
         "Invalid CHANGED_DAYS_CRITERIA"
@@ -103,8 +107,7 @@ print("Compare stats built with " + str(len(compare_stats)) + " keys")
 from matplotlib import pyplot as plt, cm
 import numpy as np
 
-colorscale = cm.tab20
-resolution = tuple([7.2, 7.2])
+resolution = tuple([12.8, 7.2])
 fig, ax = plt.subplots(figsize = resolution)
 
 ax.set_title("Comparison of " + FORMAT + ' ' + TYPE + ' ' + "players" \
@@ -112,8 +115,7 @@ ax.set_title("Comparison of " + FORMAT + ' ' + TYPE + ' ' + "players" \
               fontsize ='xx-large')
 
 if COMPARE_PLAYERS:
-  color_stops = np.linspace(0, 1, len(COMPARE_PLAYERS) + 1)
-  colors = colorscale(color_stops)
+  player_to_color = get_player_colors(COMPARE_PLAYERS, by_country = COLOR_BY_COUNTRY)
 
   for i, p in enumerate(COMPARE_PLAYERS):
     (xs, ys) = [], []
@@ -121,22 +123,37 @@ if COMPARE_PLAYERS:
       (xs, ys) = zip(*compare_stats[p].items())
 
     plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
-                      alpha = 0.5, color = colors[i], label = readable_name_and_country(p))
+                      alpha = 0.5, color = player_to_color[p], \
+                      label = readable_name_and_country(p))
 
 elif COMPARE_RANKS:
-  color_stops = np.linspace(0, 1, len(COMPARE_RANKS) + 1)
-  colors = colorscale(color_stops)
+  colors = list(get_player_colors(COMPARE_RANKS).values())
 
   for i, rank in enumerate(COMPARE_RANKS):
     (xs, ys) = [], []
     if rank in compare_stats:
       (xs, ys) = zip(*compare_stats[rank].items())
 
-    plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
+    plt.plot(xs, ys, linestyle = '-', linewidth = 3, antialiased = True, \
                       alpha = 0.5, color = colors[i], label = 'Rank ' + str(rank))
 
+ax.set_ylabel("Rating", fontsize = 'x-large')
 ax.set_ylim(THRESHOLD, MAX_RATING)
+yticks = range(THRESHOLD, MAX_RATING + 1, 50)
+ax.set_yticks(yticks)
+ax.set_yticklabels([str(y) for y in yticks], fontsize ='large')
+
+ax.set_xlabel("Date", fontsize = 'x-large')
 ax.set_xlim(START_DATE, END_DATE)
+xtick_yr_range = range(START_DATE.year, END_DATE.year + 1)
+if (END_DATE.year - START_DATE.year) > 20:
+  xtick_yr_range = range(START_DATE.year, END_DATE.year + 1, 2)
+if (END_DATE.year - START_DATE.year) > 50:
+  xtick_yr_range = range(START_DATE.year, END_DATE.year + 1, 5)
+xticks = [date(yr, 1, 1) for yr in xtick_yr_range]
+ax.set_xticks(xticks)
+ax.set_xticklabels([str(x.year) for x in xticks], fontsize ='large', rotation = 45)
+
 ax.legend(loc = 'best', fontsize = 'medium')
 ax.grid(True, which = 'both', axis = 'both', alpha = 0.5)
 

@@ -2,7 +2,7 @@ from common.data import get_daily_ratings
 from common.output import get_player_colors, readable_name_and_country
 
 from datetime import date
-from matplotlib import pyplot as plt, cm
+from matplotlib import pyplot as plt
 
 # ['batting', 'bowling', 'allrounder']
 TYPE = 'batting'

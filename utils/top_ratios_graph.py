@@ -57,8 +57,8 @@ BY_MEDAL_PERCENTAGES = False
 AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
 
 SHOW_GRAPH = True
-SHOW_MEDALS = True
 TRIM_EMPTY_ROWS = True
+SHOW_MEDALS = True
 # ['', 'bronze', 'silver', 'gold']
 TRUNCATE_GRAPH_AT = 'bronze'
 GRAPH_CUMULATIVES = True
@@ -97,7 +97,7 @@ for amcc in AVG_MEDAL_CUMULATIVE_COUNTS.values():
 if SHOW_MEDALS:
   assert SHOW_GRAPH, "SHOW_GRAPH must be enabled if SHOW_MEDALS is enabled"
 assert TRUNCATE_GRAPH_AT in ['', 'bronze', 'silver', 'gold']
-if TRIM_EMPTY_ROWS or TRUNCATE_GRAPH_AT:
+if TRUNCATE_GRAPH_AT:
   assert SHOW_MEDALS, "SHOW_MEDALS must be enabled if either of" \
                       + " TRIM_EMPTY_ROWS or TRUNCATE_GRAPH_AT is enabled"
 

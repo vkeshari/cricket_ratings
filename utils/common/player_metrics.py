@@ -48,8 +48,8 @@ def show_top_stats(player_stats, sort_by = 'sum', top_players = 10, dtype = 'flo
     elif dtype == 'int':
       print (str(i + 1) + ',' + '\t' + '{s:2d}'.format(s = stats['span']) + ',' \
                               + '\t' + '{s:3.0f}'.format(s = stats['avg']) + ',' \
-                              + '\t' + '{s:3d}'.format(s = stats['max']) + ',' \
-                              + '\t' + '{s:5d}'.format(s = stats['sum']) + ',' \
+                              + '\t' + '{s:3.0f}'.format(s = stats['max']) + ',' \
+                              + '\t' + '{s:3.0f}'.format(s = stats['sum']) + ',' \
                               + '\t' + readable_name_and_country(p))
     if i >= top_players - 1:
       break
