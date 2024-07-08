@@ -1,5 +1,5 @@
 from common.data import get_daily_ratings
-from common.output import readable_name_and_country
+from common.output import get_timescale_xticks
 
 from datetime import date
 
@@ -84,14 +84,10 @@ ax.set_yticklabels([str(y) for y in yticks], fontsize ='large')
 
 ax.set_xlabel("Date", fontsize = 'x-large')
 ax.set_xlim(START_DATE, END_DATE)
-xtick_yr_range = range(START_DATE.year, END_DATE.year + 1)
-if (END_DATE.year - START_DATE.year) > 20:
-  xtick_yr_range = range(START_DATE.year, END_DATE.year + 1, 2)
-if (END_DATE.year - START_DATE.year) > 50:
-  xtick_yr_range = range(START_DATE.year, END_DATE.year + 1, 5)
-xticks = [date(yr, 1, 1) for yr in xtick_yr_range]
+
+xticks, xticklabels = get_timescale_xticks(START_DATE, END_DATE, format = 'widescreen')
 ax.set_xticks(xticks)
-ax.set_xticklabels([str(x.year) for x in xticks], fontsize ='large', rotation = 45)
+ax.set_xticklabels(xticklabels, fontsize ='large', rotation = 45)
 
 ax.legend(loc = 'best', fontsize = 'medium')
 ax.grid(True, which = 'both', axis = 'both', alpha = 0.5)

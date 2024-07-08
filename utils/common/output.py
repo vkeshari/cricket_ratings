@@ -1,7 +1,9 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from matplotlib import cm
 
 import numpy as np
+
+ONE_DAY = timedelta(days = 1)
 
 def string_to_date(s):
   dt = datetime.strptime(s, '%Y%m%d')
@@ -63,3 +65,30 @@ def get_player_colors(players, by_country = False):
     player_to_color = {p: colors[i] for i, p in enumerate(players)}
 
   return player_to_color
+
+
+def get_timescale_xticks(start_date, end_date, format = 'square'):
+  assert format in ['square', 'widescreen']
+  if format == 'square':
+    counts_to_yr_widths = {1: 1, 10: 2, 25: 5}
+  elif format == 'widescreen':
+    counts_to_yr_widths = {2: 1, 20: 2, 50: 5}
+
+  xtick_yr_range = []
+  for c in counts_to_yr_widths:
+    if (end_date - start_date) > timedelta(days = c * 365):
+      xtick_yr_range = range(start_date.year, end_date.year + 1, counts_to_yr_widths[c])
+
+  if xtick_yr_range:
+    xticks = [date(yr, 1, 1) for yr in xtick_yr_range]
+    xticklabels = [str(x.year) for x in xticks]
+  else:
+    xticks = []
+    d = start_date
+    while d <= end_date:
+      if d.day == 1:
+        xticks.append(d)
+      d += ONE_DAY
+    xticklabels = [str(x.year) + '-' + str(x.month) for x in xticks]
+  
+  return xticks, xticklabels
