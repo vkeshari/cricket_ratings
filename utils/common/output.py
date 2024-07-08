@@ -4,6 +4,7 @@ from matplotlib import cm
 import numpy as np
 
 ONE_DAY = timedelta(days = 1)
+ONE_YEAR = timedelta(days = 365)
 
 def string_to_date(s):
   dt = datetime.strptime(s, '%Y%m%d')
@@ -28,6 +29,9 @@ def country(p):
 
 def readable_name_and_country(p):
   return readable_name(p) + ' (' + country(p) + ')'
+
+def last_name(p):
+  return p.split('.')[0].split('_')[-1]
 
 def get_player_colors(players, by_country = False):
   player_to_color = {}
@@ -76,7 +80,7 @@ def get_timescale_xticks(start_date, end_date, format = 'square'):
 
   xtick_yr_range = []
   for c in counts_to_yr_widths:
-    if (end_date - start_date) > timedelta(days = c * 365):
+    if (end_date - start_date) > c * ONE_YEAR:
       xtick_yr_range = range(start_date.year, end_date.year + 1, counts_to_yr_widths[c])
 
   if xtick_yr_range:
