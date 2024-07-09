@@ -3,11 +3,12 @@ from common.output import get_player_colors, get_timescale_xticks, \
                           country, last_name, readable_name_and_country
 
 from datetime import date
+from matplotlib import pyplot as plt, cm
 from pathlib import Path
 
-# ['batting', 'bowling', 'allrounder']
+# ['', 'batting', 'bowling', 'allrounder']
 TYPE = 'batting'
-# ['test', 'odi', 't20']
+# ['', 'test', 'odi', 't20']
 FORMAT = 't20'
 
 START_DATE = date(2007, 1, 1)
@@ -120,10 +121,6 @@ for typ, frmt in types_and_formats:
   compare_stats = get_compare_stats(daily_ratings, daily_ranks, \
                                     COMPARE_PLAYERS, COMPARE_RANKS, START_DATE, END_DATE)
   print("Compare stats built with " + str(len(compare_stats)) + " keys")
-
-
-  from matplotlib import pyplot as plt, cm
-  import numpy as np
 
   resolution = tuple([12.8, 7.2])
   fig, ax = plt.subplots(figsize = resolution)

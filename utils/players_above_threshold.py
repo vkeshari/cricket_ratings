@@ -2,11 +2,14 @@ from common.data import get_daily_ratings
 from common.output import get_timescale_xticks
 
 from datetime import date
+from matplotlib import pyplot as plt, cm
 from pathlib import Path
 
-# ['batting', 'bowling', 'allrounder']
+import numpy as np
+
+# ['', 'batting', 'bowling', 'allrounder']
 TYPE = 'batting'
-# ['test', 'odi', 't20']
+# ['', 'test', 'odi', 't20']
 FORMAT = 't20'
 
 START_DATE = date(2007, 1, 1)
@@ -79,10 +82,8 @@ for typ, frmt in types_and_formats:
       for rating in daily_ratings[d].values():
         if rating >= t:
           thresholds_to_counts[t][d] += 1
-
-
-  from matplotlib import pyplot as plt, cm
-  import numpy as np
+  print("Counts above thresholds built for " \
+            + str(len(thresholds_to_counts)) + " thresholds")
 
   colorscale = cm.tab20
   resolution = tuple([12.8, 7.2])

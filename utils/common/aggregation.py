@@ -1,5 +1,10 @@
 import numpy as np
 
+from datetime import timedelta
+
+ONE_DAY = timedelta(days = 1)
+
+
 def is_aggregation_window_start(d, agg_window):
   assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
         "Invalid agg_window provided"
@@ -15,8 +20,19 @@ def is_aggregation_window_start(d, agg_window):
                                         and d.year % 10 == 1
 
 
+def get_next_aggregation_window_start(d, agg_window):
+  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
+        "Invalid agg_window provided"
+
+  next_d = d + ONE_DAY
+  while not is_aggregation_window_start(next_d, agg_window):
+    next_d += ONE_DAY
+  return next_d
+
+
 def aggregate_values(values, agg_type):
-  assert agg_type in ['avg', 'median', 'min', 'max', 'first', 'last']
+  assert agg_type in ['avg', 'median', 'min', 'max', 'first', 'last'], \
+        "Invalid agg_type provided"
 
   if not values:
     return 0
@@ -63,6 +79,41 @@ def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, \
                             + str(len(aggregate_ratings)) + " days")
 
   return aggregate_ratings
+
+
+def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
+                                dist_aggregate, bin_stops, normalize_to = 100):
+  assert dist_aggregate in ['avg', 'median', 'min', 'max', 'first', 'last'], \
+        "Invalid dist_aggregate provided"
+
+  aggregate_buckets = {d: [] for d in agg_dates}
+  for d in daily_ratings:
+    if not d in date_to_agg_date:
+      continue
+    bucket = date_to_agg_date[d]
+    distribution_for_date = np.histogram(list(daily_ratings[d].values()), \
+                                            bins = bin_stops \
+                                          )[0]
+    aggregate_buckets[bucket].append(distribution_for_date)
+
+  for d in aggregate_buckets:
+    for dist in aggregate_buckets[d]:
+      total_count = sum(dist)
+      for i, val in enumerate(dist):
+        dist[i] = val * normalize_to / total_count
+
+  aggregated_buckets = {d: [] for d in agg_dates}
+  num_bins = len(bin_stops) - 1
+
+  for d in aggregate_buckets:
+    aggregate_buckets[d] = list(zip(*aggregate_buckets[d]))
+
+  for d in aggregate_buckets:
+    for i in range(num_bins):
+      aggregated_buckets[d].append( \
+                aggregate_values(aggregate_buckets[d][i], dist_aggregate))
+
+  return aggregated_buckets, bin_stops
 
 
 def get_metrics_by_stops(aggregate_ratings, stops, dates, \

@@ -1,3 +1,6 @@
+from common.aggregation import is_aggregation_window_start, \
+                                get_next_aggregation_window_start, \
+                                get_aggregated_distribution
 from common.data import get_daily_ratings
 from common.output import get_player_colors, readable_name_and_country
 
@@ -9,20 +12,25 @@ import numpy as np
 import math
 
 # ['', 'batting', 'bowling', 'allrounder']
-TYPE = ''
+TYPE = 'batting'
 # ['', 'test', 'odi', 't20']
-FORMAT = ''
+FORMAT = 't20'
 
 # Graph dates
-GRAPH_DATES = [date(2024, 7, 1)]
+GRAPH_DATES = [date(2021, 1, 1)]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
 MAX_RATING = 1000
 BIN_SIZE = 50
 
+# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
+AGGREGATION_WINDOW = 'yearly'
+# ['', 'avg', 'median', 'min', 'max', 'first', 'last']
+BIN_AGGREGATE = 'avg'
+
 # ['', 'rating', 'rank', 'either', 'both']
-CHANGED_DAYS_CRITERIA = ''
+CHANGED_DAYS_CRITERIA = 'rating'
 
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
@@ -46,6 +54,11 @@ assert BIN_SIZE >= 10 and BIN_SIZE <= 100, "BIN_SIZE should be between 10 and 10
 assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, \
       "BIN_SIZE should be a factor of ratings range"
 
+assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
+      "Invalid AGGREGATION_WINDOW provided"
+assert BIN_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
+      "Invalid BIN_AGGREGATE provided"
+
 types_and_formats = []
 if TYPE and FORMAT:
   types_and_formats.append((TYPE, FORMAT))
@@ -68,19 +81,26 @@ for typ, frmt in types_and_formats:
                             changed_days_criteria = CHANGED_DAYS_CRITERIA, \
                             allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
+  first_date = min(daily_ratings.keys())
+  last_date = max(daily_ratings.keys())
+
   for graph_date in GRAPH_DATES:
     print (graph_date)
 
-    if graph_date not in daily_ratings:
-      print ("Skipping " + frmt + ' ' + typ + ": Graph date not found in ratings")
-      continue
+    next_d = get_next_aggregation_window_start(graph_date, AGGREGATION_WINDOW)
 
-    day_ratings = daily_ratings[graph_date]
-    day_ratings = [d for d in day_ratings.values() if d >= THRESHOLD and d <= MAX_RATING]
-    num_players = len(day_ratings)
+    date_to_agg_date = {d: graph_date for d in daily_ratings \
+                                if d >= graph_date and d < next_d}
+    bin_stops = list(range(THRESHOLD, MAX_RATING, BIN_SIZE)) + [MAX_RATING]
 
-    bins = range(THRESHOLD, MAX_RATING + 1, BIN_SIZE)
-    bin_counts = np.histogram(day_ratings, bins)[0]
+    aggregated_buckets, bins = get_aggregated_distribution(daily_ratings, \
+                                      agg_dates = [graph_date], \
+                                      date_to_agg_date = date_to_agg_date, \
+                                      dist_aggregate = BIN_AGGREGATE, \
+                                      bin_stops = bin_stops)
+    bin_counts = aggregated_buckets[graph_date]
+
+    num_players = round(sum(bin_counts))
     actual_bins = bins[ : -1]
 
     if SHOW_BIN_COUNTS:
@@ -95,10 +115,11 @@ for typ, frmt in types_and_formats:
       fig, ax = plt.subplots(figsize = resolution)
 
       title_text = "Distribution of " + frmt + " " + typ \
-                    + " players by rating\n" + str(graph_date)
+                    + " players by rating\n" + str(graph_date) \
+                    + '(' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
       ax.set_title(title_text, fontsize ='xx-large')
 
-      ax.set_ylabel('No. of players', fontsize ='x-large')
+      ax.set_ylabel('No. of players (normalized)', fontsize ='x-large')
       ymax = math.ceil(max(bin_counts) / 5) * 5
       if ymax <= 20:
         ytick_size = 1
@@ -122,18 +143,20 @@ for typ, frmt in types_and_formats:
         graph_color = 'blue'
       elif typ == 'bowling':
         graph_color = 'red'
-      ax.hist(day_ratings, bins, align = 'mid', \
+      ax.bar(actual_bins, bin_counts, width = BIN_SIZE, align = 'edge', \
                 color = graph_color, alpha = 0.5)
 
+
       plt.text(MAX_RATING - 10, ymax * 0.95, \
-                s = 'Total players: ' + str(num_players), \
+                s = 'Total players (normalized): ' + str(num_players), \
                 alpha = 1, fontsize = 'x-large', \
                 horizontalalignment = 'right', verticalalignment = 'top')
 
       fig.tight_layout()
 
-      out_filename = 'out/images/hist/singleday/' + str(THRESHOLD) + '_' \
+      out_filename = 'out/images/hist/distagg/' + str(THRESHOLD) + '_' \
                       + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
+                      + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
                       + frmt + '_' + typ + '_' \
                       + str(graph_date.year) + '.png'
 

@@ -1,4 +1,5 @@
 from common.aggregation import aggregate_values, is_aggregation_window_start, \
+                                get_aggregated_distribution, \
                                 get_aggregate_ratings, get_metrics_by_stops
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
@@ -153,32 +154,11 @@ def get_exp_medians(daily_ratings):
 
   exp_bin_stops = list(range(THRESHOLD, MAX_RATING, EXP_BIN_SIZE)) + [MAX_RATING]
 
-  aggregate_buckets = {d: [] for d in dates_to_show}
-  for d in daily_ratings:
-    if not d in date_to_bucket:
-      continue
-    bucket = date_to_bucket[d]
-    distribution_for_date = np.histogram(list(daily_ratings[d].values()), \
-                                            bins = exp_bin_stops \
-                                          )[0]
-    aggregate_buckets[bucket].append(distribution_for_date)
-
-  for d in aggregate_buckets:
-    for dist in aggregate_buckets[d]:
-      total_count = sum(dist)
-      for i, val in enumerate(dist):
-        dist[i] = val * 100 / total_count
-
-  aggregated_buckets = {d: [] for d in dates_to_show}
-  num_bins = len(exp_bin_stops) - 1
-
-  for d in aggregate_buckets:
-    aggregate_buckets[d] = list(zip(*aggregate_buckets[d]))
-
-  for d in aggregate_buckets:
-    for i in range(num_bins):
-      aggregated_buckets[d].append( \
-                aggregate_values(aggregate_buckets[d][i], BIN_AGGREGATE))
+  aggregated_buckets, _ = get_aggregated_distribution( \
+                              daily_ratings, agg_dates = dates_to_show, \
+                              date_to_agg_date = date_to_bucket, \
+                              dist_aggregate = BIN_AGGREGATE, \
+                              bin_stops = exp_bin_stops)
 
   exp_medians = {}
 
