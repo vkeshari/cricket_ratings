@@ -2,14 +2,15 @@ from common.data import get_daily_ratings
 from common.output import get_timescale_xticks
 
 from datetime import date
+from pathlib import Path
 
 # ['batting', 'bowling', 'allrounder']
 TYPE = 'batting'
 # ['test', 'odi', 't20']
 FORMAT = 't20'
 
-START_DATE = date(2009, 1, 1)
-END_DATE = date(2024, 1, 1)
+START_DATE = date(2007, 1, 1)
+END_DATE = date(2024, 7, 1)
 
 MAX_RATING = 1000
 THRESHOLD = 500
@@ -123,14 +124,13 @@ for typ, frmt in types_and_formats:
 
   fig.tight_layout()
 
-  if RATING_STOPS:
-    rating_range_text = ''
-    for r in RATING_STOPS:
-      rating_range_text += '_' str(r)
-  else:
-    rating_range_text = '_' + str(THRESHOLD) + '_' + str(MAX_RATING)
-  out_filename = 'out/images/line' + '_' + frmt + '_' + typ + '_' \
-                  + str(START_DATE.year) + '_' + str(END_DATE.year) + '_' \
-                  + 'aboverating' + rating_range_text + '.png'
+  rating_range_text = ''
+  for r in thresholds_to_plot:
+    rating_range_text += str(r) + '_'
+  out_filename = 'out/images/line/aboverating/' + rating_range_text \
+                  + frmt + '_' + typ + '_' \
+                  + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
+
+  Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
   fig.savefig(out_filename)
   print("Written: " + out_filename)

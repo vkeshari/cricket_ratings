@@ -76,7 +76,7 @@ if GRAPH_DATE in daily_ratings:
     ax.set_title(title_text, fontsize ='xx-large')
 
     ax.set_ylabel('No. of players', fontsize ='x-large')
-    ymax = math.ceil(max(bin_counts) / 10) * 10
+    ymax = math.ceil(max(bin_counts) / 5) * 5
     if ymax <= 20:
       ytick_size = 1
     else:

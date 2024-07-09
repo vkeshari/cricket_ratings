@@ -3,21 +3,22 @@ from common.output import get_player_colors, get_timescale_xticks, \
                           country, last_name, readable_name_and_country
 
 from datetime import date
+from pathlib import Path
 
 # ['batting', 'bowling', 'allrounder']
 TYPE = 'batting'
 # ['test', 'odi', 't20']
 FORMAT = 't20'
 
-START_DATE = date(2009, 1, 1)
-END_DATE = date(2024, 1, 1)
+START_DATE = date(2007, 1, 1)
+END_DATE = date(2024, 7, 1)
 
 MAX_RATING = 1000
 THRESHOLD = 500
 
 COMPARE_RANKS = [1, 2, 3]
 COMPARE_PLAYERS = []
-COLOR_BY_COUNTRY = True
+COLOR_BY_COUNTRY = False
 
 # ['', 'rating', 'rank', 'either', 'both']
 CHANGED_DAYS_CRITERIA = ''
@@ -174,12 +175,14 @@ for typ, frmt in types_and_formats:
   comparison_text = ''
   if COMPARE_PLAYERS:
     for p in COMPARE_PLAYERS:
-      comparison_text += '_' + country(p) + last_name(p)
+      comparison_text += country(p) + last_name(p) + '_'
   elif COMPARE_RANKS:
     for r in COMPARE_RANKS:
-      comparison_text += '_' + str(r)
-  out_filename = 'out/images/line' + '_' + frmt + '_' + typ + '_' \
-                  + str(START_DATE.year) + '_' + str(END_DATE.year) + '_' \
-                  + 'comparison' + comparison_text + '.png'
+      comparison_text += str(r) + '_'
+  out_filename = 'out/images/line/comparison/' + comparison_text \
+                  + frmt + '_' + typ + '_' \
+                  + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
+
+  Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
   fig.savefig(out_filename)
   print("Written: " + out_filename)
