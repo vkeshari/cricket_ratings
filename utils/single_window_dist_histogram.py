@@ -12,7 +12,7 @@ import numpy as np
 import math
 
 # ['', 'batting', 'bowling', 'allrounder']
-TYPE = 'batting'
+TYPE = ''
 # ['', 'test', 'odi', 't20']
 FORMAT = 't20'
 
@@ -75,7 +75,7 @@ else:
 
 for typ, frmt in types_and_formats:
   print (frmt + ' : ' + typ)
-  print (str(THRESHOLD) + ' : ' + str(MAX_RATING))
+  print (str(THRESHOLD) + ' : ' + str(BIN_SIZE) + ' : ' + str(MAX_RATING))
 
   daily_ratings, _ = get_daily_ratings(typ, frmt, \
                             changed_days_criteria = CHANGED_DAYS_CRITERIA, \
@@ -119,7 +119,7 @@ for typ, frmt in types_and_formats:
                     + '(' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
       ax.set_title(title_text, fontsize ='xx-large')
 
-      ax.set_ylabel('No. of players (normalized)', fontsize ='x-large')
+      ax.set_ylabel('No. of players (normalized to 100)', fontsize ='x-large')
       ymax = math.ceil(max(bin_counts) / 5) * 5
       if ymax <= 20:
         ytick_size = 1
@@ -145,12 +145,6 @@ for typ, frmt in types_and_formats:
         graph_color = 'red'
       ax.bar(actual_bins, bin_counts, width = BIN_SIZE, align = 'edge', \
                 color = graph_color, alpha = 0.5)
-
-
-      plt.text(MAX_RATING - 10, ymax * 0.95, \
-                s = 'Total players (normalized): ' + str(num_players), \
-                alpha = 1, fontsize = 'x-large', \
-                horizontalalignment = 'right', verticalalignment = 'top')
 
       fig.tight_layout()
 
