@@ -64,7 +64,7 @@ assert BIN_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
       "Invalid BIN_AGGREGATE provided"
 
 for p in PLOT_PERCENTILES:
-  assert p >= 0 and p <= 100, "Each value in PLOT_PERCENTILES must be between 0 and 100"
+  assert p >= 0 and p < 100, "Each value in PLOT_PERCENTILES must be between 0 and 100"
 if PLOT_PERCENTILES:
   assert THRESHOLD == 0 and MAX_RATING == 1000, \
       "Ratings range must be 0 to 1000 if PLOT_PERCENTILES is provided"
@@ -108,10 +108,34 @@ for typ, frmt in types_and_formats:
                                       date_to_agg_date = date_to_agg_date, \
                                       dist_aggregate = BIN_AGGREGATE, \
                                       bin_stops = bin_stops)
-    bin_counts = aggregated_buckets[graph_date]
 
-    num_players = round(sum(bin_counts))
+    bin_counts = aggregated_buckets[graph_date]
     actual_bins = bins[ : -1]
+    num_players = sum(bin_counts)
+    bin_counts = [b * 100 / num_players for b in bin_counts]
+
+    all_percentiles = {}
+    if PLOT_PERCENTILES:
+      percentile_bin_stops = list(range(THRESHOLD, MAX_RATING)) + [MAX_RATING]
+      percentile_buckets, percentile_bins = get_aggregated_distribution(daily_ratings, \
+                                      agg_dates = [graph_date], \
+                                      date_to_agg_date = date_to_agg_date, \
+                                      dist_aggregate = BIN_AGGREGATE, \
+                                      bin_stops = percentile_bin_stops)
+
+      percentile_bin_counts = percentile_buckets[graph_date]
+      percentile_bins = percentile_bins[ : -1]
+      num_percentile_players = sum(percentile_bin_counts)
+      percentile_bin_counts = [b * 100 / num_percentile_players \
+                                  for b in percentile_bin_counts]
+
+      for p in PLOT_PERCENTILES:
+        cum_sum = 0
+        for i, b in enumerate(percentile_bins):
+          cum_sum += percentile_bin_counts[i]
+          if cum_sum >= p:
+            all_percentiles[p] = b
+            break
 
     if SHOW_BIN_COUNTS:
       print("=== Bin counts (" + frmt + " " + typ + ") on " + str(graph_date) + " ===")
@@ -156,17 +180,16 @@ for typ, frmt in types_and_formats:
       ax.bar(actual_bins, bin_counts, width = BIN_SIZE, align = 'edge', \
                 color = graph_color, alpha = 0.5)
 
-      for i, p in enumerate(PLOT_PERCENTILES):
-        p_val = np.percentile(a = [b + BIN_SIZE / 2 for b in actual_bins],
-                              q = p, weights = bin_counts, method = 'inverted_cdf')
+      for i, p in enumerate(all_percentiles):
+        p_val = all_percentiles[p]
+        p_text = 'p' + str(p) + ': ' + '{v:3.0f}'.format(v = p_val)
         y_ratio = 0.95 - 0.05 * i
+
         plt.axvline(x = p_val, ymax = y_ratio, \
                     linestyle = ':', color = 'black', alpha = 0.8)
         plt.text(p_val + 5, y_ratio * ymax, \
-                  s = 'p' + str(p) + ': ' + '{v:3.0f}'.format(v = p_val), \
-                  color = 'black', alpha = 0.9, fontsize = 'large', \
+                  s = p_text, color = 'black', alpha = 0.9, fontsize = 'large', \
                   horizontalalignment = 'left', verticalalignment = 'center')
-
 
       fig.tight_layout()
 
