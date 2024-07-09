@@ -30,6 +30,15 @@ def get_next_aggregation_window_start(d, agg_window):
   return next_d
 
 
+def date_to_aggregation_date(dates, aggregation_dates):
+  bin_by_date = np.searchsorted(aggregation_dates, dates, side = 'right')
+  date_to_aggregation_date = {}
+  for i, d in enumerate(dates):
+    if bin_by_date[i] > 0:
+      date_to_aggregation_date[d] = aggregation_dates[bin_by_date[i] - 1]
+  return date_to_aggregation_date
+
+
 def aggregate_values(values, agg_type):
   assert agg_type in ['avg', 'median', 'min', 'max', 'first', 'last'], \
         "Invalid agg_type provided"

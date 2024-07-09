@@ -1,5 +1,5 @@
 from common.aggregation import aggregate_values, is_aggregation_window_start, \
-                                get_aggregated_distribution, \
+                                date_to_aggregation_date, get_aggregated_distribution, \
                                 get_aggregate_ratings, get_metrics_by_stops
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
@@ -136,14 +136,11 @@ while d <= last_date:
     dates_to_show.append(d)
   d += ONE_DAY
 
-bin_by_date = np.searchsorted(dates_to_show, list(daily_ratings.keys()), side = 'right')
-date_to_bucket = {}
-for i, d in enumerate(daily_ratings.keys()):
-  if bin_by_date[i] > 0:
-    date_to_bucket[d] = dates_to_show[bin_by_date[i] - 1]
+date_to_aggregation_date = date_to_aggregation_date(dates = list(daily_ratings.keys()), \
+                                                    aggregation_dates = dates_to_show)
 
 aggregate_ratings = get_aggregate_ratings(daily_ratings, agg_dates = dates_to_show, \
-                                          date_to_agg_date = date_to_bucket, \
+                                          date_to_agg_date = date_to_aggregation_date, \
                                           aggregation_window = AGGREGATION_WINDOW, \
                                           player_aggregate = PLAYER_AGGREGATE)
 
@@ -156,7 +153,7 @@ def get_exp_medians(daily_ratings):
 
   aggregated_buckets, _ = get_aggregated_distribution( \
                               daily_ratings, agg_dates = dates_to_show, \
-                              date_to_agg_date = date_to_bucket, \
+                              date_to_agg_date = date_to_aggregation_date, \
                               dist_aggregate = BIN_AGGREGATE, \
                               bin_stops = exp_bin_stops)
 
