@@ -70,7 +70,7 @@ Aggregate ratings over a window by player or by bin using a numeric measure.
 > :pencil2: **Note:** Run these from the repository root folder.
 All utils read data from player ratings timelines in `players/`
 
-### `top_final_ratings.py`
+### `final_ratings.py`
 Shows players that had the highest ratings at retirement.
 + `MAX_PLAYERS`  : Self-explanatory
 + `BY_FINAL_RANK`: Sort by final rank instead of final rating

@@ -17,7 +17,7 @@ TYPE = ''
 FORMAT = 't20'
 
 # Graph dates
-GRAPH_DATES = [date(2021, 1, 1)]
+GRAPH_DATES = [date(2010, 1, 1)]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
@@ -25,7 +25,7 @@ MAX_RATING = 1000
 BIN_SIZE = 50
 
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
-AGGREGATION_WINDOW = 'yearly'
+AGGREGATION_WINDOW = 'decadal'
 # ['', 'avg', 'median', 'min', 'max', 'first', 'last']
 BIN_AGGREGATE = 'avg'
 
@@ -34,6 +34,7 @@ CHANGED_DAYS_CRITERIA = 'rating'
 
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
+PLOT_PERCENTILES = []
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -43,6 +44,9 @@ if TYPE:
 if FORMAT:
   assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
 assert GRAPH_DATES, "GRAPH_DATES is empty"
+for gd in GRAPH_DATES:
+  assert is_aggregation_window_start(gd, AGGREGATION_WINDOW), \
+      "Invalid " + AGGREGATION_WINDOW + " aggregation start date: " + str(gd)
 
 assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
 assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
@@ -58,6 +62,12 @@ assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'd
       "Invalid AGGREGATION_WINDOW provided"
 assert BIN_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
       "Invalid BIN_AGGREGATE provided"
+
+for p in PLOT_PERCENTILES:
+  assert p >= 0 and p <= 100, "Each value in PLOT_PERCENTILES must be between 0 and 100"
+if PLOT_PERCENTILES:
+  assert THRESHOLD == 0 and MAX_RATING == 1000, \
+      "Ratings range must be 0 to 1000 if PLOT_PERCENTILES is provided"
 
 types_and_formats = []
 if TYPE and FORMAT:
@@ -145,6 +155,18 @@ for typ, frmt in types_and_formats:
         graph_color = 'red'
       ax.bar(actual_bins, bin_counts, width = BIN_SIZE, align = 'edge', \
                 color = graph_color, alpha = 0.5)
+
+      for i, p in enumerate(PLOT_PERCENTILES):
+        p_val = np.percentile(a = [b + BIN_SIZE / 2 for b in actual_bins],
+                              q = p, weights = bin_counts, method = 'inverted_cdf')
+        y_ratio = 0.95 - 0.05 * i
+        plt.axvline(x = p_val, ymax = y_ratio, \
+                    linestyle = ':', color = 'black', alpha = 0.8)
+        plt.text(p_val + 5, y_ratio * ymax, \
+                  s = 'p' + str(p) + ': ' + '{v:3.0f}'.format(v = p_val), \
+                  color = 'black', alpha = 0.9, fontsize = 'large', \
+                  horizontalalignment = 'left', verticalalignment = 'center')
+
 
       fig.tight_layout()
 

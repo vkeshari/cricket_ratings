@@ -1,3 +1,4 @@
+from common.aggregation import aggregate_values
 from common.data import get_daily_ratings
 from common.output import get_player_colors, readable_name_and_country
 
@@ -11,10 +12,10 @@ import math
 # ['', 'batting', 'bowling', 'allrounder']
 TYPE = ''
 # ['', 'test', 'odi', 't20']
-FORMAT = ''
+FORMAT = 't20'
 
 # Graph dates
-GRAPH_DATES = [date(2024, 7, 1)]
+GRAPH_DATES = [date(2024, 1, 1)]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
@@ -26,6 +27,8 @@ CHANGED_DAYS_CRITERIA = ''
 
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
+# ['avg', 'median', 'p90', ... ] (See common.aggregation.aggregate_values)
+PLOT_STATS = []
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -45,6 +48,10 @@ assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 assert BIN_SIZE >= 10 and BIN_SIZE <= 100, "BIN_SIZE should be between 10 and 100"
 assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, \
       "BIN_SIZE should be a factor of ratings range"
+
+if PLOT_STATS:
+  assert THRESHOLD == 0 and MAX_RATING == 1000, \
+      "Ratings range must be 0 to 1000 if PLOT_STATS is provided"
 
 types_and_formats = []
 if TYPE and FORMAT:
@@ -76,7 +83,8 @@ for typ, frmt in types_and_formats:
       continue
 
     day_ratings = daily_ratings[graph_date]
-    day_ratings = [d for d in day_ratings.values() if d >= THRESHOLD and d <= MAX_RATING]
+    day_ratings = [d for d in day_ratings.values() \
+                      if d > 0 and d >= THRESHOLD and d <= MAX_RATING]
     num_players = len(day_ratings)
 
     bins = range(THRESHOLD, MAX_RATING + 1, BIN_SIZE)
@@ -124,6 +132,16 @@ for typ, frmt in types_and_formats:
         graph_color = 'red'
       ax.hist(day_ratings, bins, align = 'mid', \
                 color = graph_color, alpha = 0.5)
+
+      for i, s in enumerate(PLOT_STATS):
+        s_loc = aggregate_values(day_ratings, s)
+        y_ratio = 0.95 - 0.05 * i
+        plt.axvline(x = s_loc, ymax = y_ratio, \
+                    linestyle = ':', color = 'black', alpha = 0.8)
+        plt.text(s_loc + 5, y_ratio * ymax, \
+                  s = s + ': ' + '{v:3.0f}'.format(v = s_loc), \
+                  color = 'black', alpha = 0.9, fontsize = 'large', \
+                  horizontalalignment = 'left', verticalalignment = 'center')
 
       plt.text(MAX_RATING - 10, ymax * 0.95, \
                 s = 'Total players: ' + str(num_players), \

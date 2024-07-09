@@ -17,7 +17,7 @@ def is_aggregation_window_start(d, agg_window):
       or agg_window == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
       or agg_window == 'yearly' and d.day == 1 and d.month == 1 \
       or agg_window == 'decadal' and d.day == 1 and d.month == 1 \
-                                        and d.year % 10 == 1
+                                        and d.year % 10 == 0
 
 
 def get_next_aggregation_window_start(d, agg_window):
@@ -40,7 +40,8 @@ def date_to_aggregation_date(dates, aggregation_dates):
 
 
 def aggregate_values(values, agg_type):
-  assert agg_type in ['avg', 'median', 'min', 'max', 'first', 'last'], \
+  assert agg_type in ['avg', 'median', 'min', 'max', 'first', 'last', \
+                      'p10', 'p20', 'p25', 'p50', 'p75', 'p80', 'p90'], \
         "Invalid agg_type provided"
 
   if not values:
@@ -48,8 +49,6 @@ def aggregate_values(values, agg_type):
 
   if agg_type == 'avg':
     return np.average(values)
-  if agg_type == 'median':
-    return np.percentile(values, 50, method = 'nearest')
   if agg_type == 'min':
     return min(values)
   if agg_type == 'max':
@@ -58,6 +57,21 @@ def aggregate_values(values, agg_type):
     return values[0]
   if agg_type == 'last':
     return values[-1]
+
+  if agg_type == 'p10':
+    return np.percentile(values, 10, method = 'nearest')
+  if agg_type == 'p20':
+    return np.percentile(values, 20, method = 'nearest')
+  if agg_type == 'p25':
+    return np.percentile(values, 25, method = 'nearest')
+  if agg_type == 'p50' or agg_type == 'median':
+    return np.percentile(values, 50, method = 'nearest')
+  if agg_type == 'p75':
+    return np.percentile(values, 75, method = 'nearest')
+  if agg_type == 'p80':
+    return np.percentile(values, 80, method = 'nearest')
+  if agg_type == 'p90':
+    return np.percentile(values, 90, method = 'nearest')
 
 
 def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, \
@@ -91,7 +105,8 @@ def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, \
 
 
 def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
-                                dist_aggregate, bin_stops, normalize_to = 100):
+                                dist_aggregate, bin_stops, normalize_to = 100, \
+                                ignore_zero_ratings = True):
   assert dist_aggregate in ['avg', 'median', 'min', 'max', 'first', 'last'], \
         "Invalid dist_aggregate provided"
 
@@ -100,9 +115,10 @@ def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
     if not d in date_to_agg_date:
       continue
     bucket = date_to_agg_date[d]
-    distribution_for_date = np.histogram(list(daily_ratings[d].values()), \
-                                            bins = bin_stops \
-                                          )[0]
+    ratings_for_day = list(daily_ratings[d].values())
+    if ignore_zero_ratings:
+      ratings_for_day = [r for r in ratings_for_day if r > 0]
+    distribution_for_date = np.histogram(ratings_for_day, bins = bin_stops)[0]
     aggregate_buckets[bucket].append(distribution_for_date)
 
   for d in aggregate_buckets:
