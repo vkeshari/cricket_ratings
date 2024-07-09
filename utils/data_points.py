@@ -5,11 +5,11 @@ from datetime import date
 # ['batting', 'bowling', 'allrounder']
 TYPE = ''
 # ['test', 'odi', 't20']
-FORMAT = 't20'
+FORMAT = 'test'
 PLAYERS_DIR = 'players/' + TYPE + '/' + FORMAT
 
-START_DATE = date(2009, 1, 1)
-END_DATE = date(2024, 1, 1)
+START_DATE = date(1901, 1, 1)
+END_DATE = date(2024, 7, 1)
 
 MAX_RATING = 1000
 THRESHOLD = 0
@@ -57,7 +57,8 @@ for typ, frmt in types_and_formats:
                             allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
   total_points = 0
   for d in daily_ratings:
-    total_points += len(daily_ratings[d].values())
+    day_ratings = [r for r in daily_ratings[d].values() if r > 0]
+    total_points += len(day_ratings)
 
   rating_days = sorted(daily_ratings.keys())
   print ("First date:\t" + str(rating_days[0]))

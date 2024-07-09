@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 
 # ['', 'batting', 'bowling', 'allrounder']
-TYPE = 'batting'
+TYPE = ''
 # ['', 'test', 'odi', 't20']
 FORMAT = 't20'
 
