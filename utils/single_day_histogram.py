@@ -1,6 +1,6 @@
-from common.aggregation import aggregate_values
 from common.data import get_daily_ratings
 from common.output import get_player_colors, readable_name_and_country
+from common.stats import get_stats_for_list
 
 from datetime import date
 from matplotlib import pyplot as plt
@@ -27,7 +27,7 @@ CHANGED_DAYS_CRITERIA = ''
 
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
-# ['avg', 'median', 'p90', ... ] (See common.aggregation.aggregate_values)
+# ['avg', 'median', 'p90', ... ] (See common.stats.get_stats_for_list)
 PLOT_STATS = []
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
@@ -134,7 +134,7 @@ for typ, frmt in types_and_formats:
                 color = graph_color, alpha = 0.5)
 
       for i, s in enumerate(PLOT_STATS):
-        s_loc = aggregate_values(day_ratings, s)
+        s_loc = get_stats_for_list(day_ratings, s)
         y_ratio = 0.95 - 0.05 * i
         plt.axvline(x = s_loc, ymax = y_ratio, \
                     linestyle = ':', color = 'black', alpha = 0.8)

@@ -1,6 +1,8 @@
-import numpy as np
+from common.stats import get_stats_for_list
 
 from datetime import timedelta
+
+import numpy as np
 
 ONE_DAY = timedelta(days = 1)
 
@@ -39,41 +41,6 @@ def date_to_aggregation_date(dates, aggregation_dates):
   return date_to_aggregation_date
 
 
-def aggregate_values(values, agg_type):
-  assert agg_type in ['avg', 'median', 'min', 'max', 'first', 'last', \
-                      'p10', 'p20', 'p25', 'p50', 'p75', 'p80', 'p90'], \
-        "Invalid agg_type provided"
-
-  if not values:
-    return 0
-
-  if agg_type == 'avg':
-    return np.average(values)
-  if agg_type == 'min':
-    return min(values)
-  if agg_type == 'max':
-    return max(values)
-  if agg_type == 'first':
-    return values[0]
-  if agg_type == 'last':
-    return values[-1]
-
-  if agg_type == 'p10':
-    return np.percentile(values, 10, method = 'nearest')
-  if agg_type == 'p20':
-    return np.percentile(values, 20, method = 'nearest')
-  if agg_type == 'p25':
-    return np.percentile(values, 25, method = 'nearest')
-  if agg_type == 'p50' or agg_type == 'median':
-    return np.percentile(values, 50, method = 'nearest')
-  if agg_type == 'p75':
-    return np.percentile(values, 75, method = 'nearest')
-  if agg_type == 'p80':
-    return np.percentile(values, 80, method = 'nearest')
-  if agg_type == 'p90':
-    return np.percentile(values, 90, method = 'nearest')
-
-
 def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, \
                           aggregation_window, player_aggregate):
   assert aggregation_window in ['monthly', 'quarterly', 'halfyearly', \
@@ -96,7 +63,8 @@ def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, \
   aggregate_ratings = {d: {} for d in agg_dates}
   for d in aggregate_buckets:
     for p in aggregate_buckets[d]:
-      aggregate_ratings[d][p] = aggregate_values(aggregate_buckets[d][p], player_aggregate)
+      aggregate_ratings[d][p] = get_stats_for_list(aggregate_buckets[d][p], \
+                                                      stat_type = player_aggregate)
   
   print(aggregation_window + " aggregate ratings built for " \
                             + str(len(aggregate_ratings)) + " days")
@@ -135,8 +103,8 @@ def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
 
   for d in aggregate_buckets:
     for i in range(num_bins):
-      aggregated_buckets[d].append( \
-                aggregate_values(aggregate_buckets[d][i], dist_aggregate))
+      aggregated_buckets[d].append(get_stats_for_list(aggregate_buckets[d][i], \
+                                                      stat_type = dist_aggregate))
 
   return aggregated_buckets, bin_stops
 

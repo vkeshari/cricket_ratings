@@ -3,6 +3,7 @@ from common.aggregation import is_aggregation_window_start, \
                                 get_aggregated_distribution
 from common.data import get_daily_ratings
 from common.output import get_player_colors, readable_name_and_country
+from common.stats import fit_exp_curve, normalize_array
 
 from datetime import date
 from matplotlib import pyplot as plt
@@ -22,7 +23,7 @@ GRAPH_DATES = [date(2010, 1, 1)]
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
 MAX_RATING = 1000
-BIN_SIZE = 50
+BIN_SIZE = 100
 
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
 AGGREGATION_WINDOW = 'decadal'
@@ -35,6 +36,7 @@ CHANGED_DAYS_CRITERIA = 'rating'
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
 PLOT_PERCENTILES = []
+FIT_CURVE = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -111,31 +113,40 @@ for typ, frmt in types_and_formats:
 
     bin_counts = aggregated_buckets[graph_date]
     actual_bins = bins[ : -1]
-    num_players = sum(bin_counts)
-    bin_counts = [b * 100 / num_players for b in bin_counts]
+    bin_counts = normalize_array(bin_counts)
 
-    all_percentiles = {}
-    if PLOT_PERCENTILES:
-      percentile_bin_stops = list(range(THRESHOLD, MAX_RATING)) + [MAX_RATING]
-      percentile_buckets, percentile_bins = get_aggregated_distribution(daily_ratings, \
+    if PLOT_PERCENTILES or FIT_CURVE:
+      stats_bin_size = (MAX_RATING - THRESHOLD) / 100
+      stats_bin_stops = np.linspace(THRESHOLD, MAX_RATING, 101)
+      stats_buckets, stats_bins = get_aggregated_distribution(daily_ratings, \
                                       agg_dates = [graph_date], \
                                       date_to_agg_date = date_to_agg_date, \
                                       dist_aggregate = BIN_AGGREGATE, \
-                                      bin_stops = percentile_bin_stops)
+                                      bin_stops = stats_bin_stops)
 
-      percentile_bin_counts = percentile_buckets[graph_date]
-      percentile_bins = percentile_bins[ : -1]
-      num_percentile_players = sum(percentile_bin_counts)
-      percentile_bin_counts = [b * 100 / num_percentile_players \
-                                  for b in percentile_bin_counts]
+      stats_bin_counts = normalize_array(stats_buckets[graph_date])
+      stats_bins = stats_bins[ : -1]
 
+    all_percentiles = {}
+    if PLOT_PERCENTILES:
       for p in PLOT_PERCENTILES:
         cum_sum = 0
-        for i, b in enumerate(percentile_bins):
-          cum_sum += percentile_bin_counts[i]
+        for i, b in enumerate(stats_bins):
+          cum_sum += stats_bin_counts[i]
           if cum_sum >= p:
             all_percentiles[p] = b
             break
+
+    xs_fit, ys_fit, fit_mean = [], [], 0
+    if FIT_CURVE:
+      xs_fit = range(THRESHOLD, MAX_RATING)
+      ys_fit, exp_mean, cov = fit_exp_curve(xs = stats_bins, ys = stats_bin_counts, \
+                                            xs_new = xs_fit, \
+                                            xs_range = (THRESHOLD, MAX_RATING))
+      ys_fit = [y * (BIN_SIZE / stats_bin_size) for y in ys_fit]
+      fit_mean = round(exp_mean)
+      print("Exp mean: " + str(fit_mean))
+
 
     if SHOW_BIN_COUNTS:
       print("=== Bin counts (" + frmt + " " + typ + ") on " + str(graph_date) + " ===")
@@ -183,7 +194,7 @@ for typ, frmt in types_and_formats:
       for i, p in enumerate(all_percentiles):
         p_val = all_percentiles[p]
         p_text = 'p' + str(p) + ': ' + '{v:3.0f}'.format(v = p_val)
-        y_ratio = 0.95 - 0.05 * i
+        y_ratio = 0.9 - 0.05 * i
 
         plt.axvline(x = p_val, ymax = y_ratio, \
                     linestyle = ':', color = 'black', alpha = 0.8)
@@ -191,10 +202,19 @@ for typ, frmt in types_and_formats:
                   s = p_text, color = 'black', alpha = 0.9, fontsize = 'large', \
                   horizontalalignment = 'left', verticalalignment = 'center')
 
+      plt.plot(xs_fit, ys_fit, linewidth = 3, \
+                color = 'black', alpha = 0.5, antialiased = True)
+      if fit_mean > 0:
+        plt.axvline(x = fit_mean, linestyle = '--', color = 'black', alpha = 0.5)
+        plt.text(fit_mean - 5, 0.95 * ymax, s = 'Exp mean: ' + str(fit_mean), \
+                  color = 'green', alpha = 0.9, fontsize = 'large', \
+                  horizontalalignment = 'right', verticalalignment = 'center')
+
       fig.tight_layout()
 
       out_filename = 'out/images/hist/distagg/' + str(THRESHOLD) + '_' \
                       + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
+                      + ('FIT_' if FIT_CURVE else '') \
                       + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
                       + frmt + '_' + typ + '_' \
                       + str(graph_date.year) + '.png'

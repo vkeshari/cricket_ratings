@@ -1,4 +1,4 @@
-from common.aggregation import aggregate_values, is_aggregation_window_start, \
+from common.aggregation import is_aggregation_window_start, \
                                 date_to_aggregation_date, get_aggregated_distribution, \
                                 get_aggregate_ratings, get_metrics_by_stops
 from common.data import get_daily_ratings

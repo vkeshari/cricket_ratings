@@ -1,4 +1,4 @@
-from common.aggregation import aggregate_values, is_aggregation_window_start, \
+from common.aggregation import is_aggregation_window_start, \
                                 get_aggregate_ratings, get_metrics_by_stops
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph

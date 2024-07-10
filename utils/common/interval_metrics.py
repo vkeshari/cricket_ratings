@@ -1,19 +1,21 @@
 from common.output import readable_name_and_country
+from common.stats import get_stats_for_list
 
 import numpy as np
 
 
 def get_graph_stats(data):
   outer_interval = {}
-  outer_interval['start'] = np.percentile(data, 10, method = 'nearest')
-  outer_interval['end'] = np.percentile(data, 90, method = 'nearest')
+  outer_interval['start'] = get_stats_for_list(data, stat_type = 'p10')
+  outer_interval['end'] = get_stats_for_list(data, stat_type = 'p90')
   outer_interval['width'] = outer_interval['end'] - outer_interval['start']
   inner_interval = {}
-  inner_interval['start'] = np.percentile(data, 25, method = 'nearest')
-  inner_interval['end'] = np.percentile(data, 75, method = 'nearest')
+  inner_interval['start'] = get_stats_for_list(data, stat_type = 'p25')
+  inner_interval['end'] = get_stats_for_list(data, stat_type = 'p75')
   inner_interval['width'] = inner_interval['end'] - inner_interval['start']
+  
   line = (min(data), max(data))
-  avg = np.average(data)
+  avg = get_stats_for_list(data, stat_type = 'avg')
 
   return outer_interval, inner_interval, line, avg
 
