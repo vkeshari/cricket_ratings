@@ -1,3 +1,4 @@
+from fitter import Fitter
 from scipy.optimize import curve_fit
 
 import numpy as np
@@ -41,6 +42,25 @@ def get_stats_for_list(values, stat_type):
 def normalize_array(values, normalize_to = 100):
   sum_values = sum(values)
   return [v * normalize_to / sum_values for v in values]
+
+
+def fit_dist_to_hist(bin_counts, bins, bin_width, range = (0, 1), scale_bins = 1):
+  all_vals = []
+  rng = np.random.default_rng()
+  for i, b in enumerate(bins):
+    vals = rng.integers(low = b, high = b + bin_width, \
+                        size = round(bin_counts[i] * scale_bins))
+    scaled_vals = [(v - range[0]) / (range[1] - range[0]) for v in vals]
+    all_vals.append(scaled_vals)
+  all_vals = np.concatenate(all_vals)
+  print ("Data points for fit: " + str(len(all_vals)))
+
+  fit = Fitter(all_vals)
+  fit.fit()
+  print ("Fit complete!")
+
+  print(fit.summary(Nbest = 50, method = 'ks_statistic'))
+  return fit
 
 
 def exp_func(x, a, b):

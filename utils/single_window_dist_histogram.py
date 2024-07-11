@@ -2,7 +2,6 @@ from common.aggregation import is_aggregation_window_start, \
                                 get_next_aggregation_window_start, \
                                 get_aggregated_distribution
 from common.data import get_daily_ratings
-from common.output import get_player_colors, readable_name_and_country
 from common.stats import fit_exp_curve, normalize_array
 
 from datetime import date
@@ -23,7 +22,7 @@ GRAPH_DATES = [date(2010, 1, 1)]
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
 MAX_RATING = 1000
-BIN_SIZE = 100
+BIN_SIZE = 50
 
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
 AGGREGATION_WINDOW = 'decadal'
@@ -35,8 +34,10 @@ CHANGED_DAYS_CRITERIA = 'rating'
 
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
-PLOT_PERCENTILES = []
+PLOT_PERCENTILES = [50, 75, 90, 95]
+PERCENTILE_FRACTIONS = True
 FIT_CURVE = False
+FIXED_YMAX = True
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -53,6 +54,7 @@ for gd in GRAPH_DATES:
 assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
 assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
       "THRESHOLD must be between 0 and MAX_RATING"
+assert (MAX_RATING - THRESHOLD) % 100 == 0, "Range of ratings must be a multiple of 100"
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
@@ -68,8 +70,9 @@ assert BIN_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
 for p in PLOT_PERCENTILES:
   assert p >= 0 and p < 100, "Each value in PLOT_PERCENTILES must be between 0 and 100"
 if PLOT_PERCENTILES:
-  assert THRESHOLD == 0 and MAX_RATING == 1000, \
-      "Ratings range must be 0 to 1000 if PLOT_PERCENTILES is provided"
+  assert PERCENTILE_FRACTIONS or THRESHOLD == 0 and MAX_RATING == 1000, \
+      "If PLOT_PERCENTILES is provided, either PRECENTILE_FRACTIONS must be set or " \
+          + "ratings range must be 0 to 1000"
 
 types_and_formats = []
 if TYPE and FORMAT:
@@ -149,11 +152,13 @@ for typ, frmt in types_and_formats:
 
 
     if SHOW_BIN_COUNTS:
-      print("=== Bin counts (" + frmt + " " + typ + ") on " + str(graph_date) + " ===")
+      print("=== " + AGGREGATION_WINDOW + " " + BIN_AGGREGATE \
+            + " bin counts (" + frmt + " " + typ + ") on " + str(graph_date) + " ===")
       print("BIN\tCOUNT")
 
       for i, b in enumerate(actual_bins):
-        print ('{b:3d}\t{bc:3d}'.format(b = b, bc = bin_counts[i]))
+        print ('{b:3d}\t{bc:5.2f}'.format(b = b, bc = bin_counts[i]))
+      print ("TOTAL:\t{t:5.2f}".format(t = sum(bin_counts)))
 
     if SHOW_GRAPH:
       resolution = tuple([7.2, 7.2])
@@ -165,12 +170,18 @@ for typ, frmt in types_and_formats:
       ax.set_title(title_text, fontsize ='xx-large')
 
       ax.set_ylabel('No. of players (normalized to 100)', fontsize ='x-large')
-      ymax = math.ceil(max(bin_counts) / 5) * 5
+
+      if FIXED_YMAX:
+        ymax = int(BIN_SIZE / 2)
+      else:
+        ymax = math.ceil(max(bin_counts) / 5) * 5
+      ax.set_ylim(0, ymax)
+
       if ymax <= 20:
         ytick_size = 1
       else:
         ytick_size = 2
-      ax.set_ylim(0, ymax)
+
       yticks = range(0, ymax + 1, ytick_size)
       ax.set_yticks(yticks)
       ax.set_yticklabels([str(y) for y in yticks], fontsize ='large')
@@ -193,7 +204,11 @@ for typ, frmt in types_and_formats:
 
       for i, p in enumerate(all_percentiles):
         p_val = all_percentiles[p]
-        p_text = 'p' + str(p) + ': ' + '{v:3.0f}'.format(v = p_val)
+        if PERCENTILE_FRACTIONS:
+          p_text = 'pf' + str(p) + ': ' \
+                    + '{v:4.2f}'.format(v = (p_val - THRESHOLD) / (MAX_RATING - THRESHOLD))
+        else:
+          p_text = 'p' + str(p) + ': ' + '{v:3.0f}'.format(v = p_val)
         y_ratio = 0.9 - 0.05 * i
 
         plt.axvline(x = p_val, ymax = y_ratio, \
@@ -214,6 +229,7 @@ for typ, frmt in types_and_formats:
 
       out_filename = 'out/images/hist/distagg/' + str(THRESHOLD) + '_' \
                       + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
+                      + ('PF_' if PLOT_PERCENTILES and PERCENTILE_FRACTIONS else '') \
                       + ('FIT_' if FIT_CURVE else '') \
                       + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
                       + frmt + '_' + typ + '_' \

@@ -1,5 +1,4 @@
 from common.data import get_daily_ratings
-from common.output import get_player_colors, readable_name_and_country
 from common.stats import get_stats_for_list
 
 from datetime import date

@@ -8,7 +8,7 @@ TYPE = ''
 FORMAT = 'test'
 PLAYERS_DIR = 'players/' + TYPE + '/' + FORMAT
 
-START_DATE = date(1901, 1, 1)
+START_DATE = date(1975, 1, 1)
 END_DATE = date(2024, 7, 1)
 
 MAX_RATING = 1000
@@ -16,6 +16,9 @@ THRESHOLD = 0
 
 # ['', 'rating', 'rank', 'either', 'both']
 CHANGED_DAYS_CRITERIA = 'rating'
+
+BY_DECADE = True
+BY_YEAR = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -55,12 +58,44 @@ for typ, frmt in types_and_formats:
   daily_ratings, _ = get_daily_ratings(typ, frmt, \
                             changed_days_criteria = CHANGED_DAYS_CRITERIA, \
                             allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
+
+  rating_days = sorted(daily_ratings.keys())
   total_points = 0
-  for d in daily_ratings:
+  for d in rating_days:
     day_ratings = [r for r in daily_ratings[d].values() if r > 0]
     total_points += len(day_ratings)
 
-  rating_days = sorted(daily_ratings.keys())
-  print ("First date:\t" + str(rating_days[0]))
-  print ("Last date:\t" + str(rating_days[-1]))
+  first_date = rating_days[0]
+  last_date = rating_days[-1]
+  print()
+  print ("First date:\t" + str(first_date))
+  print ("Last date:\t" + str(last_date))
+  print()
   print ("Total data points:\t{v}".format(v = total_points))
+
+  if BY_DECADE:
+    first_decade = int(first_date.year / 10) * 10
+    last_decade = int(last_date.year / 10) * 10
+    by_decade = {d: 0 for d in range(first_decade, last_decade + 1, 10)}
+    for d in rating_days:
+      decade = int(d.year / 10) * 10
+      day_ratings = [r for r in daily_ratings[d].values() if r > 0]
+      by_decade[decade] += len(day_ratings)
+    print()
+    print("DECADE\tData Points")
+    for d in by_decade:
+      print("{d:4d}:\t{c:6d}".format(d = d, c = by_decade[d]))
+
+  if BY_YEAR:
+    first_year = first_date.year
+    last_year = last_date.year
+    by_year = {d: 0 for d in range(first_year, last_year + 1)}
+    for d in rating_days:
+      day_ratings = [r for r in daily_ratings[d].values() if r > 0]
+      by_year[d.year] += len(day_ratings)
+    print()
+    print("YEAR\tData Points")
+    for y in by_year:
+      print("{y:4d}:\t{c:6d}".format(y = y, c = by_year[y]))
+
+  print()
