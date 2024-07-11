@@ -34,7 +34,7 @@ CHANGED_DAYS_CRITERIA = 'rating'
 
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
-PLOT_PERCENTILES = [50, 75, 90, 95]
+PLOT_PERCENTILES = [50, 75, 90]
 PERCENTILE_FRACTIONS = True
 FIT_CURVE = False
 FIXED_YMAX = True
@@ -95,9 +95,6 @@ for typ, frmt in types_and_formats:
   daily_ratings, _ = get_daily_ratings(typ, frmt, \
                             changed_days_criteria = CHANGED_DAYS_CRITERIA, \
                             allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
-
-  first_date = min(daily_ratings.keys())
-  last_date = max(daily_ratings.keys())
 
   for graph_date in GRAPH_DATES:
     print (graph_date)

@@ -5,7 +5,7 @@ import numpy as np
 
 
 def get_stats_for_list(values, stat_type):
-  assert stat_type in ['avg', 'median', 'min', 'max', 'first', 'last', \
+  assert stat_type in ['avg', 'std', 'median', 'min', 'max', 'first', 'last', \
                       'p10', 'p20', 'p25', 'p50', 'p75', 'p80', 'p90'], \
         "Invalid stat_type provided"
 
@@ -14,6 +14,8 @@ def get_stats_for_list(values, stat_type):
 
   if stat_type == 'avg':
     return np.average(values)
+  if stat_type == 'std':
+    return np.std(values)
   if stat_type == 'min':
     return min(values)
   if stat_type == 'max':
