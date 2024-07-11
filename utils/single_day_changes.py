@@ -107,7 +107,6 @@ if SHOW_GRAPH:
 
   title = 'Distribution of daily rating changes: ' + FORMAT + ' ' + TYPE \
           + '\n' + str(START_DATE) + ' to ' + str(END_DATE)
-
   ax.set_title(title, fontsize ='xx-large')
 
   ax.set_xlabel('Daily Rating Change', fontsize ='x-large')

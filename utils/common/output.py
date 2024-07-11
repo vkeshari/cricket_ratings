@@ -74,9 +74,9 @@ def get_player_colors(players, by_country = False):
 def get_timescale_xticks(start_date, end_date, format = 'square'):
   assert format in ['square', 'widescreen']
   if format == 'square':
-    counts_to_yr_widths = {1: 1, 10: 2, 25: 5}
+    counts_to_yr_widths = {1: 1, 10: 2, 25: 5, 50: 10}
   elif format == 'widescreen':
-    counts_to_yr_widths = {2: 1, 20: 2, 50: 5}
+    counts_to_yr_widths = {2: 1, 20: 2, 50: 5, 100: 10}
 
   xtick_yr_range = []
   for c in counts_to_yr_widths:
