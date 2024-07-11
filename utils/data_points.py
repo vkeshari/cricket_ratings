@@ -5,7 +5,7 @@ from datetime import date
 # ['batting', 'bowling', 'allrounder']
 TYPE = ''
 # ['test', 'odi', 't20']
-FORMAT = 'test'
+FORMAT = 'odi'
 PLAYERS_DIR = 'players/' + TYPE + '/' + FORMAT
 
 START_DATE = date(1975, 1, 1)
