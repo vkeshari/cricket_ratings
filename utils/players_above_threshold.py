@@ -110,6 +110,8 @@ for typ, frmt in types_and_formats:
                                               agg_window = PLOT_AVERAGES, \
                                               start_date = START_DATE, \
                                               end_date = END_DATE)
+    agg_window_size = aggregation_dates[1] - aggregation_dates[0]
+
     date_to_agg_date = \
             date_to_aggregation_date(dates = list(agg_daily_ratings.keys()), \
                                       aggregation_dates = aggregation_dates)
@@ -132,6 +134,8 @@ for typ, frmt in types_and_formats:
         thresholds_to_avgs[t][d] = \
                 get_stats_for_list(thresholds_to_window_counts[t][d], 'avg')
 
+    print("Aggregate stats built with " + str(len(thresholds_to_avgs)) + " keys")
+
 
   resolution = tuple([12.8, 7.2])
   fig, ax = plt.subplots(figsize = resolution)
@@ -143,28 +147,26 @@ for typ, frmt in types_and_formats:
   colors = get_colors_from_scale(len(thresholds_to_plot))
 
   ymax = 9
+  for t in thresholds_to_counts:
+    ymax = max(ymax, max(thresholds_to_counts[t].values()))
+  ymax += 1
+
   for i, t in enumerate(thresholds_to_counts):
     (xs, ys) = zip(*thresholds_to_counts[t].items())
-    ymax = max(ymax, max(thresholds_to_counts[t].values()))
-
     plt.plot(xs, ys, linestyle = '-', linewidth = 3, antialiased = True, \
                       alpha = 0.3, color = colors[i], label = "Rating >= " + str(t))
 
-    if PLOT_AVERAGE_RATINGS and t in PLOT_AVERAGE_RATINGS:
-      for j, d in enumerate(aggregation_dates[ : -1]):
-        if d not in thresholds_to_avgs[t]:
-          continue
-        xs = (d, aggregation_dates[j + 1])
-        ys = (thresholds_to_avgs[t][d], thresholds_to_avgs[t][d])
-        plt.plot(xs, ys, linestyle = '-', linewidth = 10, antialiased = True, \
-                        alpha = 0.5, color = colors[i])
+    if PLOT_AVERAGE_RATINGS and t in thresholds_to_avgs:
+      ax.barh(y = thresholds_to_avgs[t].values(), width = agg_window_size, \
+              align = 'center', left = thresholds_to_avgs[t].keys(), \
+              height = ymax / 40, color = colors[i], alpha = 0.5)
 
   ax.set_ylabel("No. of players above rating", fontsize = 'x-large')
-  ax.set_ylim(0, ymax + 1)
+  ax.set_ylim(0, ymax)
   if ymax <= 10:
-    yticks = range(0, ymax + 1)
+    yticks = range(0, ymax)
   else:
-    yticks = range(0, ymax + 1, 5)
+    yticks = range(0, ymax, 5)
   ax.set_yticks(yticks)
   ax.set_yticklabels([str(y) for y in yticks], fontsize ='large')
 

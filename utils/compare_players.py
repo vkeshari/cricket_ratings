@@ -141,14 +141,12 @@ for typ, frmt in types_and_formats:
     days_with_change = get_days_with_change(daily_ratings, PLOT_AVERAGES)
     agg_daily_ratings = {d: v for d, v in daily_ratings.items() if d in days_with_change}
 
-    agg_daily_ratings, _ = get_daily_ratings(typ, frmt, \
-                                changed_days_criteria = 'rating', \
-                                allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
-
     aggregation_dates = get_aggregation_dates(agg_daily_ratings, \
                                               agg_window = PLOT_AVERAGES, \
                                               start_date = START_DATE, \
                                               end_date = END_DATE)
+    agg_window_size = aggregation_dates[1] - aggregation_dates[0]
+
     date_to_agg_date = \
             date_to_aggregation_date(dates = list(agg_daily_ratings.keys()), \
                                       aggregation_dates = aggregation_dates)
@@ -169,6 +167,8 @@ for typ, frmt in types_and_formats:
     for k in keys_to_window_counts:
       for d in keys_to_window_counts[k]:
         keys_to_avgs[k][d] = get_stats_for_list(keys_to_window_counts[k][d], 'avg')
+
+    print("Aggregate stats built with " + str(len(keys_to_avgs)) + " keys")
 
 
   resolution = tuple([12.8, 7.2])
@@ -191,13 +191,10 @@ for typ, frmt in types_and_formats:
                         label = readable_name_and_country(p))
 
       if PLOT_AVERAGE_KEYS and p in keys_to_avgs:
-        for j, d in enumerate(aggregation_dates[ : -1]):
-          if d not in keys_to_avgs[p]:
-            continue
-          xs = (d, aggregation_dates[j + 1])
-          ys = (keys_to_avgs[p][d], keys_to_avgs[p][d])
-          plt.plot(xs, ys, linestyle = '-', linewidth = 10, antialiased = True, \
-                          alpha = 0.5, color = player_to_color[p])
+        ax.barh(y = keys_to_avgs[p].values(), width = agg_window_size, \
+                align = 'center', left = keys_to_avgs[p].keys(), \
+                height = (MAX_RATING - THRESHOLD) / 40, \
+                color = player_to_color[p], alpha = 0.5)
 
   elif COMPARE_RANKS:
     colors = get_colors_from_scale(len(COMPARE_RANKS))
@@ -211,13 +208,10 @@ for typ, frmt in types_and_formats:
                         alpha = 0.3, color = colors[i], label = 'Rank ' + str(rank))
 
       if PLOT_AVERAGE_KEYS and rank in keys_to_avgs:
-        for j, d in enumerate(aggregation_dates[ : -1]):
-          if d not in keys_to_avgs[rank]:
-            continue
-          xs = (d, aggregation_dates[j + 1])
-          ys = (keys_to_avgs[rank][d], keys_to_avgs[rank][d])
-          plt.plot(xs, ys, linestyle = '-', linewidth = 10, antialiased = True, \
-                          alpha = 0.5, color = colors[i])
+        ax.barh(y = keys_to_avgs[rank].values(), width = agg_window_size, \
+                align = 'center', left = keys_to_avgs[rank].keys(), \
+                height = (MAX_RATING - THRESHOLD) / 40, \
+                color = colors[i], alpha = 0.5)
 
   ax.set_ylabel("Rating", fontsize = 'x-large')
   ax.set_ylim(THRESHOLD, MAX_RATING)
