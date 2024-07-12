@@ -8,7 +8,8 @@ ONE_DAY = timedelta(days = 1)
 
 
 def is_aggregation_window_start(d, agg_window):
-  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
+  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
+                            'yearly', 'fiveyearly', 'decadal'], \
         "Invalid agg_window provided"
 
   if not agg_window:
@@ -18,12 +19,15 @@ def is_aggregation_window_start(d, agg_window):
       or agg_window == 'quarterly' and d.day == 1 and d.month in [1, 4, 7, 10] \
       or agg_window == 'halfyearly' and d.day == 1 and d.month in [1, 7] \
       or agg_window == 'yearly' and d.day == 1 and d.month == 1 \
+      or agg_window == 'fiveyearly' and d.day == 1 and d.month == 1 \
+                                        and d.year % 5 == 0 \
       or agg_window == 'decadal' and d.day == 1 and d.month == 1 \
                                         and d.year % 10 == 0
 
 
 def get_next_aggregation_window_start(d, agg_window):
-  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
+  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
+                          'fiveyearly', 'yearly', 'decadal'], \
         "Invalid agg_window provided"
 
   next_d = d + ONE_DAY
@@ -41,11 +45,25 @@ def date_to_aggregation_date(dates, aggregation_dates):
   return date_to_aggregation_date
 
 
-def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, \
-                          aggregation_window, player_aggregate):
-  assert aggregation_window in ['monthly', 'quarterly', 'halfyearly', \
-                                    'yearly', 'decadal'], \
-        "Invalid aggregation_window provided"
+def get_aggregation_dates(daily_ratings, agg_window, start_date, end_date):
+  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
+                          'fiveyearly', 'yearly', 'decadal'], \
+        "Invalid agg_window provided"
+
+  first_date = min(daily_ratings.keys())
+  last_date = max(daily_ratings.keys())
+
+  aggregation_dates = []
+  d = first_date
+  while d <= last_date:
+    if d >= start_date and d <= end_date and is_aggregation_window_start(d, agg_window):
+      aggregation_dates.append(d)
+    d += ONE_DAY
+
+  return aggregation_dates
+
+
+def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, player_aggregate):
   assert player_aggregate in ['avg', 'median', 'min', 'max', 'first', 'last'], \
         "Invalid player_aggregate provided"
 
@@ -66,8 +84,7 @@ def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, \
       aggregate_ratings[d][p] = get_stats_for_list(aggregate_buckets[d][p], \
                                                       stat_type = player_aggregate)
   
-  print(aggregation_window + " aggregate ratings built for " \
-                            + str(len(aggregate_ratings)) + " days")
+  print("Aggregate ratings built for " + str(len(aggregate_ratings)) + " days")
 
   return aggregate_ratings
 

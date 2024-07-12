@@ -1,4 +1,5 @@
 from common.aggregation import is_aggregation_window_start, \
+                                get_aggregation_dates, date_to_aggregation_date, \
                                 get_aggregate_ratings, get_metrics_by_stops
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
@@ -107,26 +108,12 @@ daily_ratings, _ = get_daily_ratings(TYPE, FORMAT, \
                           agg_window = AGGREGATION_WINDOW, \
                           allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
-first_date = min(daily_ratings.keys())
-last_date = max(daily_ratings.keys())
-
-dates_to_show = []
-d = first_date
-while d <= last_date:
-  if d >= START_DATE and d <= END_DATE \
-          and is_aggregation_window_start(d, AGGREGATION_WINDOW):
-    dates_to_show.append(d)
-  d += ONE_DAY
-
-bin_by_date = np.searchsorted(dates_to_show, list(daily_ratings.keys()), side = 'right')
-date_to_bucket = {}
-for i, d in enumerate(daily_ratings.keys()):
-  if bin_by_date[i] > 0:
-    date_to_bucket[d] = dates_to_show[bin_by_date[i] - 1]
+dates_to_show = get_aggregation_dates(daily_ratings, agg_window = AGGREGATION_WINDOW, \
+                                      start_date = START_DATE, end_date = END_DATE)
+date_to_agg_date = date_to_aggregation_date(daily_ratings.keys(), dates_to_show)
 
 aggregate_ratings = get_aggregate_ratings(daily_ratings, agg_dates = dates_to_show, \
-                                          date_to_agg_date = date_to_bucket, \
-                                          aggregation_window = AGGREGATION_WINDOW, \
+                                          date_to_agg_date = date_to_agg_date, \
                                           player_aggregate = PLAYER_AGGREGATE)
 
 for i, d in enumerate(dates_to_show):

@@ -35,7 +35,7 @@ CHANGED_DAYS_CRITERIA = 'rating'
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
 PLOT_PERCENTILES = [50, 75, 90]
-PERCENTILE_FRACTIONS = True
+RATING_FRACTIONS = True
 FIT_CURVE = False
 FIXED_YMAX = True
 
@@ -70,7 +70,7 @@ assert BIN_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
 for p in PLOT_PERCENTILES:
   assert p >= 0 and p < 100, "Each value in PLOT_PERCENTILES must be between 0 and 100"
 if PLOT_PERCENTILES:
-  assert PERCENTILE_FRACTIONS or THRESHOLD == 0 and MAX_RATING == 1000, \
+  assert RATING_FRACTIONS or THRESHOLD == 0 and MAX_RATING == 1000, \
       "If PLOT_PERCENTILES is provided, either PRECENTILE_FRACTIONS must be set or " \
           + "ratings range must be 0 to 1000"
 
@@ -201,7 +201,7 @@ for typ, frmt in types_and_formats:
 
       for i, p in enumerate(all_percentiles):
         p_val = all_percentiles[p]
-        if PERCENTILE_FRACTIONS:
+        if RATING_FRACTIONS:
           p_text = 'pf' + str(p) + ': ' \
                     + '{v:4.2f}'.format(v = (p_val - THRESHOLD) / (MAX_RATING - THRESHOLD))
         else:
@@ -226,7 +226,7 @@ for typ, frmt in types_and_formats:
 
       out_filename = 'out/images/hist/distagg/' + str(THRESHOLD) + '_' \
                       + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
-                      + ('PF_' if PLOT_PERCENTILES and PERCENTILE_FRACTIONS else '') \
+                      + ('PF_' if PLOT_PERCENTILES and RATING_FRACTIONS else '') \
                       + ('FIT_' if FIT_CURVE else '') \
                       + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
                       + frmt + '_' + typ + '_' \

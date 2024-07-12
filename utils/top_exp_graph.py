@@ -1,5 +1,6 @@
 from common.aggregation import is_aggregation_window_start, \
-                                date_to_aggregation_date, get_aggregated_distribution, \
+                                get_aggregation_dates, date_to_aggregation_date, \
+                                get_aggregated_distribution, \
                                 get_aggregate_ratings, get_metrics_by_stops
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
@@ -125,23 +126,13 @@ daily_ratings, _ = get_daily_ratings(TYPE, FORMAT, \
                           agg_window = AGGREGATION_WINDOW, \
                           allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
-first_date = min(daily_ratings.keys())
-last_date = max(daily_ratings.keys())
-
-dates_to_show = []
-d = first_date
-while d <= last_date:
-  if d >= START_DATE and d <= END_DATE \
-          and is_aggregation_window_start(d, AGGREGATION_WINDOW):
-    dates_to_show.append(d)
-  d += ONE_DAY
-
-date_to_aggregation_date = date_to_aggregation_date(dates = list(daily_ratings.keys()), \
+dates_to_show = get_aggregation_dates(daily_ratings, agg_window = AGGREGATION_WINDOW, \
+                                      start_date = START_DATE, end_date = END_DATE)
+date_to_agg_date = date_to_aggregation_date(dates = list(daily_ratings.keys()), \
                                                     aggregation_dates = dates_to_show)
 
 aggregate_ratings = get_aggregate_ratings(daily_ratings, agg_dates = dates_to_show, \
-                                          date_to_agg_date = date_to_aggregation_date, \
-                                          aggregation_window = AGGREGATION_WINDOW, \
+                                          date_to_agg_date = date_to_agg_date, \
                                           player_aggregate = PLAYER_AGGREGATE)
 
 
@@ -153,7 +144,7 @@ def get_exp_medians(daily_ratings):
 
   aggregated_buckets, _ = get_aggregated_distribution( \
                               daily_ratings, agg_dates = dates_to_show, \
-                              date_to_agg_date = date_to_aggregation_date, \
+                              date_to_agg_date = date_to_agg_date, \
                               dist_aggregate = BIN_AGGREGATE, \
                               bin_stops = exp_bin_stops)
 
