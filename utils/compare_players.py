@@ -26,9 +26,6 @@ for i, p in enumerate(COMPARE_PLAYERS):
 
 COLOR_BY_COUNTRY = False
 
-# ['', 'rating', 'rank', 'either', 'both']
-CHANGED_DAYS_CRITERIA = ''
-
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'fiveyearly', 'decadal']
 PLOT_AVERAGES = 'yearly'
 PLOT_AVERAGE_KEYS = COMPARE_RANKS
@@ -56,9 +53,6 @@ if COMPARE_PLAYERS:
 if COLOR_BY_COUNTRY:
   assert COMPARE_PLAYERS, \
       "COLOR_BY_COUNTRY can only be set when COMPARE_PLAYERS is provided"
-
-assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both'], \
-        "Invalid CHANGED_DAYS_CRITERIA"
 
 if PLOT_AVERAGE_KEYS:
   assert PLOT_AVERAGES, "PLOT_AVERAGE_KEYS provided but no PLOT_AVERAGES"
@@ -128,8 +122,7 @@ for typ, frmt in types_and_formats:
 
     return compare_stats
 
-  daily_ratings, daily_ranks = get_daily_ratings(typ, frmt, \
-                                    changed_days_criteria = CHANGED_DAYS_CRITERIA, \
+  daily_ratings, daily_ranks = get_daily_ratings(typ, frmt, changed_days_criteria = '', \
                                     allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
   compare_stats = get_compare_stats(daily_ratings, daily_ranks, \

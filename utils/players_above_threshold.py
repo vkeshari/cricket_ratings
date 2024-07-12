@@ -24,16 +24,13 @@ RATING_STEP = 100
 RATING_STOPS = []
 
 if RATING_STOPS:
-  thresholds_to_plot = RATING_STOPS
+  THRESHOLDS_TO_PLOT = RATING_STOPS
 else:
-  thresholds_to_plot = range(THRESHOLD, MAX_RATING, RATING_STEP)
+  THRESHOLDS_TO_PLOT = range(THRESHOLD, MAX_RATING, RATING_STEP)
 
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'fiveyearly', 'decadal']
 PLOT_AVERAGES = 'yearly'
-PLOT_AVERAGE_RATINGS = thresholds_to_plot
-
-# ['', 'rating', 'rank', 'either', 'both']
-CHANGED_DAYS_CRITERIA = ''
+PLOT_AVERAGE_RATINGS = THRESHOLDS_TO_PLOT
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -56,15 +53,14 @@ for r in RATING_STOPS:
   assert r >= THRESHOLD and r <= MAX_RATING, \
       "All values in RATING_STOPS must be between THRESHOLD and MAX_RATING"
 
+assert THRESHOLDS_TO_PLOT, "THRESHOLDS_TO_PLOT is empty"
+
 if PLOT_AVERAGE_RATINGS:
   assert PLOT_AVERAGES, "PLOT_AVERAGE_RATINGS provided but no PLOT_AVERAGES"
-  assert not set(PLOT_AVERAGE_RATINGS) - set(thresholds_to_plot), \
-      "PLOT_AVERAGE_RATINGS must be a subset of ratings to plot"
+  assert not set(PLOT_AVERAGE_RATINGS) - set(THRESHOLDS_TO_PLOT), \
+      "PLOT_AVERAGE_RATINGS must be a subset of THRESHOLDS_TO_PLOT"
 assert PLOT_AVERAGES in ['', 'monthly', 'quarterly', 'halfyearly', \
                           'yearly', 'fiveyearly', 'decadal']
-
-assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both'], \
-        "Invalid CHANGED_DAYS_CRITERIA"
 
 types_and_formats = []
 if TYPE and FORMAT:
@@ -85,12 +81,11 @@ for typ, frmt in types_and_formats:
   print (frmt + ' : ' + typ)
   print (str(START_DATE) + ' : ' + str(END_DATE))
 
-  daily_ratings, _ = get_daily_ratings(typ, frmt, \
-                            changed_days_criteria = CHANGED_DAYS_CRITERIA, \
+  daily_ratings, _ = get_daily_ratings(typ, frmt, changed_days_criteria = '', \
                             allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
-  thresholds_to_counts = {t: {} for t in thresholds_to_plot}
-  for t in thresholds_to_plot:
+  thresholds_to_counts = {t: {} for t in THRESHOLDS_TO_PLOT}
+  for t in THRESHOLDS_TO_PLOT:
     for d in daily_ratings:
       if d < START_DATE or d > END_DATE:
         continue
@@ -144,7 +139,7 @@ for typ, frmt in types_and_formats:
                     + "\n" + str(START_DATE) + " to " + str(END_DATE), \
                 fontsize ='xx-large')
 
-  colors = get_colors_from_scale(len(thresholds_to_plot))
+  colors = get_colors_from_scale(len(THRESHOLDS_TO_PLOT))
 
   ymax = 9
   for t in thresholds_to_counts:
@@ -183,7 +178,7 @@ for typ, frmt in types_and_formats:
   fig.tight_layout()
 
   rating_range_text = ''
-  for r in thresholds_to_plot:
+  for r in THRESHOLDS_TO_PLOT:
     rating_range_text += str(r) + '_'
   out_filename = 'out/images/line/aboverating/' + rating_range_text \
                   + (PLOT_AVERAGES + '_' if PLOT_AVERAGES else '') \
