@@ -6,7 +6,8 @@ import math
 
 
 def get_days_with_change(daily_data, agg_window):
-  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
+  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
+                          'yearly', 'fiveyearly', 'decadal'], \
         "Invalid agg_window provided"
 
   changed_days = set()
@@ -35,7 +36,8 @@ def get_daily_ratings(typ, frmt, changed_days_criteria = '', agg_window = '', \
   assert frmt in ['test', 'odi', 't20'], "Invalid format provided"
   assert changed_days_criteria in ['', 'rating', 'rank', 'either', 'both'], \
         "Invalid changed_days_criteria"
-  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
+  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
+                          'yearly', 'fiveyearly', 'decadal'], \
         "Invalid agg_window provided"
 
   daily_ratings = {}
@@ -52,9 +54,9 @@ def get_daily_ratings(typ, frmt, changed_days_criteria = '', agg_window = '', \
       parts = l.split(',')
       d = string_to_date(parts[0])
       if d not in dates_parsed:
-        dates_parsed.add(d)
         daily_ratings[d] = {}
         daily_ranks[d] = {}
+        dates_parsed.add(d)
 
       rating = eval(parts[2])
       if typ == 'allrounder' and allrounders_geom_mean:
@@ -93,6 +95,8 @@ def get_daily_ratings(typ, frmt, changed_days_criteria = '', agg_window = '', \
 
   print("Daily ratings data built for " + str(len(daily_ratings)) + " days" )
   print("Daily ranks data built for " + str(len(daily_ranks)) + " days" )
+  assert not daily_ratings.keys() ^ daily_ranks.keys(), \
+          "Key mismatch between daily_ratings and daily_ranks"
 
   return daily_ratings, daily_ranks
 

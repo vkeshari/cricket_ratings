@@ -33,9 +33,9 @@ def readable_name_and_country(p):
 def last_name(p):
   return p.split('.')[0].split('_')[-1]
 
-def get_colors_from_scale(num_colors):
+def get_colors_from_scale(num_colors, scale = cm.brg):
   color_stops = np.linspace(0, 1, num_colors + 1)
-  return cm.turbo(color_stops)
+  return scale(color_stops)
 
 def get_player_colors(players, by_country = False):
   player_to_color = {}

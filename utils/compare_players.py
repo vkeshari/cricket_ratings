@@ -1,13 +1,15 @@
-from common.data import get_daily_ratings
-from common.output import get_player_colors, get_timescale_xticks, \
+from common.aggregation import date_to_aggregation_date, get_aggregation_dates
+from common.data import get_daily_ratings, get_days_with_change
+from common.output import get_player_colors, get_timescale_xticks, get_colors_from_scale, \
                           country, last_name, readable_name_and_country
+from common.stats import get_stats_for_list
 
 from datetime import date
 from matplotlib import pyplot as plt, cm
 from pathlib import Path
 
 # ['', 'batting', 'bowling', 'allrounder']
-TYPE = 'batting'
+TYPE = ''
 # ['', 'test', 'odi', 't20']
 FORMAT = 't20'
 
@@ -19,10 +21,17 @@ THRESHOLD = 500
 
 COMPARE_RANKS = [1, 2, 3]
 COMPARE_PLAYERS = []
+for i, p in enumerate(COMPARE_PLAYERS):
+  COMPARE_PLAYERS[i] = p + '.data'
+
 COLOR_BY_COUNTRY = False
 
 # ['', 'rating', 'rank', 'either', 'both']
 CHANGED_DAYS_CRITERIA = ''
+
+# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'fiveyearly', 'decadal']
+PLOT_AVERAGES = 'yearly'
+PLOT_AVERAGE_KEYS = COMPARE_RANKS
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -51,8 +60,13 @@ if COLOR_BY_COUNTRY:
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both'], \
         "Invalid CHANGED_DAYS_CRITERIA"
 
-for i, p in enumerate(COMPARE_PLAYERS):
-  COMPARE_PLAYERS[i] = p + '.data'
+if PLOT_AVERAGE_KEYS:
+  assert PLOT_AVERAGES, "PLOT_AVERAGE_KEYS provided but no PLOT_AVERAGES"
+  assert not set(PLOT_AVERAGE_KEYS) - set(COMPARE_RANKS) - set(COMPARE_PLAYERS), \
+      "PLOT_AVERAGE_KEYS must be a subset of compare keys to plot"
+assert PLOT_AVERAGES in ['', 'monthly', 'quarterly', 'halfyearly', \
+                          'yearly', 'fiveyearly', 'decadal']
+
 
 types_and_formats = []
 if TYPE and FORMAT:
@@ -122,6 +136,41 @@ for typ, frmt in types_and_formats:
                                     COMPARE_PLAYERS, COMPARE_RANKS, START_DATE, END_DATE)
   print("Compare stats built with " + str(len(compare_stats)) + " keys")
 
+  aggregation_dates = []
+  if PLOT_AVERAGE_KEYS:
+    days_with_change = get_days_with_change(daily_ratings, PLOT_AVERAGES)
+    agg_daily_ratings = {d: v for d, v in daily_ratings.items() if d in days_with_change}
+
+    agg_daily_ratings, _ = get_daily_ratings(typ, frmt, \
+                                changed_days_criteria = 'rating', \
+                                allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
+
+    aggregation_dates = get_aggregation_dates(agg_daily_ratings, \
+                                              agg_window = PLOT_AVERAGES, \
+                                              start_date = START_DATE, \
+                                              end_date = END_DATE)
+    date_to_agg_date = \
+            date_to_aggregation_date(dates = list(agg_daily_ratings.keys()), \
+                                      aggregation_dates = aggregation_dates)
+    if not aggregation_dates[-1] == END_DATE:
+      aggregation_dates.append(END_DATE)
+
+    keys_to_window_counts = {k: {} for k in PLOT_AVERAGE_KEYS}
+    for k in PLOT_AVERAGE_KEYS:
+      for d in date_to_agg_date:
+        if d < START_DATE or d > END_DATE or d not in compare_stats[k]:
+          continue
+        agg_date = date_to_agg_date[d]
+        if agg_date not in keys_to_window_counts[k]:
+          keys_to_window_counts[k][agg_date] = []
+        keys_to_window_counts[k][agg_date].append(compare_stats[k][d])
+
+    keys_to_avgs = {k: {} for k in PLOT_AVERAGE_KEYS}
+    for k in keys_to_window_counts:
+      for d in keys_to_window_counts[k]:
+        keys_to_avgs[k][d] = get_stats_for_list(keys_to_window_counts[k][d], 'avg')
+
+
   resolution = tuple([12.8, 7.2])
   fig, ax = plt.subplots(figsize = resolution)
 
@@ -132,17 +181,26 @@ for typ, frmt in types_and_formats:
   if COMPARE_PLAYERS:
     player_to_color = get_player_colors(COMPARE_PLAYERS, by_country = COLOR_BY_COUNTRY)
 
-    for i, p in enumerate(COMPARE_PLAYERS):
+    for p in COMPARE_PLAYERS:
       (xs, ys) = [], []
       if p in compare_stats:
         (xs, ys) = zip(*compare_stats[p].items())
 
-      plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
-                        alpha = 0.5, color = player_to_color[p], \
+      plt.plot(xs, ys, linestyle = '-', linewidth = 3, antialiased = True, \
+                        alpha = 0.3, color = player_to_color[p], \
                         label = readable_name_and_country(p))
 
+      if PLOT_AVERAGE_KEYS and p in keys_to_avgs:
+        for j, d in enumerate(aggregation_dates[ : -1]):
+          if d not in keys_to_avgs[p]:
+            continue
+          xs = (d, aggregation_dates[j + 1])
+          ys = (keys_to_avgs[p][d], keys_to_avgs[p][d])
+          plt.plot(xs, ys, linestyle = '-', linewidth = 10, antialiased = True, \
+                          alpha = 0.5, color = player_to_color[p])
+
   elif COMPARE_RANKS:
-    colors = list(get_player_colors(COMPARE_RANKS).values())
+    colors = get_colors_from_scale(len(COMPARE_RANKS))
 
     for i, rank in enumerate(COMPARE_RANKS):
       (xs, ys) = [], []
@@ -150,7 +208,16 @@ for typ, frmt in types_and_formats:
         (xs, ys) = zip(*compare_stats[rank].items())
 
       plt.plot(xs, ys, linestyle = '-', linewidth = 3, antialiased = True, \
-                        alpha = 0.5, color = colors[i], label = 'Rank ' + str(rank))
+                        alpha = 0.3, color = colors[i], label = 'Rank ' + str(rank))
+
+      if PLOT_AVERAGE_KEYS and rank in keys_to_avgs:
+        for j, d in enumerate(aggregation_dates[ : -1]):
+          if d not in keys_to_avgs[rank]:
+            continue
+          xs = (d, aggregation_dates[j + 1])
+          ys = (keys_to_avgs[rank][d], keys_to_avgs[rank][d])
+          plt.plot(xs, ys, linestyle = '-', linewidth = 10, antialiased = True, \
+                          alpha = 0.5, color = colors[i])
 
   ax.set_ylabel("Rating", fontsize = 'x-large')
   ax.set_ylim(THRESHOLD, MAX_RATING)
@@ -164,7 +231,7 @@ for typ, frmt in types_and_formats:
   ax.set_xticks(xticks)
   ax.set_xticklabels(xticklabels, fontsize ='large', rotation = 45)
 
-  ax.legend(loc = 'best', fontsize = 'medium')
+  ax.legend(loc = 'best', fontsize = 'large')
   ax.grid(True, which = 'both', axis = 'both', alpha = 0.5)
 
   fig.tight_layout()

@@ -1,7 +1,6 @@
-from common.aggregation import date_to_aggregation_date, get_aggregation_dates, \
-                                is_aggregation_window_start
-from common.data import get_daily_ratings
-from common.output import get_timescale_xticks
+from common.aggregation import date_to_aggregation_date, get_aggregation_dates
+from common.data import get_daily_ratings, get_days_with_change
+from common.output import get_timescale_xticks, get_colors_from_scale
 from common.stats import get_stats_for_list
 
 from datetime import date
@@ -104,12 +103,15 @@ for typ, frmt in types_and_formats:
 
   aggregation_dates = []
   if PLOT_AVERAGE_RATINGS:
-    aggregation_dates = get_aggregation_dates(daily_ratings, \
+    days_with_change = get_days_with_change(daily_ratings, PLOT_AVERAGES)
+    agg_daily_ratings = {d: v for d, v in daily_ratings.items() if d in days_with_change}
+
+    aggregation_dates = get_aggregation_dates(agg_daily_ratings, \
                                               agg_window = PLOT_AVERAGES, \
                                               start_date = START_DATE, \
                                               end_date = END_DATE)
     date_to_agg_date = \
-            date_to_aggregation_date(dates = list(daily_ratings.keys()), \
+            date_to_aggregation_date(dates = list(agg_daily_ratings.keys()), \
                                       aggregation_dates = aggregation_dates)
     if not aggregation_dates[-1] == END_DATE:
       aggregation_dates.append(END_DATE)
@@ -131,7 +133,6 @@ for typ, frmt in types_and_formats:
                 get_stats_for_list(thresholds_to_window_counts[t][d], 'avg')
 
 
-  colorscale = cm.tab20
   resolution = tuple([12.8, 7.2])
   fig, ax = plt.subplots(figsize = resolution)
 
@@ -139,8 +140,7 @@ for typ, frmt in types_and_formats:
                     + "\n" + str(START_DATE) + " to " + str(END_DATE), \
                 fontsize ='xx-large')
 
-  color_stops = np.linspace(0, 1, len(thresholds_to_plot) + 1)
-  colors = colorscale(color_stops)
+  colors = get_colors_from_scale(len(thresholds_to_plot))
 
   ymax = 9
   for i, t in enumerate(thresholds_to_counts):
@@ -148,10 +148,12 @@ for typ, frmt in types_and_formats:
     ymax = max(ymax, max(thresholds_to_counts[t].values()))
 
     plt.plot(xs, ys, linestyle = '-', linewidth = 3, antialiased = True, \
-                      alpha = 0.5, color = colors[i], label = "Rating >= " + str(t))
+                      alpha = 0.3, color = colors[i], label = "Rating >= " + str(t))
 
-    if t in PLOT_AVERAGE_RATINGS:
+    if PLOT_AVERAGE_RATINGS and t in PLOT_AVERAGE_RATINGS:
       for j, d in enumerate(aggregation_dates[ : -1]):
+        if d not in thresholds_to_avgs[t]:
+          continue
         xs = (d, aggregation_dates[j + 1])
         ys = (thresholds_to_avgs[t][d], thresholds_to_avgs[t][d])
         plt.plot(xs, ys, linestyle = '-', linewidth = 10, antialiased = True, \
@@ -173,7 +175,7 @@ for typ, frmt in types_and_formats:
   ax.set_xticks(xticks)
   ax.set_xticklabels(xticklabels, fontsize ='large', rotation = 45)
 
-  ax.legend(loc = 'best', fontsize = 'medium')
+  ax.legend(loc = 'best', fontsize = 'large')
   ax.grid(True, which = 'both', axis = 'both', alpha = 0.5)
 
   fig.tight_layout()
