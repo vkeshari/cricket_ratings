@@ -15,7 +15,7 @@ TYPE = ''
 FORMAT = 't20'
 
 START_DATE = date(2011, 1, 1)
-END_DATE = date(2024, 1, 1)
+END_DATE = date(2024, 7, 1)
 SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 
 # Upper and lower bounds of ratings to show
@@ -35,7 +35,7 @@ SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
 GRAPH_CUMULATIVES = True
 TRIM_EMPTY_ROWS = True
-HIDE_THRESHOLD = True
+HIDE_THRESHOLD = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -131,7 +131,9 @@ for typ, frmt in types_and_formats:
     graph_annotations = {'TYPE': typ, 'FORMAT': frmt, \
                         'START_DATE': START_DATE, 'END_DATE': END_DATE, \
                         'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
-                        'AGG_TYPE': BIN_AGGREGATE, \
+                        'AGG_TYPE': BIN_AGGREGATE, 'AGG_LOCATION': 'x', \
+                        'LABEL_METRIC': 'No. of players', \
+                        'LABEL_METRIC': 'Percent of ' + str(THRESHOLD) + '+ players', \
                         'LABEL_KEY': 'rating', 'LABEL_TEXT': 'Rating', \
                         'DTYPE': 'int', \
                         }

@@ -181,7 +181,7 @@ for typ, frmt in types_and_formats:
                     + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
                     + frmt + '_' + typ + '_' \
                     + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
-
     Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
+    
     fig.savefig(out_filename)
     print("Written: " + out_filename)

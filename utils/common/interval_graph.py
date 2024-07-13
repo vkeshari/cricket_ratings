@@ -39,10 +39,11 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   assert stops, "No stops provided"
   assert annotations, "No annotations provided"
   assert not {'TYPE', 'FORMAT', 'START_DATE', 'END_DATE', \
-                  'AGGREGATION_WINDOW', 'AGG_TYPE', \
-                  'LABEL_KEY', 'LABEL_TEXT', 'DTYPE'} \
-              - annotations.keys(), \
+                  'AGGREGATION_WINDOW', 'AGG_TYPE', 'AGG_LOCATION', \
+                  'LABEL_METRIC', 'LABEL_KEY', 'LABEL_TEXT', 'DTYPE'} \
+              ^ annotations.keys(), \
           "Not all annotations provided"
+  assert annotations['AGG_LOCATION'] in {'', 'x', 'y'}
   assert yparams, "No yparams provided"
   assert not {'min', 'max', 'step'} ^ yparams.keys(), "yparams must be min, max and step"
   if show_medals:
@@ -58,17 +59,25 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   resolution = tuple([7.2, 7.2])
   fig, ax = plt.subplots(figsize = resolution)
 
-  title_text = "No. of players above " + annotations['LABEL_TEXT'] + "\n" \
+  title_text = annotations['LABEL_METRIC'] + " above " \
+                + annotations['LABEL_TEXT'] + "\n" \
                 + annotations['FORMAT'] + ' ' + annotations['TYPE'] \
                 + ' (' + str(annotations['START_DATE']) \
                 + ' to ' + str(annotations['END_DATE']) + ')'
   ax.set_title(title_text, fontsize ='xx-large')
 
+  agg_text = ''
+  if annotations['AGG_LOCATION']:
+    agg_text = ' (' + annotations['AGGREGATION_WINDOW'] \
+                    + ' ' + annotations['AGG_TYPE'] + ')'
+
   ylabel = annotations['LABEL_TEXT'] \
-                + ' (' + annotations['AGGREGATION_WINDOW'] \
-                + ' ' + annotations['AGG_TYPE'] + ')'
+                +  (agg_text if annotations['AGG_LOCATION'] == 'y' else '')
   ax.set_ylabel(ylabel, fontsize ='x-large')
-  ax.set_xlabel('No. of players above ' + annotations['LABEL_KEY'], fontsize ='x-large')
+
+  xlabel = annotations['LABEL_METRIC'] + ' above ' + annotations['LABEL_KEY'] \
+                + (agg_text if annotations['AGG_LOCATION'] == 'x' else '')
+  ax.set_xlabel(xlabel, fontsize ='x-large')
 
   ymin = yparams['min'] - yparams['step']
   ymax = yparams['max']
@@ -86,7 +95,6 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
     line_max = graph_metrics['lines'][i][1]
     if  line_max > xmax:
       xmax = line_max
-  xmax += 1
   ax.set_xlim(0, xmax)
 
   xtickmajor = 2
@@ -111,26 +119,26 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   outer_widths = [interval['width'] for interval in graph_metrics['outers']]
   ax.barh(y = stops, width = outer_widths, \
             align = 'center', height = 0.9 * yparams['step'], left = outer_starts, \
-            color = 'darkgrey', alpha = 0.4, \
+            color = 'darkgrey', alpha = 0.4, label = "Middle 80%", \
           )
 
   inner_starts = [interval['start'] for interval in graph_metrics['inners']]
   inner_widths = [interval['width'] for interval in graph_metrics['inners']]
   ax.barh(y = stops, width = inner_widths, \
           align = 'center', height = 0.8 * yparams['step'], left = inner_starts, \
-          color = 'green', alpha = 0.5, \
+          color = 'green', alpha = 0.5, label = "Middle 50%", \
         )
 
   plt.plot(graph_metrics['avgs'], stops, \
                     linewidth = 0, alpha = 0.5, \
                     marker = 'x', markeredgecolor = 'blue', \
-                    markersize = 8, markeredgewidth = 2)
+                    markersize = 8, markeredgewidth = 2, label = "Average")
 
   for i, s in enumerate(stops):
     plt.plot(list(graph_metrics['lines'][i]), [s, s], linewidth = 2, \
                       color = 'black', alpha = 0.9, \
                       marker = 'o', markerfacecolor = 'red', \
-                      markersize = 3, markeredgewidth = 0)
+                      markersize = 3, markeredgewidth = 0, label = "Full Range" if i == 0 else '')
 
   if show_medals:
     for medal in medal_stats:
@@ -142,6 +150,7 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
                               xlims = {'xmax': xmax}
                               )
 
+  ax.legend(loc = 'best', fontsize = 'large')
   fig.tight_layout()
 
   if not save_filename:

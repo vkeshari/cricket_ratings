@@ -110,7 +110,8 @@ daily_ratings, _ = get_daily_ratings(TYPE, FORMAT, \
 
 dates_to_show = get_aggregation_dates(daily_ratings, agg_window = AGGREGATION_WINDOW, \
                                       start_date = START_DATE, end_date = END_DATE)
-date_to_agg_date = date_to_aggregation_date(daily_ratings.keys(), dates_to_show)
+date_to_agg_date = date_to_aggregation_date(dates = list(daily_ratings.keys()), \
+                                                    aggregation_dates = dates_to_show)
 
 aggregate_ratings = get_aggregate_ratings(daily_ratings, agg_dates = dates_to_show, \
                                           date_to_agg_date = date_to_agg_date, \
@@ -172,7 +173,8 @@ if SHOW_GRAPH:
   graph_annotations = {'TYPE': TYPE, 'FORMAT': FORMAT, \
                         'START_DATE': START_DATE, 'END_DATE': END_DATE, \
                         'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
-                        'AGG_TYPE': PLAYER_AGGREGATE, \
+                        'AGG_TYPE': PLAYER_AGGREGATE, 'AGG_LOCATION': 'y', \
+                        'LABEL_METRIC': 'No. of players', \
                         'LABEL_KEY': 'rating', 'LABEL_TEXT': 'Rating', \
                         'DTYPE': DTYPE, \
                         }
