@@ -14,10 +14,10 @@ import math
 # ['', 'batting', 'bowling', 'allrounder']
 TYPE = ''
 # ['', 'test', 'odi', 't20']
-FORMAT = 'test'
+FORMAT = 't20'
 
 # Graph dates
-GRAPH_DATES = [date(y, 1, 1) for y in range(1952, 2024)]
+GRAPH_DATES = [date(y, 1, 1) for y in range(2007, 2024)]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
@@ -239,7 +239,8 @@ for typ, frmt in types_and_formats:
                     + ('FIT_' if FIT_CURVE else '') \
                     + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
                     + frmt + '_' + typ + '_' \
-                    + str(GRAPH_DATES[0].year) + '_' + str(GRAPH_DATES[1].year) + '.gif'
+                    + str(GRAPH_DATES[0].year) + '_' + str(GRAPH_DATES[-1].year) \
+                    + '.gif'
 
     writer = animation.FFMpegWriter(fps = 2, bitrate = 5000)
     with writer.saving(fig, out_filename, dpi = 100):

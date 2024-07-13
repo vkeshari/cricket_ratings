@@ -172,7 +172,7 @@ if SHOW_GRAPH:
   graph_annotations = {'TYPE': TYPE, 'FORMAT': FORMAT, \
                         'START_DATE': START_DATE, 'END_DATE': END_DATE, \
                         'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
-                        'PLAYER_AGGREGATE': PLAYER_AGGREGATE, \
+                        'AGG_TYPE': PLAYER_AGGREGATE, \
                         'LABEL_KEY': 'rating', 'LABEL_TEXT': 'Rating', \
                         'DTYPE': DTYPE, \
                         }

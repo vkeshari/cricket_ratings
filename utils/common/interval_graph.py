@@ -1,5 +1,7 @@
 from matplotlib import pyplot as plt
 
+import math
+
 
 def filter_to_yrange(yparams, graph_metrics, stops):
   filtered_stop_indices = []
@@ -29,14 +31,15 @@ def plot_medal_indicators(medal, medal_threshold, exp_num, ylims, xlims):
 
 
 def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
-                            medal_stats, show_medals = False):
+                            medal_stats = {}, show_medals = False, all_xticks = True, \
+                            save_filename = ''):
   assert graph_metrics, "No graph_metrics provided"
   assert not {'lines', 'avgs', 'outers', 'inners'} - graph_metrics.keys(), \
           "Not all graph metrics provided"
   assert stops, "No stops provided"
   assert annotations, "No annotations provided"
   assert not {'TYPE', 'FORMAT', 'START_DATE', 'END_DATE', \
-                  'AGGREGATION_WINDOW', 'PLAYER_AGGREGATE', \
+                  'AGGREGATION_WINDOW', 'AGG_TYPE', \
                   'LABEL_KEY', 'LABEL_TEXT', 'DTYPE'} \
               - annotations.keys(), \
           "Not all annotations provided"
@@ -63,7 +66,7 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
 
   ylabel = annotations['LABEL_TEXT'] \
                 + ' (' + annotations['AGGREGATION_WINDOW'] \
-                + ' ' + annotations['PLAYER_AGGREGATE'] + ')'
+                + ' ' + annotations['AGG_TYPE'] + ')'
   ax.set_ylabel(ylabel, fontsize ='x-large')
   ax.set_xlabel('No. of players above ' + annotations['LABEL_KEY'], fontsize ='x-large')
 
@@ -73,10 +76,10 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   ax.set_yticks(stops)
   if annotations['DTYPE'] == 'float':
     ax.set_yticklabels(["{s:.2f}".format(s = s) for s in stops], \
-                            fontsize ='medium')
+                            fontsize ='large')
   else:
     ax.set_yticklabels([str(s) for s in stops], \
-                            fontsize ='medium')  
+                            fontsize ='large')  
 
   xmax = -1
   for i, s in enumerate(stops):
@@ -84,22 +87,25 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
     if  line_max > xmax:
       xmax = line_max
   xmax += 1
-
   ax.set_xlim(0, xmax)
-  xticks = list(range(0, xmax + 1, 1))
-  ax.set_xticks(xticks)
 
-  xlabwidth = 1
+  xtickmajor = 2
+  xtickminor = 1
   if xmax > 25:
-    xlabwidth = 2
+    xtickmajor = 5
   if xmax > 50:
-    xlabwidth = 5
-  if xmax > 100:
-    xlabwidth = 10
-  xticklabels = [str(x) if x % xlabwidth == 0 else '' for x in xticks]
-  ax.set_xticklabels(xticklabels, fontsize ='medium')
+    xtickmajor = 10
+    xtickminor = 2
+  xticks_major = list(range(0, math.floor(xmax + 1), xtickmajor))
+  xticks_minor = list(range(0, math.floor(xmax + 1), xtickminor))
 
-  ax.grid(True, which = 'both', axis = 'x', alpha = 0.5)
+  ax.set_xticks(xticks_major)
+  ax.grid(True, which = 'major', axis = 'x', alpha = 0.8)
+  ax.set_xticks(xticks_minor, minor = True)
+  ax.grid(True, which = 'minor', axis = 'x', alpha = 0.4)
+
+  xticklabels = [str(x) for x in xticks_major]
+  ax.set_xticklabels(xticklabels, fontsize ='large')
 
   outer_starts = [interval['start'] for interval in graph_metrics['outers']]
   outer_widths = [interval['width'] for interval in graph_metrics['outers']]
@@ -137,4 +143,9 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
                               )
 
   fig.tight_layout()
-  plt.show()
+
+  if not save_filename:
+    plt.show()
+  else:
+    fig.savefig(save_filename)
+    print("Written: " + save_filename)

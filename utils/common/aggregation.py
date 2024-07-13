@@ -98,6 +98,8 @@ def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
     if not d in date_to_agg_date:
       continue
     bucket = date_to_agg_date[d]
+    if not bucket in agg_dates:
+      continue
     ratings_for_day = list(daily_ratings[d].values())
     if ignore_zero_ratings:
       ratings_for_day = [r for r in ratings_for_day if r > 0]
