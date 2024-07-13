@@ -1,13 +1,15 @@
 from common.aggregation import is_aggregation_window_start, \
                                 get_aggregation_dates, date_to_aggregation_date, \
                                 get_aggregated_distribution, \
-                                get_aggregate_ratings, get_metrics_by_stops
+                                get_aggregate_ratings, get_metrics_by_stops, \
+                                VALID_AGGREGATIONS
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
 from common.interval_metrics import get_graph_metrics, get_medal_stats, \
                                     get_player_medals, show_top_medals
 from common.player_metrics import get_player_stats, show_top_stats
 from common.output import string_to_date, readable_name_and_country
+from common.stats import VALID_STATS
 
 from datetime import date, timedelta
 
@@ -35,11 +37,11 @@ MAX_RATING = 1000
 CHANGED_DAYS_CRITERIA = 'rating'
 
 # Aggregation
-# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
+# See common.aggregation.VALID_AGGREGATIONS for possible windows
 AGGREGATION_WINDOW = 'yearly'
-# ['', 'avg', 'median', 'min', 'max', 'first', 'last']
+# See common.stats.VALID_STATS for possible aggregate stats
 PLAYER_AGGREGATE = 'max'
-# ['', 'avg', 'median', 'min', 'max', 'first', 'last']
+# See common.stats.VALID_STATS for possible aggregate stats
 BIN_AGGREGATE = 'avg'
 
 EXP_BIN_SIZE = 10
@@ -84,12 +86,9 @@ assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
-assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
-      "Invalid AGGREGATION_WINDOW provided"
-assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
-      "Invalid PLAYER_AGGREGATE provided"
-assert BIN_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
-      "Invalid BIN_AGGREGATE provided"
+assert AGGREGATION_WINDOW in VALID_AGGREGATIONS, "Invalid AGGREGATION_WINDOW provided"
+assert BIN_AGGREGATE in VALID_STATS, "Invalid BIN_AGGREGATE provided"
+assert PLAYER_AGGREGATE in VALID_STATS, "Invalid PLAYER_AGGREGATE provided"
 
 assert EXP_BIN_SIZE >= 10, "EXP_BIN_SIZE must be at least 10"
 assert MAX_SIGMA >= 1.0, "MAX_SIGMA must greater than 1.0"

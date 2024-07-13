@@ -1,16 +1,17 @@
-from common.stats import get_stats_for_list
+from common.stats import get_stats_for_list, VALID_STATS
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import numpy as np
 
 ONE_DAY = timedelta(days = 1)
+LAST_FUTURE_DATE = date(2030, 1, 1)
 
+VALID_AGGREGATIONS = {'', 'monthly', 'quarterly', 'halfyearly', \
+                            'yearly', 'fiveyearly', 'decadal', '1952_1992'}
 
 def is_aggregation_window_start(d, agg_window):
-  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
-                            'yearly', 'fiveyearly', 'decadal'], \
-        "Invalid agg_window provided"
+  assert agg_window in VALID_AGGREGATIONS, "Invalid agg_window provided"
 
   if not agg_window:
     return True
@@ -22,17 +23,18 @@ def is_aggregation_window_start(d, agg_window):
       or agg_window == 'fiveyearly' and d.day == 1 and d.month == 1 \
                                         and d.year % 5 == 0 \
       or agg_window == 'decadal' and d.day == 1 and d.month == 1 \
-                                        and d.year % 10 == 0
+                                        and d.year % 10 == 0 \
+      or agg_window == '1952_1992' and d.day == 1 and d.month == 1 \
+                                        and d.year in {1952, 1992}
 
 
 def get_next_aggregation_window_start(d, agg_window):
-  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
-                          'fiveyearly', 'yearly', 'decadal'], \
-        "Invalid agg_window provided"
+  assert agg_window in VALID_AGGREGATIONS, "Invalid agg_window provided"
 
   next_d = d + ONE_DAY
   while not is_aggregation_window_start(next_d, agg_window):
     next_d += ONE_DAY
+    assert next_d < LAST_FUTURE_DATE, "No next aggregation date found after " + str(d)
   return next_d
 
 
@@ -46,9 +48,7 @@ def date_to_aggregation_date(dates, aggregation_dates):
 
 
 def get_aggregation_dates(daily_ratings, agg_window, start_date, end_date):
-  assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
-                          'fiveyearly', 'yearly', 'decadal'], \
-        "Invalid agg_window provided"
+  assert agg_window in VALID_AGGREGATIONS, "Invalid agg_window provided"
 
   first_date = min(daily_ratings.keys())
   last_date = max(daily_ratings.keys())
@@ -64,8 +64,7 @@ def get_aggregation_dates(daily_ratings, agg_window, start_date, end_date):
 
 
 def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, player_aggregate):
-  assert player_aggregate in ['avg', 'median', 'min', 'max', 'first', 'last'], \
-        "Invalid player_aggregate provided"
+  assert player_aggregate in VALID_STATS, "Invalid player_aggregate provided"
 
   aggregate_buckets = {d: {} for d in agg_dates}
 
@@ -92,8 +91,7 @@ def get_aggregate_ratings(daily_ratings, agg_dates, date_to_agg_date, player_agg
 def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
                                 dist_aggregate, bin_stops, normalize_to = 100, \
                                 ignore_zero_ratings = True):
-  assert dist_aggregate in ['avg', 'median', 'min', 'max', 'first', 'last'], \
-        "Invalid dist_aggregate provided"
+  assert dist_aggregate in VALID_STATS, "Invalid dist_aggregate provided"
 
   aggregate_buckets = {d: [] for d in agg_dates}
   for d in daily_ratings:

@@ -1,8 +1,8 @@
 from common.aggregation import is_aggregation_window_start, \
                                 get_next_aggregation_window_start, \
-                                get_aggregated_distribution
+                                get_aggregated_distribution, VALID_AGGREGATIONS
 from common.data import get_daily_ratings
-from common.stats import fit_exp_curve, normalize_array
+from common.stats import fit_exp_curve, normalize_array, VALID_STATS
 
 from datetime import date
 from matplotlib import pyplot as plt
@@ -24,9 +24,9 @@ THRESHOLD = 500
 MAX_RATING = 1000
 BIN_SIZE = 50
 
-# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
+# See common.aggregation.VALID_AGGREGATIONS for possible windows
 AGGREGATION_WINDOW = 'decadal'
-# ['', 'avg', 'median', 'min', 'max', 'first', 'last']
+# See common.stats.VALID_STATS for possible aggregate stats
 BIN_AGGREGATE = 'avg'
 
 # ['', 'rating', 'rank', 'either', 'both']
@@ -62,10 +62,8 @@ assert BIN_SIZE >= 10 and BIN_SIZE <= 100, "BIN_SIZE should be between 10 and 10
 assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, \
       "BIN_SIZE should be a factor of ratings range"
 
-assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
-      "Invalid AGGREGATION_WINDOW provided"
-assert BIN_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
-      "Invalid BIN_AGGREGATE provided"
+assert AGGREGATION_WINDOW in VALID_AGGREGATIONS, "Invalid AGGREGATION_WINDOW provided"
+assert BIN_AGGREGATE in VALID_STATS, "Invalid BIN_AGGREGATE provided"
 
 for p in PLOT_PERCENTILES:
   assert p >= 0 and p < 100, "Each value in PLOT_PERCENTILES must be between 0 and 100"
@@ -73,6 +71,9 @@ if PLOT_PERCENTILES:
   assert RATING_FRACTIONS or THRESHOLD == 0 and MAX_RATING == 1000, \
       "If PLOT_PERCENTILES is provided, either PRECENTILE_FRACTIONS must be set or " \
           + "ratings range must be 0 to 1000"
+
+def get_rating_fraction(r):
+  return (r - THRESHOLD) / (MAX_RATING - THRESHOLD)
 
 types_and_formats = []
 if TYPE and FORMAT:
@@ -111,9 +112,8 @@ for typ, frmt in types_and_formats:
                                       dist_aggregate = BIN_AGGREGATE, \
                                       bin_stops = bin_stops)
 
-    bin_counts = aggregated_buckets[graph_date]
+    bin_counts = normalize_array(aggregated_buckets[graph_date])
     actual_bins = bins[ : -1]
-    bin_counts = normalize_array(bin_counts)
 
     if PLOT_PERCENTILES or FIT_CURVE:
       stats_bin_size = (MAX_RATING - THRESHOLD) / 100
@@ -169,7 +169,7 @@ for typ, frmt in types_and_formats:
       ax.set_ylabel('No. of players (normalized to 100)', fontsize ='x-large')
 
       if FIXED_YMAX:
-        ymax = int(BIN_SIZE / 2)
+        ymax = max(10, int(BIN_SIZE / 2))
       else:
         ymax = math.ceil(max(bin_counts) / 5) * 5
       ax.set_ylim(0, ymax)
@@ -197,13 +197,13 @@ for typ, frmt in types_and_formats:
       elif typ == 'bowling':
         graph_color = 'red'
       ax.bar(actual_bins, bin_counts, width = BIN_SIZE, align = 'edge', \
-                color = graph_color, alpha = 0.5)
+                color = graph_color, alpha = 0.5, label = 'Player Counts')
 
       for i, p in enumerate(all_percentiles):
         p_val = all_percentiles[p]
         if RATING_FRACTIONS:
           p_text = 'pf' + str(p) + ': ' \
-                    + '{v:4.2f}'.format(v = (p_val - THRESHOLD) / (MAX_RATING - THRESHOLD))
+                    + '{v:4.2f}'.format(v = get_rating_fraction(p_val))
         else:
           p_text = 'p' + str(p) + ': ' + '{v:3.0f}'.format(v = p_val)
         y_ratio = 0.9 - 0.05 * i
@@ -214,14 +214,20 @@ for typ, frmt in types_and_formats:
                   s = p_text, color = 'black', alpha = 0.9, fontsize = 'large', \
                   horizontalalignment = 'left', verticalalignment = 'center')
 
-      plt.plot(xs_fit, ys_fit, linewidth = 3, \
-                color = 'black', alpha = 0.5, antialiased = True)
       if fit_mean > 0:
-        plt.axvline(x = fit_mean, linestyle = '--', color = 'black', alpha = 0.5)
-        plt.text(fit_mean - 5, 0.95 * ymax, s = 'Exp mean: ' + str(fit_mean), \
-                  color = 'green', alpha = 0.9, fontsize = 'large', \
+        plt.plot(xs_fit, ys_fit, linewidth = 3, \
+                  color = 'darkgreen', alpha = 0.5, antialiased = True, \
+                  label = 'Exponential Fit')
+        plt.axvline(x = fit_mean, linestyle = '--', color = 'darkgreen', alpha = 0.5)
+        if RATING_FRACTIONS:
+          fit_mean_text = '{v:4.2f}'.format(v = get_rating_fraction(fit_mean))
+        else:
+          fit_mean_text = str(fit_mean)
+        plt.text(fit_mean - 5, 0.95 * ymax, s = 'Exp mean: ' + fit_mean_text, \
+                  color = 'darkgreen', alpha = 0.9, fontsize = 'large', \
                   horizontalalignment = 'right', verticalalignment = 'center')
 
+      ax.legend(loc = 'best', fontsize = 'large')
       fig.tight_layout()
 
       out_filename = 'out/images/hist/distagg/' + str(THRESHOLD) + '_' \

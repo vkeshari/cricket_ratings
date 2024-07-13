@@ -1,12 +1,14 @@
 from common.aggregation import is_aggregation_window_start, \
                                 get_aggregation_dates, date_to_aggregation_date, \
-                                get_aggregate_ratings, get_metrics_by_stops
+                                get_aggregate_ratings, get_metrics_by_stops, \
+                                VALID_AGGREGATIONS
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
 from common.interval_metrics import get_graph_metrics, get_medal_stats, \
                                     get_player_medals, show_top_medals
 from common.player_metrics import get_player_stats, show_top_stats
 from common.output import string_to_date, readable_name_and_country
+from common.stats import VALID_STATS
 
 from datetime import date, timedelta
 
@@ -35,9 +37,9 @@ RATING_STEP = 10
 CHANGED_DAYS_CRITERIA = 'rating'
 
 # Aggregation
-# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
+# See common.aggregation.VALID_AGGREGATIONS for possible windows
 AGGREGATION_WINDOW = 'yearly'
-# ['', 'avg', 'median', 'min', 'max', 'first', 'last']
+# See common.stats.VALID_STATS for possible aggregate stats
 PLAYER_AGGREGATE = 'max'
 
 SHOW_BIN_COUNTS = False
@@ -74,10 +76,8 @@ assert RATING_STEP >= 5, "RATING_STEP must be at least 5"
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
-assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
-      "Invalid AGGREGATION_WINDOW provided"
-assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
-      "Invalid PLAYER_AGGREGATE provided"
+assert AGGREGATION_WINDOW in VALID_AGGREGATIONS, "Invalid AGGREGATION_WINDOW provided"
+assert PLAYER_AGGREGATE in VALID_STATS, "Invalid PLAYER_AGGREGATE provided"
 
 assert not AVG_MEDAL_CUMULATIVE_COUNTS.keys() ^ {'gold', 'silver', 'bronze'}, \
       "AVG_MEDAL_CUMULATIVE_COUNTS keys must be gold silver and bronze"

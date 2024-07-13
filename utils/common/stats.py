@@ -3,11 +3,12 @@ from scipy.optimize import curve_fit
 
 import numpy as np
 
+VALID_STATS = {'avg', 'std', 'median', 'min', 'max', 'first', 'last', \
+                      'p10', 'p20', 'p25', 'p50', 'p75', 'p80', 'p90'}
+
 
 def get_stats_for_list(values, stat_type):
-  assert stat_type in ['avg', 'std', 'median', 'min', 'max', 'first', 'last', \
-                      'p10', 'p20', 'p25', 'p50', 'p75', 'p80', 'p90'], \
-        "Invalid stat_type provided"
+  assert stat_type in VALID_STATS, "Invalid stat_type provided"
 
   if not values:
     return 0

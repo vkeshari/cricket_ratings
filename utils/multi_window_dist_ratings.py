@@ -1,9 +1,9 @@
 from common.aggregation import is_aggregation_window_start, \
                                 get_next_aggregation_window_start, \
-                                get_aggregated_distribution
+                                get_aggregated_distribution, VALID_AGGREGATIONS
 from common.data import get_daily_ratings
 from common.output import get_colors_from_scale
-from common.stats import get_stats_for_list, normalize_array
+from common.stats import get_stats_for_list, normalize_array, VALID_STATS
 
 from datetime import date
 from matplotlib import pyplot as plt
@@ -18,8 +18,8 @@ TYPE = 'bowling'
 FORMAT = 'test'
 
 # Graph dates
-START_DATE = date(1948, 1, 1)
-END_DATE = date(1993, 1, 1)
+START_DATE = date(1952, 1, 1)
+END_DATE = date(1992, 1, 1)
 
 GRAPH_DATES = [date(y, 1, 1) for y in range(START_DATE.year, END_DATE.year)]
 
@@ -27,9 +27,9 @@ GRAPH_DATES = [date(y, 1, 1) for y in range(START_DATE.year, END_DATE.year)]
 THRESHOLD = 0
 MAX_RATING = 1000
 
-# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
+# See common.aggregation.VALID_AGGREGATIONS for possible windows
 AGGREGATION_WINDOW = 'yearly'
-# ['', 'avg', 'median', 'min', 'max', 'first', 'last']
+# See common.stats.VALID_STATS for possible aggregate stats
 BIN_AGGREGATE = 'avg'
 
 # ['', 'rating', 'rank', 'either', 'both']
@@ -58,10 +58,8 @@ assert THRESHOLD == 0 and MAX_RATING == 1000, \
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
-assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
-      "Invalid AGGREGATION_WINDOW provided"
-assert BIN_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
-      "Invalid BIN_AGGREGATE provided"
+assert AGGREGATION_WINDOW in VALID_AGGREGATIONS, "Invalid AGGREGATION_WINDOW provided"
+assert BIN_AGGREGATE in VALID_STATS, "Invalid BIN_AGGREGATE provided"
 
 assert PLOT_RATINGS
 for r in PLOT_RATINGS:

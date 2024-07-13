@@ -1,8 +1,8 @@
 from common.aggregation import is_aggregation_window_start, \
                                 get_next_aggregation_window_start, \
-                                get_aggregated_distribution
+                                get_aggregated_distribution, VALID_AGGREGATIONS
 from common.data import get_daily_ratings
-from common.stats import fit_dist_to_hist, normalize_array
+from common.stats import fit_dist_to_hist, normalize_array, VALID_STATS
 
 from datetime import date
 from fitter import Fitter
@@ -25,9 +25,9 @@ THRESHOLD = 0
 MAX_RATING = 1000
 BIN_SIZE = 50
 
-# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
+# See common.aggregation.VALID_AGGREGATIONS for possible windows
 AGGREGATION_WINDOW = 'decadal'
-# ['', 'avg', 'median', 'min', 'max', 'first', 'last']
+# See common.stats.VALID_STATS for possible aggregate stats
 BIN_AGGREGATE = 'avg'
 
 # ['', 'rating', 'rank', 'either', 'both']
@@ -58,10 +58,8 @@ assert BIN_SIZE >= 10 and BIN_SIZE <= 100, "BIN_SIZE should be between 10 and 10
 assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, \
       "BIN_SIZE should be a factor of ratings range"
 
-assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
-      "Invalid AGGREGATION_WINDOW provided"
-assert BIN_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
-      "Invalid BIN_AGGREGATE provided"
+assert AGGREGATION_WINDOW in VALID_AGGREGATIONS, "Invalid AGGREGATION_WINDOW provided"
+assert BIN_AGGREGATE in VALID_STATS, "Invalid BIN_AGGREGATE provided"
 
 types_and_formats = []
 if TYPE and FORMAT:

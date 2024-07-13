@@ -1,12 +1,14 @@
 from common.aggregation import is_aggregation_window_start, \
                                 get_aggregation_dates, date_to_aggregation_date, \
-                                get_aggregate_ratings, get_metrics_by_stops
+                                get_aggregate_ratings, get_metrics_by_stops, \
+                                VALID_AGGREGATIONS
 from common.data import get_daily_ratings
 from common.interval_graph import plot_interval_graph
 from common.interval_metrics import get_graph_metrics, get_medal_stats, \
                                     get_player_medals, show_top_medals
 from common.player_metrics import get_player_stats, show_top_stats
 from common.output import string_to_date, readable_name_and_country
+from common.stats import VALID_STATS
 
 from datetime import date, timedelta
 
@@ -34,9 +36,9 @@ MAX_RATING = 1000
 CHANGED_DAYS_CRITERIA = 'rating'
 
 # Aggregation
-# ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']
+# See common.aggregation.VALID_AGGREGATIONS for possible windows
 AGGREGATION_WINDOW = 'yearly'
-# ['', 'avg', 'median', 'min', 'max', 'first', 'last']
+# See common.stats.VALID_STATS for possible aggregate stats
 PLAYER_AGGREGATE = 'max'
 
 THRESHOLD_RELATIVE = False
@@ -81,10 +83,8 @@ assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
-assert AGGREGATION_WINDOW in ['monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal'], \
-      "Invalid AGGREGATION_WINDOW provided"
-assert PLAYER_AGGREGATE in ['avg', 'median', 'min', 'max', 'first', 'last'], \
-      "Invalid PLAYER_AGGREGATE provided"
+assert AGGREGATION_WINDOW in VALID_AGGREGATIONS, "Invalid AGGREGATION_WINDOW provided"
+assert PLAYER_AGGREGATE in VALID_STATS, "Invalid PLAYER_AGGREGATE provided"
 
 assert MAX_RATIO == 1.0, "MAX_RATIO must be 1.0"
 assert MIN_RATIO > 0.0 and MIN_RATIO < 1.0, "MIN_RATIO must be between 0.0 and 1.0"
