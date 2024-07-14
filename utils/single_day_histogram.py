@@ -1,4 +1,5 @@
 from common.data import get_daily_ratings
+from common.output import pretty_format
 from common.stats import get_stats_for_list
 
 from datetime import date
@@ -101,8 +102,8 @@ for typ, frmt in types_and_formats:
       resolution = tuple([7.2, 7.2])
       fig, ax = plt.subplots(figsize = resolution)
 
-      title_text = "Distribution of " + frmt + " " + typ \
-                    + " players by rating\n" + str(graph_date)
+      title_text = "Distribution of " + pretty_format(frmt, typ) \
+                    + " by rating\n" + str(graph_date)
       ax.set_title(title_text, fontsize ='xx-large')
 
       ax.set_ylabel('No. of players', fontsize ='x-large')

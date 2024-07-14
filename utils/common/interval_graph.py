@@ -1,3 +1,5 @@
+from common.output import pretty_format
+
 from matplotlib import pyplot as plt
 
 import math
@@ -61,7 +63,7 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
 
   title_text = annotations['LABEL_METRIC'] + " above " \
                 + annotations['LABEL_TEXT'] + "\n" \
-                + annotations['FORMAT'] + ' ' + annotations['TYPE'] \
+                + pretty_format(annotations['FORMAT'], annotations['TYPE']) \
                 + ' (' + str(annotations['START_DATE']) \
                 + ' to ' + str(annotations['END_DATE']) + ')'
   ax.set_title(title_text, fontsize ='xx-large')

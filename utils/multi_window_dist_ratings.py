@@ -2,7 +2,7 @@ from common.aggregation import is_aggregation_window_start, \
                                 get_next_aggregation_window_start, \
                                 get_aggregated_distribution, VALID_AGGREGATIONS
 from common.data import get_daily_ratings
-from common.output import get_colors_from_scale
+from common.output import get_colors_from_scale, pretty_format
 from common.stats import get_stats_for_list, normalize_array, VALID_STATS
 
 from datetime import date
@@ -128,7 +128,7 @@ for typ, frmt in types_and_formats:
     resolution = tuple([7.2, 7.2])
     fig, ax = plt.subplots(figsize = resolution)
 
-    title_text = "Distribution of " + frmt + " " + typ \
+    title_text = "Distribution of " + pretty_format(frmt, typ) \
                   + " ratings by percentile\n" \
                   + str(START_DATE) + ' to ' + str(END_DATE) \
                   + ' (' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'

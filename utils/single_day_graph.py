@@ -1,5 +1,5 @@
 from common.data import get_daily_ratings
-from common.output import get_player_colors, readable_name_and_country
+from common.output import pretty_format, get_player_colors, readable_name_and_country
 
 from datetime import date
 from matplotlib import pyplot as plt
@@ -73,7 +73,7 @@ if GRAPH_DATE in daily_ratings:
     names = [readable_name_and_country(p) for p in players]
     cols = [player_colors[p] for p in players]
 
-    title_text = "Top " + FORMAT + " " + TYPE + " players by rating on " + str(GRAPH_DATE)
+    title_text = "Top " + pretty_format(FORMAT, TYPE) + " by rating on " + str(GRAPH_DATE)
     ax.set_title(title_text, fontsize ='xx-large')
 
     ax.set_ylabel('Rank', fontsize ='x-large')

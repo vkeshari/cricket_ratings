@@ -2,7 +2,7 @@ from common.aggregation import is_aggregation_window_start, \
                                 get_next_aggregation_window_start, \
                                 get_aggregated_distribution, VALID_AGGREGATIONS
 from common.data import get_daily_ratings
-from common.output import get_colors_from_scale
+from common.output import get_colors_from_scale, pretty_format
 from common.stats import get_stats_for_list, normalize_array, VALID_STATS
 
 from datetime import date
@@ -13,20 +13,17 @@ import numpy as np
 import math
 
 # ['', 'batting', 'bowling', 'allrounder']
-TYPE = 'bowling'
+TYPE = ''
 # ['', 'test', 'odi', 't20']
-FORMAT = 'test'
+FORMAT = 't20'
 
 # Graph dates
-START_DATE = date(1952, 1, 1)
-END_DATE = date(1992, 1, 1)
-
-GRAPH_DATES = [date(y, 1, 1) for y in range(START_DATE.year, END_DATE.year)]
+GRAPH_DATES = [date(y, 1, 1) for y in range(2011, 2024)]
 
 # Upper and lower bounds of ratings to show
-THRESHOLD = 0
+THRESHOLD = 500
 MAX_RATING = 1000
-BIN_SIZE = 50
+BIN_SIZE = 10
 
 # See common.aggregation.VALID_AGGREGATIONS for possible windows
 AGGREGATION_WINDOW = 'yearly'
@@ -39,7 +36,7 @@ CHANGED_DAYS_CRITERIA = 'rating'
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
 PLOT_PERCENTILES = [50, 75, 90]
-RATING_FRACTIONS = False
+RATING_FRACTIONS = True
 STD = 1
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
@@ -72,7 +69,7 @@ assert PLOT_PERCENTILES
 for p in PLOT_PERCENTILES:
   assert p >= 0 and p < 100, "Each value in PLOT_PERCENTILES must be between 0 and 100"
 assert RATING_FRACTIONS or THRESHOLD == 0 and MAX_RATING == 1000, \
-    "Either PRECENTILE_FRACTIONS must be set or ratings range must be 0 to 1000"
+    "Either RATING_FRACTIONS must be set or ratings range must be 0 to 1000"
 
 assert STD > 0 and STD <= 3, "STD must be between 0 and 3"
 
@@ -132,14 +129,14 @@ for typ, frmt in types_and_formats:
     resolution = tuple([7.2, 7.2])
     fig, ax = plt.subplots(figsize = resolution)
 
-    title_text = "Distribution of " + frmt + " " + typ \
+    title_text = "Distribution of " + pretty_format(frmt, typ) \
                   + " percentiles by rating\n" \
                   + str(START_DATE) + ' to ' + str(END_DATE) \
                   + ' (' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
     ax.set_title(title_text, fontsize ='xx-large')
 
     ax.set_ylabel('No. of years', fontsize ='x-large')
-    ymax = int(BIN_SIZE / 2)
+    ymax = max(10, int(BIN_SIZE / 2))
     ax.set_ylim(0, ymax)
     if ymax < 30:
       ytick_size = 1
@@ -172,7 +169,7 @@ for typ, frmt in types_and_formats:
 
       if RATING_FRACTIONS:
         perecntile_avg_fraction = (percentile_avg - THRESHOLD) / (MAX_RATING - THRESHOLD)
-        perecntile_std_fraction = (percentile_std - THRESHOLD) / (MAX_RATING - THRESHOLD)
+        perecntile_std_fraction = percentile_std / (MAX_RATING - THRESHOLD)
         p_text = 'pf' + str(p) + ': ' \
                   + '{a:4.2f} +/- {s:4.2f}'.format(a = perecntile_avg_fraction, \
                                                     s = STD * perecntile_std_fraction)

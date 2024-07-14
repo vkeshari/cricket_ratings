@@ -1,5 +1,5 @@
 from common.data import get_daily_ratings
-from common.output import readable_name_and_country
+from common.output import readable_name_and_country, pretty_format
 
 from datetime import date
 
@@ -105,7 +105,7 @@ if SHOW_GRAPH:
   changes = [c[0] for c in all_changes]
   change_bins = list(range(-MAX_CHANGE, MAX_CHANGE + 1, BIN_WIDTH))
 
-  title = 'Distribution of daily rating changes: ' + FORMAT + ' ' + TYPE \
+  title = 'Distribution of daily rating changes: ' + pretty_format(FORMAT, TYPE) \
           + '\n' + str(START_DATE) + ' to ' + str(END_DATE)
   ax.set_title(title, fontsize ='xx-large')
 

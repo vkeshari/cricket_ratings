@@ -2,6 +2,7 @@ from common.aggregation import is_aggregation_window_start, \
                                 get_next_aggregation_window_start, \
                                 get_aggregated_distribution, VALID_AGGREGATIONS
 from common.data import get_daily_ratings
+from common.output import pretty_format
 from common.stats import fit_exp_curve, normalize_array, VALID_STATS
 
 from datetime import date
@@ -17,7 +18,7 @@ TYPE = ''
 FORMAT = 't20'
 
 # Graph dates
-GRAPH_DATES = [date(y, 1, 1) for y in range(2007, 2024)]
+GRAPH_DATES = [date(y, 1, 1) for y in range(2007, 2023)]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
@@ -70,7 +71,7 @@ for p in PLOT_PERCENTILES:
   assert p >= 0 and p < 100, "Each value in PLOT_PERCENTILES must be between 0 and 100"
 if PLOT_PERCENTILES:
   assert RATING_FRACTIONS or THRESHOLD == 0 and MAX_RATING == 1000, \
-      "If PLOT_PERCENTILES is provided, either PRECENTILE_FRACTIONS must be set or " \
+      "If PLOT_PERCENTILES is provided, either RATING_FRACTIONS must be set or " \
           + "ratings range must be 0 to 1000"
 
 def get_rating_fraction(r):
@@ -138,8 +139,8 @@ def process_for_day(graph_date, daily_ratings, fig, ax):
     print ("TOTAL:\t{t:5.2f}".format(t = sum(bin_counts)))
 
   if SHOW_GRAPH:
-    title_text = "Distribution of " + frmt + " " + typ \
-                  + " players by rating\n" + str(graph_date) \
+    title_text = "Distribution of " + pretty_format(frmt, typ) \
+                  + " by rating\n" + str(graph_date) \
                   + '(' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
     ax.set_title(title_text, fontsize ='xx-large')
 
@@ -251,6 +252,8 @@ for typ, frmt in types_and_formats:
 
         plt.draw()
         writer.grab_frame()
+
+    print("Written: " + out_filename)
 
   else:
     for graph_date in GRAPH_DATES:

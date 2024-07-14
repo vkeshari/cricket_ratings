@@ -20,9 +20,30 @@ def date_to_string(d):
     dy = '0' + dy
   return yr + '-' + mn + '-' + dy
 
+
+def pretty_format(frmt, typ):
+  s = ''
+  if frmt == 'test':
+    s += "Test"
+  if frmt == 'odi':
+    s += "ODI"
+  if frmt == 't20':
+    s += "T20I"
+
+  if typ == 'batting':
+    s += " Batsmen"
+  if typ == 'bowling':
+    s += " Bowlers"
+
+  return s
+
+
 def readable_name(p):
   sep = p.find('_')
   return p[sep + 1 : ].split('.')[0].replace('_', ' ')
+
+def last_name(p):
+  return p.split('.')[0].split('_')[-1]
 
 def country(p):
   return p.split('_')[0]
@@ -30,8 +51,6 @@ def country(p):
 def readable_name_and_country(p):
   return readable_name(p) + ' (' + country(p) + ')'
 
-def last_name(p):
-  return p.split('.')[0].split('_')[-1]
 
 def get_colors_from_scale(num_colors, scale = cm.brg):
   color_stops = np.linspace(0, 1, num_colors + 1)

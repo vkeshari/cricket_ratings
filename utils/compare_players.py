@@ -1,7 +1,7 @@
 from common.aggregation import date_to_aggregation_date, get_aggregation_dates
 from common.data import get_daily_ratings, get_days_with_change
 from common.output import get_player_colors, get_timescale_xticks, get_colors_from_scale, \
-                          country, last_name, readable_name_and_country
+                          country, last_name, readable_name_and_country, pretty_format
 from common.stats import get_stats_for_list
 
 from datetime import date
@@ -167,7 +167,7 @@ for typ, frmt in types_and_formats:
   resolution = tuple([12.8, 7.2])
   fig, ax = plt.subplots(figsize = resolution)
 
-  ax.set_title("Comparison of " + frmt + ' ' + typ + ' ' + "players" \
+  ax.set_title("Comparison of " + pretty_format(frmt, typ) \
                     + "\n" + str(START_DATE) + " to " + str(END_DATE), \
                 fontsize ='xx-large')
 
