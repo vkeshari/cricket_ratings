@@ -2,14 +2,14 @@ from common.data import get_daily_ratings
 from common.output import readable_name_and_country, get_player_colors, pretty_format
 
 from matplotlib import pyplot as plt
+from pathlib import Path
 
 import math
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = 'batting'
+TYPE = ''
 # ['test', 'odi', 't20']
 FORMAT = 't20'
-PLAYERS_DIR = 'players/' + TYPE + '/' + FORMAT
 
 MAX_PLAYERS = 20
 NUM_TOP = 3
@@ -20,15 +20,16 @@ CHANGED_DAYS_CRITERIA = 'either'
 SHOW_TABLE = True
 SHOW_GRAPH = True
 COLOR_BY_COUNTRY = True
-SHOW_NAMES_CUTOFF = 200
+MAX_NAMES = 5
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
 
-assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
-assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
-assert MAX_PLAYERS > 0, "MAX_PLAYERS must be positive"
+assert TYPE in ['', 'batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
+assert FORMAT in ['', 'test', 'odi', 't20'], "Invalid FORMAT provided"
 assert NUM_TOP > 0, "NUM_TOP must be positive"
+assert MAX_PLAYERS >= NUM_TOP, "MAX_PLAYERS must be at least NUM_TOP"
+assert MAX_NAMES <= MAX_PLAYERS, "MAX_NAMES must be at most MAX_PLAYERS"
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
@@ -59,76 +60,105 @@ def get_top_player_stats(daily_ratings, daily_ranks, num_top):
 
   return player_stats
 
-daily_ratings, daily_ranks = get_daily_ratings(TYPE, FORMAT, \
-                                  changed_days_criteria = CHANGED_DAYS_CRITERIA, \
-                                  allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
+types_and_formats = []
+if TYPE and FORMAT:
+  types_and_formats.append((TYPE, FORMAT))
+elif TYPE:
+  for f in ['test', 'odi', 't20']:
+    types_and_formats.append((TYPE, f))
+elif FORMAT:
+  for t in ['batting', 'bowling']:
+    types_and_formats.append((t, FORMAT))
+else:
+  for f in ['test', 'odi', 't20']:
+    for t in ['batting', 'bowling']:
+      types_and_formats.append((t, f))
 
-top_player_stats = get_top_player_stats(daily_ratings, daily_ranks, NUM_TOP)
-sorted_top_stats = dict(sorted(top_player_stats.items(), \
-                                    key = lambda item: (item[1]['days_at_top'], \
-                                                        -item[1]['min_rank'],
-                                                        item[1]['max_rating']), \
-                                    reverse = True))
+for typ, frmt in types_and_formats:
+  print (frmt + ' : ' + typ)
 
-if SHOW_TABLE:
-  print ("Players by longest time spent in top " + str(NUM_TOP) + ' rankings :' \
-          + '\t' + FORMAT + '\t' + TYPE)
+  daily_ratings, daily_ranks = get_daily_ratings(typ, frmt, \
+                                    changed_days_criteria = CHANGED_DAYS_CRITERIA, \
+                                    allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
-  for i, p in enumerate(sorted_top_stats):
-    days_at_top = sorted_top_stats[p]['days_at_top']
-    min_rank = sorted_top_stats[p]['min_rank']
-    max_rating = sorted_top_stats[p]['max_rating']
-    print (str(i + 1) + '\tMax Rating: ' + str(max_rating) + '\t\tBest Rank: ' \
-            + str(min_rank) + '\tDays in top ' + str(NUM_TOP) + ': ' + str(days_at_top) \
-            + '\t' + readable_name_and_country(p))
-    if i == MAX_PLAYERS - 1:
-      break
+  top_player_stats = get_top_player_stats(daily_ratings, daily_ranks, NUM_TOP)
+  sorted_top_stats = dict(sorted(top_player_stats.items(), \
+                                      key = lambda item: (item[1]['days_at_top'], \
+                                                          -item[1]['min_rank'],
+                                                          item[1]['max_rating']), \
+                                      reverse = True))
 
-if SHOW_GRAPH:
-  resolution = tuple([7.2, 7.2])
-  fig, ax = plt.subplots(figsize = resolution)
+  if SHOW_TABLE:
+    print ("Players by longest time spent in top " + str(NUM_TOP) + ' rankings :' \
+            + '\t' + frmt + '\t' + typ)
 
-  title_text = pretty_format(FORMAT, TYPE) \
-                + " by no. of days spent in Top " + str(NUM_TOP) + " Ranks"
-  ax.set_title(title_text, fontsize ='xx-large')
-
-  ax.set_ylabel("No. of Days", fontsize ='x-large')
-
-  days_list = [s['days_at_top'] for s in sorted_top_stats.values()][ : MAX_PLAYERS]
-
-  ymax = math.ceil(max(days_list) / 100) * 100
-  ax.set_ylim(0, ymax)
-  yticks_major = range(0, ymax + 1, 100)
-  yticks_minor = range(0, ymax + 1, 10)
-  ax.set_yticks(yticks_major)
-  ax.set_yticks(yticks_minor, minor = True)
-  ax.set_yticklabels([str(y) for y in yticks_major], fontsize ='large')
-
-  ax.grid(True, which = 'major', axis = 'y', alpha = 0.8)
-  ax.grid(True, which = 'minor', axis = 'y', alpha = 0.4)
-
-  ax.set_xlabel("Ordered players", fontsize ='x-large')
-  ax.set_xlim(0, MAX_PLAYERS + 1)
-
-  if COLOR_BY_COUNTRY:
-    colors = get_player_colors(sorted_top_stats.keys(), by_country = True)
-    cols = list(colors.values())[ : MAX_PLAYERS]
-  else:
-    cols = 'green'
-  xs = list(range(len(days_list)))
-
-  ax.bar(xs, days_list, align = 'edge', color = cols, alpha = 0.5, \
-            linewidth = 1, edgecolor = 'darkgrey')
-
-  if SHOW_NAMES_CUTOFF > 0:
-    for i, p in enumerate(sorted_top_stats.keys()):
+    for i, p in enumerate(sorted_top_stats):
       days_at_top = sorted_top_stats[p]['days_at_top']
-      if days_at_top < SHOW_NAMES_CUTOFF:
+      min_rank = sorted_top_stats[p]['min_rank']
+      max_rating = sorted_top_stats[p]['max_rating']
+      print (str(i + 1) + '\tMax Rating: ' + str(max_rating) + '\t\tBest Rank: ' \
+              + str(min_rank) + '\tDays in top ' + str(NUM_TOP) + ': ' + str(days_at_top) \
+              + '\t' + readable_name_and_country(p))
+      if i == MAX_PLAYERS - 1:
         break
-      player_text = readable_name_and_country(p) + ': ' + '{r:3d}'.format(r = days_at_top)
-      plt.text(x = i + 0.5, y = days_at_top + 5, s = player_text, \
-                alpha = 0.8, fontsize = 'large', \
-                horizontalalignment = 'left', verticalalignment = 'bottom')
 
-  fig.tight_layout()
-  plt.show()
+  if SHOW_GRAPH:
+    resolution = tuple([7.2, 7.2])
+    fig, ax = plt.subplots(figsize = resolution)
+
+    title_text = pretty_format(frmt, typ) \
+                  + " by no. of days spent in Top " + str(NUM_TOP) + " Ranks"
+    ax.set_title(title_text, fontsize ='xx-large')
+
+    ax.set_ylabel("No. of Days", fontsize ='x-large')
+
+    days_list = [s['days_at_top'] for s in sorted_top_stats.values()][ : MAX_PLAYERS]
+
+    ymax = (math.ceil(max(days_list) / 100) + 1) * 100
+    ax.set_ylim(0, ymax)
+    yticks = range(0, ymax + 1, 100)
+    ax.set_yticks(yticks)
+    ax.set_yticklabels([str(y) for y in yticks], fontsize ='large')
+
+    ax.grid(True, which = 'both', axis = 'y', alpha = 0.8)
+
+    ax.set_xlabel("Ordered players", fontsize ='x-large')
+    ax.set_xlim(0, MAX_PLAYERS)
+    if MAX_PLAYERS <= 25:
+      xstep = 1
+    else:
+      xstep = 5
+    xticks = range(0, MAX_PLAYERS, xstep)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([str(x + 1) for x in xticks], fontsize ='large')
+
+    if COLOR_BY_COUNTRY:
+      colors = get_player_colors(sorted_top_stats.keys(), by_country = True)
+      cols = list(colors.values())[ : MAX_PLAYERS]
+    else:
+      cols = 'green'
+    xs = list(range(len(days_list)))
+
+    ax.bar(xs, days_list, align = 'edge', color = cols, alpha = 0.5, \
+              linewidth = 1, edgecolor = 'darkgrey')
+
+    if MAX_NAMES > 0:
+      for i, p in enumerate(sorted_top_stats.keys()):
+        if i == MAX_NAMES:
+          break
+        days_at_top = sorted_top_stats[p]['days_at_top']
+        player_text = readable_name_and_country(p) + ': ' + '{r:3d}'.format(r = days_at_top)
+        plt.text(x = i + 0.5, y = days_at_top + 5, s = player_text, \
+                  alpha = 0.8, fontsize = 'large', \
+                  horizontalalignment = 'left', verticalalignment = 'bottom')
+
+    fig.tight_layout()
+
+    out_filename = 'out/images/bar/timeattop/' \
+                    + frmt + '_' + typ + '_' \
+                    + ('unfiltered_' if not CHANGED_DAYS_CRITERIA else '') \
+                    + 'top' + str(NUM_TOP) + '_' + str(MAX_PLAYERS) + '.png'
+
+    Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
+    fig.savefig(out_filename)
+    print("Written: " + out_filename)
