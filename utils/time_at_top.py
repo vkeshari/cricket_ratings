@@ -116,7 +116,12 @@ for typ, frmt in types_and_formats:
 
     ymax = (math.ceil(max(days_list) / 100) + 1) * 100
     ax.set_ylim(0, ymax)
-    yticks = range(0, ymax + 1, 100)
+    ystep = 100
+    if ymax > 1000:
+      ystep = 200
+    if ymax > 5000:
+      ystep = 500
+    yticks = range(0, ymax + 1, ystep)
     ax.set_yticks(yticks)
     ax.set_yticklabels([str(y) for y in yticks], fontsize ='large')
 
