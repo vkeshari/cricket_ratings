@@ -25,15 +25,17 @@ def pretty_format(frmt, typ):
   s = ''
   if frmt == 'test':
     s += "Test"
-  if frmt == 'odi':
+  elif frmt == 'odi':
     s += "ODI"
-  if frmt == 't20':
+  elif frmt == 't20':
     s += "T20I"
 
   if typ == 'batting':
     s += " Batsmen"
-  if typ == 'bowling':
+  elif typ == 'bowling':
     s += " Bowlers"
+  elif typ == 'allrounder':
+    s += " All-Rounders"
 
   return s
 
