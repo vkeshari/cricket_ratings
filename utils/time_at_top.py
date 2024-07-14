@@ -20,7 +20,7 @@ CHANGED_DAYS_CRITERIA = 'either'
 SHOW_TABLE = True
 SHOW_GRAPH = True
 COLOR_BY_COUNTRY = True
-MAX_NAMES = 5
+MAX_NAMES = 10
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -114,7 +114,8 @@ for typ, frmt in types_and_formats:
 
     days_list = [s['days_at_top'] for s in sorted_top_stats.values()][ : MAX_PLAYERS]
 
-    ymax = (math.ceil(max(days_list) / 100) + 1) * 100
+    ymax = (math.ceil(max(days_list) / 100)) * 105
+
     ax.set_ylim(0, ymax)
     ystep = 100
     if ymax > 1000:
@@ -147,15 +148,18 @@ for typ, frmt in types_and_formats:
     ax.bar(xs, days_list, align = 'edge', color = cols, alpha = 0.5, \
               linewidth = 1, edgecolor = 'darkgrey')
 
+    prev_y = 0
+    ytext_step = ymax / 40
     if MAX_NAMES > 0:
-      for i, p in enumerate(sorted_top_stats.keys()):
-        if i == MAX_NAMES:
-          break
+      for i, p in reversed(list(enumerate(sorted_top_stats.keys()))[ : MAX_NAMES]):
         days_at_top = sorted_top_stats[p]['days_at_top']
-        player_text = readable_name_and_country(p) + ': ' + '{r:3d}'.format(r = days_at_top)
-        plt.text(x = i + 0.5, y = days_at_top + 5, s = player_text, \
+        player_text = readable_name_and_country(p) \
+                        + ': ' + '{r:3d}'.format(r = days_at_top)
+        yloc = max(days_at_top + ytext_step / 5, prev_y + ytext_step)
+        plt.text(x = i + 0.5, y = yloc, s = player_text, \
                   alpha = 0.8, fontsize = 'large', \
                   horizontalalignment = 'left', verticalalignment = 'bottom')
+        prev_y = yloc
 
     fig.tight_layout()
 
