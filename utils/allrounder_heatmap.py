@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
-ALLROUNDERS_GEOM_MEAN = True
+ALLROUNDERS_GEOM_MEAN = False
 
 def get_allrounder_rating(x, y):
   if ALLROUNDERS_GEOM_MEAN:
@@ -44,7 +44,8 @@ for x in range(100, 1000, 100):
     plt.text(x, y, s = '{v:3.0f}'.format(v = text), color = 'white', \
               horizontalalignment = 'center', verticalalignment = 'center')
 
-cbar = plt.colorbar(shrink = 0.7, label = 'Rating Scale', ticks = range(0, 1001, 100))
+cbar = plt.colorbar(shrink = 0.72, ticks = range(0, 1001, 100))
+cbar.set_label(label = 'Rating Scale', size = 'large')
 
 fig.tight_layout()
 
