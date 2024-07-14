@@ -17,8 +17,11 @@ TYPE = ''
 # ['', 'test', 'odi', 't20']
 FORMAT = 't20'
 
+START_DATE = date(2011, 1, 1)
+END_DATE = date(2024, 1, 1)
+
 # Graph dates
-GRAPH_DATES = [date(y, 1, 1) for y in range(2011, 2024)]
+GRAPH_DATES = [date(y, 1, 1) for y in range(START_DATE.year, END_DATE.year)]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500

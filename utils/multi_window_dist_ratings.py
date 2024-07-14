@@ -13,13 +13,13 @@ import numpy as np
 import math
 
 # ['', 'batting', 'bowling', 'allrounder']
-TYPE = 'bowling'
+TYPE = ''
 # ['', 'test', 'odi', 't20']
 FORMAT = 'test'
 
 # Graph dates
-START_DATE = date(1952, 1, 1)
-END_DATE = date(1992, 1, 1)
+START_DATE = date(1930, 1, 1)
+END_DATE = date(1940, 1, 1)
 
 GRAPH_DATES = [date(y, 1, 1) for y in range(START_DATE.year, END_DATE.year)]
 
