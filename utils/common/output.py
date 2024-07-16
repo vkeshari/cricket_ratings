@@ -53,6 +53,14 @@ def country(p):
 def readable_name_and_country(p):
   return readable_name(p) + ' (' + country(p) + ')'
 
+def get_type_color(typ):
+  assert typ in {'batting', 'bowling', 'allrounder'}
+  if typ == 'batting':
+    return 'blue'
+  elif typ == 'bowling':
+    return 'red'
+  elif typ == 'allrounder':
+    return 'green'
 
 def get_colors_from_scale(num_colors, scale = cm.brg):
   color_stops = np.linspace(0, 1, num_colors + 1)
@@ -62,7 +70,7 @@ def get_player_colors(players, by_country = False):
   player_to_color = {}
   if by_country:
     country_colors = {'AFG': 'dodgerblue',
-                      'AUS': 'yellow',
+                      'AUS': 'gold',
                       'BAN': 'forestgreen',
                       'BRM': 'rosybrown',
                       'CAN': 'crimson',

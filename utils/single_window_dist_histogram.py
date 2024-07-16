@@ -2,7 +2,7 @@ from common.aggregation import is_aggregation_window_start, \
                                 get_next_aggregation_window_start, \
                                 get_aggregated_distribution, VALID_AGGREGATIONS
 from common.data import get_daily_ratings
-from common.output import pretty_format
+from common.output import pretty_format, get_type_color
 from common.stats import fit_exp_curve, normalize_array, VALID_STATS
 
 from datetime import date
@@ -170,12 +170,8 @@ def process_for_day(graph_date, daily_ratings, fig, ax):
 
     ax.grid(True, which = 'both', axis = 'both', alpha = 0.5)
 
-    if typ == 'batting':
-      graph_color = 'blue'
-    elif typ == 'bowling':
-      graph_color = 'red'
     ax.bar(actual_bins, bin_counts, width = BIN_SIZE, align = 'edge', \
-              color = graph_color, alpha = 0.5, label = 'Player Counts')
+              color = get_type_color(typ), alpha = 0.5, label = 'Player Counts')
 
     for i, p in enumerate(all_percentiles):
       p_val = all_percentiles[p]

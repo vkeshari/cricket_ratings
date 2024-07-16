@@ -6,6 +6,8 @@ TYPE = 'batting'
 # ['', 'test', 'odi', 't20']
 FORMAT = 't20'
 
+THRESHOLD = 500
+
 PLAYER = 'IND_Virat_Kohli'
 # ['above', 'below', 'total']
 LOCATION = 'above'
@@ -19,6 +21,7 @@ ALLROUNDERS_GEOM_MEAN = True
 
 assert TYPE in ['', 'batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['', 'test', 'odi', 't20'], "Invalid FORMAT provided"
+assert THRESHOLD >= 0, "THRESHOLD must be non-negative"
 assert PLAYER, "No player requested"
 assert LOCATION in {'above', 'below', 'total'}
 assert NUM_SHOW >= 5, "NUM_SHOW must be at least 5"
@@ -32,6 +35,8 @@ def get_player_competition(daily_ratings, player):
     if player not in daily_ratings[d]:
       continue
     for p in daily_ratings[d]:
+      if daily_ratings[d][p] < THRESHOLD:
+        continue
       if p not in competition:
         competition[p] = {'above': 0, 'below': 0, 'total': 0}
       if daily_ratings[d][p] >= daily_ratings[d][player]:
@@ -45,7 +50,7 @@ def get_player_competition(daily_ratings, player):
 def get_career_span(daily_ratings, player):
   player_dates = []
   for d in daily_ratings:
-    if player in daily_ratings[d]:
+    if player in daily_ratings[d] and daily_ratings[d][player] >= THRESHOLD:
       player_dates.append(d)
   player_dates = sorted(player_dates)
 

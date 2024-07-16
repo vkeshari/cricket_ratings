@@ -29,9 +29,13 @@ COLOR_BY_COUNTRY = False
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'fiveyearly', 'decadal']
 PLOT_AVERAGES = 'yearly'
 PLOT_AVERAGE_KEYS = COMPARE_RANKS
+if COMPARE_PLAYERS:
+  for i, p in enumerate(PLOT_AVERAGE_KEYS):
+    PLOT_AVERAGE_KEYS[i] = p + '.data'
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
+
 
 if TYPE:
   assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
@@ -56,7 +60,7 @@ if COLOR_BY_COUNTRY:
 
 if PLOT_AVERAGE_KEYS:
   assert PLOT_AVERAGES, "PLOT_AVERAGE_KEYS provided but no PLOT_AVERAGES"
-  assert not set(PLOT_AVERAGE_KEYS) - set(COMPARE_RANKS) - set(COMPARE_PLAYERS), \
+  assert not set(PLOT_AVERAGE_KEYS) - (set(COMPARE_RANKS) | set(COMPARE_PLAYERS)), \
       "PLOT_AVERAGE_KEYS must be a subset of compare keys to plot"
 assert PLOT_AVERAGES in ['', 'monthly', 'quarterly', 'halfyearly', \
                           'yearly', 'fiveyearly', 'decadal']
@@ -179,15 +183,15 @@ for typ, frmt in types_and_formats:
       if p in compare_stats:
         (xs, ys) = zip(*compare_stats[p].items())
 
-      plt.plot(xs, ys, linestyle = '-', linewidth = 3, antialiased = True, \
-                        alpha = 0.3, color = player_to_color[p], \
+      plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
+                        alpha = 0.4, color = player_to_color[p], \
                         label = readable_name_and_country(p))
 
       if PLOT_AVERAGE_KEYS and p in keys_to_avgs:
         ax.barh(y = keys_to_avgs[p].values(), width = agg_window_size, \
                 align = 'center', left = keys_to_avgs[p].keys(), \
                 height = (MAX_RATING - THRESHOLD) / 40, \
-                color = player_to_color[p], alpha = 0.5)
+                color = player_to_color[p], alpha = 0.4)
 
   elif COMPARE_RANKS:
     colors = get_colors_from_scale(len(COMPARE_RANKS))
@@ -197,14 +201,14 @@ for typ, frmt in types_and_formats:
       if rank in compare_stats:
         (xs, ys) = zip(*compare_stats[rank].items())
 
-      plt.plot(xs, ys, linestyle = '-', linewidth = 3, antialiased = True, \
-                        alpha = 0.3, color = colors[i], label = 'Rank ' + str(rank))
+      plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
+                        alpha = 0.4, color = colors[i], label = 'Rank ' + str(rank))
 
       if PLOT_AVERAGE_KEYS and rank in keys_to_avgs:
         ax.barh(y = keys_to_avgs[rank].values(), width = agg_window_size, \
                 align = 'center', left = keys_to_avgs[rank].keys(), \
                 height = (MAX_RATING - THRESHOLD) / 40, \
-                color = colors[i], alpha = 0.5)
+                color = colors[i], alpha = 0.4)
 
   ax.set_ylabel("Rating", fontsize = 'x-large')
   ax.set_ylim(THRESHOLD, MAX_RATING)

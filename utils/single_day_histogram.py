@@ -1,5 +1,5 @@
 from common.data import get_daily_ratings
-from common.output import pretty_format
+from common.output import pretty_format, get_type_color
 from common.stats import get_stats_for_list
 
 from datetime import date
@@ -126,12 +126,8 @@ for typ, frmt in types_and_formats:
 
       ax.grid(True, which = 'both', axis = 'both', alpha = 0.5)
 
-      if typ == 'batting':
-        graph_color = 'blue'
-      elif typ == 'bowling':
-        graph_color = 'red'
       ax.hist(day_ratings, bins, align = 'mid', \
-                color = graph_color, alpha = 0.5)
+                color = get_type_color(typ), alpha = 0.5)
 
       for i, s in enumerate(PLOT_STATS):
         s_loc = get_stats_for_list(day_ratings, s)
