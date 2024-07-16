@@ -29,9 +29,12 @@ COLOR_BY_COUNTRY = False
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'fiveyearly', 'decadal']
 PLOT_AVERAGES = 'yearly'
 PLOT_AVERAGE_KEYS = []
+SHOW_CHANGES = []
 if COMPARE_PLAYERS:
   for i, p in enumerate(PLOT_AVERAGE_KEYS):
     PLOT_AVERAGE_KEYS[i] = p + '.data'
+  for i, p in enumerate(SHOW_CHANGES):
+    SHOW_CHANGES[i] = p + '.data'
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -175,6 +178,23 @@ for typ, frmt in types_and_formats:
                       + "\n" + str(START_DATE) + " to " + str(END_DATE), \
                   fontsize ='xx-large')
 
+    ax.set_ylabel("Rating", fontsize = 'x-large')
+    ax.set_ylim(THRESHOLD, MAX_RATING)
+    yticks = range(THRESHOLD, MAX_RATING + 1, 50)
+    ax.set_yticks(yticks)
+    ax.set_yticklabels([str(y) for y in yticks], fontsize ='large')
+
+    ax.set_xlabel("Date", fontsize = 'x-large')
+    ax.set_xlim(START_DATE, END_DATE)
+    xticks_major, xticks_minor, xticklabels = \
+            get_timescale_xticks(START_DATE, END_DATE, format = 'widescreen')
+    ax.set_xticks(xticks_major)
+    ax.set_xticks(xticks_minor, minor = True)
+    ax.set_xticklabels(xticklabels, fontsize ='large')
+    
+    ax.grid(True, which = 'major', axis = 'both', alpha = 0.6)
+    ax.grid(True, which = 'minor', axis = 'both', alpha = 0.3)
+
     if COMPARE_PLAYERS:
       player_to_color = get_player_colors(COMPARE_PLAYERS, by_country = COLOR_BY_COUNTRY)
 
@@ -193,6 +213,14 @@ for typ, frmt in types_and_formats:
                   height = (MAX_RATING - THRESHOLD) / 40, \
                   color = player_to_color[p], alpha = 0.4)
 
+        if p in SHOW_CHANGES:
+          last_r = 0
+          for d in compare_stats[p]:
+            r = compare_stats[p][d]
+            if not last_r == 0 and not r == last_r:
+              plt.text(d, r + 10, str(r - last_r), fontsize = 'medium', alpha = 0.8)
+            last_r = r
+
     elif COMPARE_RANKS:
       colors = get_colors_from_scale(len(COMPARE_RANKS))
 
@@ -210,23 +238,15 @@ for typ, frmt in types_and_formats:
                   height = (MAX_RATING - THRESHOLD) / 40, \
                   color = colors[i], alpha = 0.4)
 
-    ax.set_ylabel("Rating", fontsize = 'x-large')
-    ax.set_ylim(THRESHOLD, MAX_RATING)
-    yticks = range(THRESHOLD, MAX_RATING + 1, 50)
-    ax.set_yticks(yticks)
-    ax.set_yticklabels([str(y) for y in yticks], fontsize ='large')
-
-    ax.set_xlabel("Date", fontsize = 'x-large')
-    ax.set_xlim(START_DATE, END_DATE)
-    xticks_major, xticks_minor, xticklabels = \
-            get_timescale_xticks(START_DATE, END_DATE, format = 'widescreen')
-    ax.set_xticks(xticks_major)
-    ax.set_xticks(xticks_minor, minor = True)
-    ax.set_xticklabels(xticklabels, fontsize ='large')
+        if rank in SHOW_CHANGES:
+          last_r = 0
+          for d in compare_stats[rank]:
+            r = compare_stats[rank][d]
+            if not last_r == 0 and not r == last_r:
+              plt.text(d, r + 10, str(r - last_r), fontsize = 'medium', alpha = 0.8)
+            last_r = r
 
     ax.legend(loc = 'best', fontsize = 'large')
-    ax.grid(True, which = 'major', axis = 'both', alpha = 0.6)
-    ax.grid(True, which = 'minor', axis = 'both', alpha = 0.3)
 
     fig.tight_layout()
 
