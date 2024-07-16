@@ -1,5 +1,5 @@
 from common.data import get_daily_ratings
-from common.output import get_timescale_xticks
+from common.output import get_timescale_xticks, pretty_format
 
 from datetime import date, timedelta
 from pathlib import Path
@@ -32,9 +32,9 @@ SHOW_YEAR_GRAPH = True
 ALLROUNDERS_GEOM_MEAN = True
 
 if TYPE:
-  assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
+  assert TYPE in ['', 'batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 if FORMAT:
-  assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
+  assert FORMAT in ['', 'test', 'odi', 't20'], "Invalid FORMAT provided"
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
 assert END_DATE <= date.today(), "Future END_DATE requested"
 
@@ -136,7 +136,7 @@ for typ, frmt in types_and_formats:
 
     fig, ax = plt.subplots(figsize = resolution)
 
-    title = 'Number of days of data by year: ' + frmt \
+    title = 'Number of Days of Data by year: ' + pretty_format(frmt) \
             + '\n' + str(START_DATE) + ' to ' + str(END_DATE)
     ax.set_title(title, fontsize ='xx-large')
 
@@ -144,9 +144,11 @@ for typ, frmt in types_and_formats:
     ax.set_ylabel('No. of Days', fontsize ='x-large')
 
     ax.set_xlim(START_DATE, END_DATE)
-    xticks, xticklabels = get_timescale_xticks(START_DATE, END_DATE, format = aspect_ratio)
-    ax.set_xticks(xticks)
-    ax.set_xticklabels(xticklabels, fontsize = 'large')
+    xticks_major, xticks_minor, xticklabels = \
+            get_timescale_xticks(START_DATE, END_DATE, format = aspect_ratio)
+    ax.set_xticks(xticks_major)
+    ax.set_xticks(xticks_minor, minor = True)
+    ax.set_xticklabels(xticklabels, fontsize ='large')
 
     ymax = math.ceil(max(days_by_year.values()) / 100) * 100
     ax.set_ylim(0, ymax)
@@ -154,14 +156,16 @@ for typ, frmt in types_and_formats:
     ax.set_yticks(yticks)
     ax.set_yticklabels([str(y) for y in yticks], fontsize = 'large')
 
-    ax.grid(True, which = 'both', axis = 'both', alpha = 0.5)
+    ax.grid(True, which = 'major', axis = 'both', alpha = 0.6)
+    ax.grid(True, which = 'minor', axis = 'both', alpha = 0.3)
 
     years, day_counts = zip(*days_by_year.items())
     dates_to_plot = [date(y, 1, 1) for y in years]
     ax.bar(dates_to_plot, day_counts, align = 'edge', width = ONE_YEAR, \
                   color = 'green', linewidth = 1, edgecolor = 'darkgrey', \
-                  alpha = 0.5)
+                  alpha = 0.5, label = 'No. of Days of Ratings Change')
 
+    ax.legend(loc = 'best', fontsize = 'large')
     fig.tight_layout()
 
     out_filename = 'out/images/bar/datapoints/' + frmt + '_' \

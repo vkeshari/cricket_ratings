@@ -168,12 +168,15 @@ for typ, frmt in types_and_formats:
   ax.set_xlabel("Date", fontsize = 'x-large')
   ax.set_xlim(START_DATE, END_DATE)
 
-  xticks, xticklabels = get_timescale_xticks(START_DATE, END_DATE, format = 'widescreen')
-  ax.set_xticks(xticks)
-  ax.set_xticklabels(xticklabels, fontsize ='large', rotation = 45)
+  xticks_major, xticks_minor, xticklabels = \
+          get_timescale_xticks(START_DATE, END_DATE, format = 'widescreen')
+  ax.set_xticks(xticks_major)
+  ax.set_xticks(xticks_minor, minor = True)
+  ax.set_xticklabels(xticklabels, fontsize ='large')
 
   ax.legend(loc = 'best', fontsize = 'large')
-  ax.grid(True, which = 'both', axis = 'both', alpha = 0.5)
+  ax.grid(True, which = 'major', axis = 'both', alpha = 0.6)
+  ax.grid(True, which = 'minor', axis = 'both', alpha = 0.3)
 
   fig.tight_layout()
 

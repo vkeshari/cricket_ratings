@@ -28,7 +28,7 @@ COLOR_BY_COUNTRY = False
 
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'fiveyearly', 'decadal']
 PLOT_AVERAGES = 'yearly'
-PLOT_AVERAGE_KEYS = COMPARE_RANKS
+PLOT_AVERAGE_KEYS = []
 if COMPARE_PLAYERS:
   for i, p in enumerate(PLOT_AVERAGE_KEYS):
     PLOT_AVERAGE_KEYS[i] = p + '.data'
@@ -134,7 +134,7 @@ for typ, frmt in types_and_formats:
   print("Compare stats built with " + str(len(compare_stats)) + " keys")
 
   aggregation_dates = []
-  if PLOT_AVERAGE_KEYS:
+  if compare_stats and PLOT_AVERAGE_KEYS:
     days_with_change = get_days_with_change(daily_ratings, PLOT_AVERAGES)
     agg_daily_ratings = {d: v for d, v in daily_ratings.items() if d in days_with_change}
 
@@ -167,77 +167,80 @@ for typ, frmt in types_and_formats:
 
     print("Aggregate stats built with " + str(len(keys_to_avgs)) + " keys")
 
+  if compare_stats:
+    resolution = tuple([12.8, 7.2])
+    fig, ax = plt.subplots(figsize = resolution)
 
-  resolution = tuple([12.8, 7.2])
-  fig, ax = plt.subplots(figsize = resolution)
+    ax.set_title("Comparison of " + pretty_format(frmt, typ) \
+                      + "\n" + str(START_DATE) + " to " + str(END_DATE), \
+                  fontsize ='xx-large')
 
-  ax.set_title("Comparison of " + pretty_format(frmt, typ) \
-                    + "\n" + str(START_DATE) + " to " + str(END_DATE), \
-                fontsize ='xx-large')
+    if COMPARE_PLAYERS:
+      player_to_color = get_player_colors(COMPARE_PLAYERS, by_country = COLOR_BY_COUNTRY)
 
-  if COMPARE_PLAYERS:
-    player_to_color = get_player_colors(COMPARE_PLAYERS, by_country = COLOR_BY_COUNTRY)
+      for p in COMPARE_PLAYERS:
+        (xs, ys) = [], []
+        if p in compare_stats:
+          (xs, ys) = zip(*compare_stats[p].items())
 
-    for p in COMPARE_PLAYERS:
-      (xs, ys) = [], []
-      if p in compare_stats:
-        (xs, ys) = zip(*compare_stats[p].items())
+        plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
+                          alpha = 0.4, color = player_to_color[p], \
+                          label = readable_name_and_country(p))
 
-      plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
-                        alpha = 0.4, color = player_to_color[p], \
-                        label = readable_name_and_country(p))
+        if PLOT_AVERAGE_KEYS and p in keys_to_avgs:
+          ax.barh(y = keys_to_avgs[p].values(), width = agg_window_size, \
+                  align = 'center', left = keys_to_avgs[p].keys(), \
+                  height = (MAX_RATING - THRESHOLD) / 40, \
+                  color = player_to_color[p], alpha = 0.4)
 
-      if PLOT_AVERAGE_KEYS and p in keys_to_avgs:
-        ax.barh(y = keys_to_avgs[p].values(), width = agg_window_size, \
-                align = 'center', left = keys_to_avgs[p].keys(), \
-                height = (MAX_RATING - THRESHOLD) / 40, \
-                color = player_to_color[p], alpha = 0.4)
+    elif COMPARE_RANKS:
+      colors = get_colors_from_scale(len(COMPARE_RANKS))
 
-  elif COMPARE_RANKS:
-    colors = get_colors_from_scale(len(COMPARE_RANKS))
+      for i, rank in enumerate(COMPARE_RANKS):
+        (xs, ys) = [], []
+        if rank in compare_stats:
+          (xs, ys) = zip(*compare_stats[rank].items())
 
-    for i, rank in enumerate(COMPARE_RANKS):
-      (xs, ys) = [], []
-      if rank in compare_stats:
-        (xs, ys) = zip(*compare_stats[rank].items())
+        plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
+                          alpha = 0.4, color = colors[i], label = 'Rank ' + str(rank))
 
-      plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
-                        alpha = 0.4, color = colors[i], label = 'Rank ' + str(rank))
+        if PLOT_AVERAGE_KEYS and rank in keys_to_avgs:
+          ax.barh(y = keys_to_avgs[rank].values(), width = agg_window_size, \
+                  align = 'center', left = keys_to_avgs[rank].keys(), \
+                  height = (MAX_RATING - THRESHOLD) / 40, \
+                  color = colors[i], alpha = 0.4)
 
-      if PLOT_AVERAGE_KEYS and rank in keys_to_avgs:
-        ax.barh(y = keys_to_avgs[rank].values(), width = agg_window_size, \
-                align = 'center', left = keys_to_avgs[rank].keys(), \
-                height = (MAX_RATING - THRESHOLD) / 40, \
-                color = colors[i], alpha = 0.4)
+    ax.set_ylabel("Rating", fontsize = 'x-large')
+    ax.set_ylim(THRESHOLD, MAX_RATING)
+    yticks = range(THRESHOLD, MAX_RATING + 1, 50)
+    ax.set_yticks(yticks)
+    ax.set_yticklabels([str(y) for y in yticks], fontsize ='large')
 
-  ax.set_ylabel("Rating", fontsize = 'x-large')
-  ax.set_ylim(THRESHOLD, MAX_RATING)
-  yticks = range(THRESHOLD, MAX_RATING + 1, 50)
-  ax.set_yticks(yticks)
-  ax.set_yticklabels([str(y) for y in yticks], fontsize ='large')
+    ax.set_xlabel("Date", fontsize = 'x-large')
+    ax.set_xlim(START_DATE, END_DATE)
+    xticks_major, xticks_minor, xticklabels = \
+            get_timescale_xticks(START_DATE, END_DATE, format = 'widescreen')
+    ax.set_xticks(xticks_major)
+    ax.set_xticks(xticks_minor, minor = True)
+    ax.set_xticklabels(xticklabels, fontsize ='large')
 
-  ax.set_xlabel("Date", fontsize = 'x-large')
-  ax.set_xlim(START_DATE, END_DATE)
-  xticks, xticklabels = get_timescale_xticks(START_DATE, END_DATE, format = 'widescreen')
-  ax.set_xticks(xticks)
-  ax.set_xticklabels(xticklabels, fontsize ='large', rotation = 45)
+    ax.legend(loc = 'best', fontsize = 'large')
+    ax.grid(True, which = 'major', axis = 'both', alpha = 0.6)
+    ax.grid(True, which = 'minor', axis = 'both', alpha = 0.3)
 
-  ax.legend(loc = 'best', fontsize = 'large')
-  ax.grid(True, which = 'both', axis = 'both', alpha = 0.5)
+    fig.tight_layout()
 
-  fig.tight_layout()
+    comparison_text = ''
+    if COMPARE_PLAYERS:
+      for p in COMPARE_PLAYERS:
+        comparison_text += country(p) + last_name(p) + '_'
+    elif COMPARE_RANKS:
+      for r in COMPARE_RANKS:
+        comparison_text += str(r) + '_'
+    out_filename = 'out/images/line/comparison/' + comparison_text \
+                    + frmt + '_' + typ + '_' \
+                    + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
 
-  comparison_text = ''
-  if COMPARE_PLAYERS:
-    for p in COMPARE_PLAYERS:
-      comparison_text += country(p) + last_name(p) + '_'
-  elif COMPARE_RANKS:
-    for r in COMPARE_RANKS:
-      comparison_text += str(r) + '_'
-  out_filename = 'out/images/line/comparison/' + comparison_text \
-                  + frmt + '_' + typ + '_' \
-                  + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
-
-  Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
-  fig.savefig(out_filename)
-  print("Written: " + out_filename)
+    Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
+    fig.savefig(out_filename)
+    print("Written: " + out_filename)

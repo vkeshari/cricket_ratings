@@ -21,7 +21,7 @@ def date_to_string(d):
   return yr + '-' + mn + '-' + dy
 
 
-def pretty_format(frmt, typ):
+def pretty_format(frmt, typ = ''):
   s = ''
   if frmt == 'test':
     s += "Test"
@@ -36,6 +36,8 @@ def pretty_format(frmt, typ):
     s += " Bowlers"
   elif typ == 'allrounder':
     s += " All-Rounders"
+  elif not typ:
+    s += 's'
 
   return s
 
@@ -105,26 +107,61 @@ def get_player_colors(players, by_country = False):
 
 def get_timescale_xticks(start_date, end_date, format = 'square'):
   assert format in ['square', 'widescreen']
-  if format == 'square':
-    counts_to_yr_widths = {1: 1, 10: 2, 25: 5, 50: 10}
-  elif format == 'widescreen':
-    counts_to_yr_widths = {2: 1, 20: 2, 50: 5, 100: 10}
 
-  xtick_yr_range = []
-  for c in counts_to_yr_widths:
-    if (end_date - start_date) > c * ONE_YEAR:
-      xtick_yr_range = range(start_date.year, end_date.year + 1, counts_to_yr_widths[c])
+  xticks_major, xticks_minor = [], []
+  date_range = end_date - start_date
 
-  if xtick_yr_range:
-    xticks = [date(yr, 1, 1) for yr in xtick_yr_range]
-    xticklabels = [str(x.year) for x in xticks]
-  else:
-    xticks = []
-    d = start_date
-    while d <= end_date:
+  d = start_date
+  while d <= end_date:
+    if format == 'square' and date_range < ONE_YEAR or \
+        format == 'widescreen' and date_range < 2 * ONE_YEAR:
+      if d.day == 1 and d.month % 3 == 1:
+        xticks_major.append(d)
       if d.day == 1:
-        xticks.append(d)
-      d += ONE_DAY
-    xticklabels = [str(x.year) + '-' + str(x.month) for x in xticks]
-  
-  return xticks, xticklabels
+        xticks_minor.append(d)
+    elif format == 'square' and date_range < 2 * ONE_YEAR or \
+        format == 'widescreen' and date_range < 5 * ONE_YEAR:
+      if d.day == 1 and d.month % 6 == 1:
+        xticks_major.append(d)
+      if d.day == 1:
+        xticks_minor.append(d)
+    elif format == 'square' and date_range < 5 * ONE_YEAR or \
+        format == 'widescreen' and date_range < 10 * ONE_YEAR:
+      if d.day == 1 and d.month == 1:
+        xticks_major.append(d)
+      if d.day == 1:
+        xticks_minor.append(d)
+    elif format == 'square' and date_range < 10 * ONE_YEAR or \
+        format == 'widescreen' and date_range < 20 * ONE_YEAR:
+      if d.day == 1 and d.month == 1:
+        xticks_major.append(d)
+      if d.day == 1 and d.month % 3 == 1:
+        xticks_minor.append(d)
+    elif format == 'square' and date_range < 25 * ONE_YEAR or \
+        format == 'widescreen' and date_range < 50 * ONE_YEAR:
+      if d.day == 1 and d.month == 1 and d.year % 2 == 0:
+        xticks_major.append(d)
+      if d.day == 1 and d.month == 1:
+        xticks_minor.append(d)
+    elif format == 'square' and date_range < 50 * ONE_YEAR or \
+        format == 'widescreen' and date_range < 100 * ONE_YEAR:
+      if d.day == 1 and d.month == 1 and d.year % 5 == 0:
+        xticks_major.append(d)
+      if d.day == 1 and d.month == 1:
+        xticks_minor.append(d)
+    else:
+      if d.day == 1 and d.month == 1 and d.year % 10 == 0:
+        xticks_major.append(d)
+      if d.day == 1 and d.month == 1:
+        xticks_minor.append(d)
+
+    d += ONE_DAY
+
+  if format == 'square' and date_range < 2 * ONE_YEAR or \
+        format == 'widescreen' and date_range < 5 * ONE_YEAR:
+    xticklabels = [datetime.combine(d, datetime.min.time()).strftime("%b-%Y") \
+                          for d in xticks_major]
+  else:
+    xticklabels = [str(x.year) for x in xticks_major]
+
+  return xticks_major, xticks_minor, xticklabels
