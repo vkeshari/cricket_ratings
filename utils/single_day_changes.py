@@ -27,11 +27,11 @@ CHANGED_DAYS_CRITERIA = 'rating'
 SHOW_TOP_CHANGES = False
 NUM_SHOW = 20
 
-BIN_WIDTH = 5
-
 SHOW_GRAPH = True
-MAX_CHANGE = 100
 LOG_SCALE = False
+SHOW_PERCENTAGES = False
+MAX_CHANGE = 100
+NUM_BINS = 40
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -48,9 +48,11 @@ assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
 assert NUM_SHOW >= 5, "NUM_SHOW should be at least 5"
-assert BIN_WIDTH >= 5 and BIN_WIDTH <= 100, "BIN_WIDTH must be between 5 and 100"
-assert MAX_CHANGE >= 100 and MAX_CHANGE <= 500, "MAX_CHANGE must be between 100 and 500"
-assert MAX_CHANGE % BIN_WIDTH == 0, "MAX_CHANGE must be a multiple of BIN_WIDTH"
+
+assert NUM_BINS >= 10 and NUM_BINS <= 100, "NUM_BINS must be between 10 and 100"
+assert MAX_CHANGE >= 1 and MAX_CHANGE <= 500, "MAX_CHANGE must be between 1 and 500"
+if SHOW_PERCENTAGES or LOG_SCALE:
+  assert SHOW_GRAPH, "SHOW_PERCENTAGES or LOG_SCALE requested without SHOW_GRAPH"
 
 
 types_and_formats = []
@@ -119,8 +121,18 @@ for typ, frmt in types_and_formats:
 
     fig, ax = plt.subplots(figsize = resolution)
 
-    changes = [c[0] for c in all_changes]
-    change_bins = list(range(-MAX_CHANGE, MAX_CHANGE + 1, BIN_WIDTH))
+    if SHOW_PERCENTAGES:
+      changes = []
+      for i, (c, _, _, _) in enumerate(all_changes):
+        if i == 0:
+          continue
+        prev_r = all_changes[i - 1][1]
+        pct_change = c * 100 / prev_r
+        changes.append(pct_change)
+    else:
+      changes = [c[0] for c in all_changes]
+
+    change_bins = np.linspace(-MAX_CHANGE, MAX_CHANGE, NUM_BINS)
     change_intervals = np.histogram(changes, change_bins)[0]
     ymax = math.ceil(max(change_intervals) / 1000) * 1000
 
@@ -129,15 +141,18 @@ for typ, frmt in types_and_formats:
             + ' (' + str(START_DATE) + ' to ' + str(END_DATE) + ')'
     ax.set_title(title, fontsize ='xx-large')
 
-    ax.set_xlabel('Daily Rating Change', fontsize ='x-large')
-    ax.set_ylabel('No. of changes', fontsize ='x-large')
+    if SHOW_PERCENTAGES:
+      ax.set_xlabel('Daily Rating Percent Change', fontsize = 'x-large')
+    else:
+      ax.set_xlabel('Daily Rating Change', fontsize = 'x-large')
+    ax.set_ylabel('No. of changes', fontsize = 'x-large')
 
     ax.set_xlim(-MAX_CHANGE, MAX_CHANGE)
-    xticks_major = [x for x in change_bins if x % 50 == 0]
-    xticks_minor = change_bins
+    xticks_major = np.linspace(-MAX_CHANGE, MAX_CHANGE, 5)
+    xticks_minor = np.linspace(-MAX_CHANGE, MAX_CHANGE, 21)
     ax.set_xticks(xticks_major)
     ax.set_xticks(xticks_minor, minor = True)
-    ax.set_xticklabels([str(x) for x in xticks_major], fontsize ='large')
+    ax.set_xticklabels(['{v:3.0f}'.format(v = x) for x in xticks_major], fontsize ='large')
 
     if LOG_SCALE:
       plt.yscale('log')
@@ -161,22 +176,33 @@ for typ, frmt in types_and_formats:
     ax.hist(changes, bins = change_bins, cumulative = False, \
               align = 'mid', color = get_type_color(typ), alpha = 0.5)
 
-    plus_50 = len([c for c in changes if c >= 50])
-    minus_50 = len([c for c in changes if c <= -50])
-    plus_100 = len([c for c in changes if c >= 100])
-    minus_100 = len([c for c in changes if c <= -100])
-    plt.text(MAX_CHANGE / 10, ymax * 0.95, s = "50+ single-day gains: " + str(plus_50), \
-                fontsize = 'large', alpha = 0.8)
-    plt.text(MAX_CHANGE / 10, ymax * 0.90, s = "50+ single-day drops: " + str(minus_50), \
-                fontsize = 'large', alpha = 0.8)
-    plt.text(MAX_CHANGE / 10, ymax * 0.85, s = "100+ single-day gains: " + str(plus_100), \
-                fontsize = 'large', alpha = 0.8)
-    plt.text(MAX_CHANGE / 10, ymax * 0.80, s = "100+ single-day drops: " + str(minus_100), \
-                fontsize = 'large', alpha = 0.8)
+    half = MAX_CHANGE / 2
+    full = MAX_CHANGE
+    plus_half = len([c for c in changes if c >= half])
+    minus_half = len([c for c in changes if c <= -half])
+    plus_full = len([c for c in changes if c >= full])
+    minus_full = len([c for c in changes if c <= -full])
+    plt.text(MAX_CHANGE / 10, ymax * 0.95, \
+              s = '{v:3.0f}'.format(v = half) + "+ single-day gains: " \
+                      + '{r:4d}'.format(r = plus_half), \
+              fontsize = 'large', alpha = 0.8)
+    plt.text(MAX_CHANGE / 10, ymax * 0.90, \
+              s = '{v:3.0f}'.format(v = half) + "+ single-day drops: " \
+                      + '{r:4d}'.format(r = minus_half), \
+              fontsize = 'large', alpha = 0.8)
+    plt.text(MAX_CHANGE / 10, ymax * 0.85, \
+              s = '{v:3.0f}'.format(v = full) + "+ single-day gains: " \
+                      + '{r:4d}'.format(r = plus_full), \
+              fontsize = 'large', alpha = 0.8)
+    plt.text(MAX_CHANGE / 10, ymax * 0.80, \
+              s = '{v:3.0f}'.format(v = full) + "+ single-day drops: " \
+                      + '{r:4d}'.format(r = minus_full), \
+              fontsize = 'large', alpha = 0.8)
 
     fig.tight_layout()
 
-    out_filename = 'out/images/bar/singleday/' + frmt + '_' + typ + '_' \
+    out_filename = 'out/images/bar/singleday/' + ('PCT_' if SHOW_PERCENTAGES else '') \
+                    + frmt + '_' + typ + '_' \
                     + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
 
     Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
