@@ -1,4 +1,4 @@
-from common.stats import get_stats_for_list, VALID_STATS
+from common.stats import get_stats_for_list, normalize_array, VALID_STATS
 
 from datetime import date, timedelta
 
@@ -107,10 +107,8 @@ def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
     aggregate_buckets[bucket].append(distribution_for_date)
 
   for d in aggregate_buckets:
-    for dist in aggregate_buckets[d]:
-      total_count = sum(dist)
-      for i, val in enumerate(dist):
-        dist[i] = val * normalize_to / total_count
+    for i, dist in enumerate(aggregate_buckets[d]):
+      aggregate_buckets[d][i] = normalize_array(dist, normalize_to)
 
   aggregated_buckets = {d: [] for d in agg_dates}
   num_bins = len(bin_stops) - 1
@@ -119,6 +117,9 @@ def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
     aggregate_buckets[d] = list(zip(*aggregate_buckets[d]))
 
   for d in aggregate_buckets:
+    if len(aggregate_buckets[d]) == 0:
+      aggregated_buckets[d] = [0] * num_bins
+      continue
     for i in range(num_bins):
       aggregated_buckets[d].append(get_stats_for_list(aggregate_buckets[d][i], \
                                                       stat_type = dist_aggregate))

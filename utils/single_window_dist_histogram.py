@@ -67,12 +67,16 @@ assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, \
 assert AGGREGATION_WINDOW in VALID_AGGREGATIONS, "Invalid AGGREGATION_WINDOW provided"
 assert BIN_AGGREGATE in VALID_STATS, "Invalid BIN_AGGREGATE provided"
 
+if SHOW_BIN_COUNTS:
+  assert not ANIMATE, "SHOW_BIN_COUNTS must be disabled if ANIMATE is enabled"
+
 for p in PLOT_PERCENTILES:
   assert p >= 0 and p < 100, "Each value in PLOT_PERCENTILES must be between 0 and 100"
 if PLOT_PERCENTILES:
   assert RATING_FRACTIONS or THRESHOLD == 0 and MAX_RATING == 1000, \
       "If PLOT_PERCENTILES is provided, either RATING_FRACTIONS must be set or " \
           + "ratings range must be 0 to 1000"
+
 
 def get_rating_fraction(r):
   return (r - THRESHOLD) / (MAX_RATING - THRESHOLD)

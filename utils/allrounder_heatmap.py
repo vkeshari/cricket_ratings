@@ -47,7 +47,7 @@ for x in range(100, 1000, 100):
 cbar = plt.colorbar(shrink = 0.72, ticks = range(0, 1001, 100))
 cbar.set_label(label = 'Rating Scale', size = 'large')
 
-plt.contour(xy, levels = range(100, 1000, 100), colors = 'white', \
+ax.contour(xy, levels = range(100, 1000, 100), colors = 'white', \
                 alpha = 0.5, antialiased = True)
 
 fig.tight_layout()

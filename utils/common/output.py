@@ -105,8 +105,9 @@ def get_player_colors(players, by_country = False):
   return player_to_color
 
 
-def resolution_by_span(start_date, end_date):
-  if (end_date.year - start_date.year > 50):
+def resolution_by_span(start_date, end_date, heatmap = False):
+  if heatmap and end_date.year - start_date.year > 25 or \
+      not heatmap and end_date.year - start_date.year > 50:
     resolution = tuple([12.8, 7.2])
     aspect_ratio = 'widescreen'
   else:
@@ -147,8 +148,8 @@ def get_timescale_xticks(start_date, end_date, format = 'square'):
         xticks_major.append(d)
       if d.day == 1 and d.month % 3 == 1:
         xticks_minor.append(d)
-    elif format == 'square' and date_range < 25 * ONE_YEAR or \
-        format == 'widescreen' and date_range < 50 * ONE_YEAR:
+    elif format == 'square' and date_range < 20 * ONE_YEAR or \
+        format == 'widescreen' and date_range < 40 * ONE_YEAR:
       if d.day == 1 and d.month == 1 and d.year % 2 == 0:
         xticks_major.append(d)
       if d.day == 1 and d.month == 1:

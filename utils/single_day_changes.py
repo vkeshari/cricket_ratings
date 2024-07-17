@@ -217,7 +217,8 @@ for typ, frmt in types_and_formats:
     adjusted_start_date = date(START_DATE.year, 1, 1)
     adjusted_end_date = date(END_DATE.year, 1, 1)
 
-    resolution, aspect_ratio = resolution_by_span(adjusted_start_date, adjusted_end_date)
+    resolution, aspect_ratio = resolution_by_span(adjusted_start_date, adjusted_end_date, \
+                                                  heatmap = True)
     fig, ax = plt.subplots(figsize = resolution)
 
     changes_by_year = {yr: [] for yr in \
@@ -259,7 +260,6 @@ for typ, frmt in types_and_formats:
     xticks_major, xticks_minor, xticklabels = \
             get_timescale_xticks(adjusted_start_date, adjusted_end_date, \
                                   format = aspect_ratio)
-
     ax.set_xticks(xticks_major)
     ax.set_xticks(xticks_minor, minor = True)
     ax.set_xticklabels(xticklabels, fontsize ='large')
@@ -287,7 +287,7 @@ for typ, frmt in types_and_formats:
     else:
       cbar_ticks = range(0, 100, 10)
       cbar_ticklabels = [str(t) for t in cbar_ticks]
-    cbar = plt.colorbar(ticks = cbar_ticks)
+    cbar = plt.colorbar(ticks = cbar_ticks, aspect = 25)
     cbar.ax.set_yticklabels(cbar_ticklabels, fontsize = 'medium')
     if LOG_SCALE:
       cbar.set_label(label = 'Interval Frequency (log scale)', size = 'x-large')
