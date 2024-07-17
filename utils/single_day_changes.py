@@ -217,8 +217,7 @@ for typ, frmt in types_and_formats:
     adjusted_start_date = date(START_DATE.year, 1, 1)
     adjusted_end_date = date(END_DATE.year, 1, 1)
 
-    resolution, aspect_ratio = resolution_by_span(adjusted_start_date, adjusted_end_date, \
-                                                  heatmap = True)
+    resolution, aspect_ratio = resolution_by_span(adjusted_start_date, adjusted_end_date)
     fig, ax = plt.subplots(figsize = resolution)
 
     changes_by_year = {yr: [] for yr in \
@@ -241,7 +240,7 @@ for typ, frmt in types_and_formats:
     title = 'Single-Day Rating Change Heatmap by Year\n' \
             + pretty_format(frmt, typ) \
             + ' (' + str(adjusted_start_date) + ' to ' + str(adjusted_end_date) + ')'
-    ax.set_title(title, fontsize ='xx-large')
+    ax.set_title(title, fontsize ='x-large')
 
     if SHOW_PERCENTAGES:
       ax.set_ylabel('Daily Rating Percent Change', fontsize = 'x-large')

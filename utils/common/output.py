@@ -105,9 +105,9 @@ def get_player_colors(players, by_country = False):
   return player_to_color
 
 
-def resolution_by_span(start_date, end_date, heatmap = False):
-  if heatmap and end_date.year - start_date.year > 25 or \
-      not heatmap and end_date.year - start_date.year > 50:
+def resolution_by_span(start_date, end_date, prefer_wide = False):
+  if prefer_wide and end_date.year - start_date.year > 25 or \
+      not prefer_wide and end_date.year - start_date.year > 50:
     resolution = tuple([12.8, 7.2])
     aspect_ratio = 'widescreen'
   else:

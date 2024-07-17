@@ -18,7 +18,7 @@ TYPE = ''
 FORMAT = 't20'
 
 # Graph dates
-GRAPH_DATES = [date(y, 1, 1) for y in range(2007, 2023)]
+GRAPH_DATES = [date(y, 1, 1) for y in range(2007, 2024)]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
@@ -144,7 +144,9 @@ def process_for_day(graph_date, daily_ratings, fig, ax):
 
   if SHOW_GRAPH:
     title_text = "Distribution of " + pretty_format(frmt, typ) \
-                  + " by rating\n" + str(graph_date) \
+                  + " by Rating " \
+                  + ("(GM)" if ALLROUNDERS_GEOM_MEAN and typ == 'allrounder' else '') \
+                  + "\n" + str(graph_date) \
                   + '(' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
     ax.set_title(title_text, fontsize ='xx-large')
 
@@ -158,8 +160,10 @@ def process_for_day(graph_date, daily_ratings, fig, ax):
 
     if ymax <= 20:
       ytick_size = 1
-    else:
+    elif ymax <= 50:
       ytick_size = 2
+    else:
+      ytick_size = 5
 
     yticks = range(0, ymax + 1, ytick_size)
     ax.set_yticks(yticks)
@@ -239,8 +243,10 @@ for typ, frmt in types_and_formats:
                     + ('PF_' if PLOT_PERCENTILES and RATING_FRACTIONS else '') \
                     + ('FIT_' if FIT_CURVE else '') \
                     + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
-                    + frmt + '_' + typ + '_' \
-                    + str(GRAPH_DATES[0].year) + '_' + str(GRAPH_DATES[-1].year) \
+                    + frmt + '_' + typ \
+                    + ('GEOM' if typ == 'allrounder' \
+                              and ALLROUNDERS_GEOM_MEAN else '') \
+                    + '_' + str(GRAPH_DATES[0].year) + '_' + str(GRAPH_DATES[-1].year) \
                     + '.gif'
 
     writer = animation.FFMpegWriter(fps = 2, bitrate = 5000)
@@ -262,8 +268,10 @@ for typ, frmt in types_and_formats:
                       + ('PF_' if PLOT_PERCENTILES and RATING_FRACTIONS else '') \
                       + ('FIT_' if FIT_CURVE else '') \
                       + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
-                      + frmt + '_' + typ + '_' \
-                      + str(graph_date.year) + '.png'
+                      + frmt + '_' + typ \
+                      + ('GEOM' if typ == 'allrounder' \
+                                and ALLROUNDERS_GEOM_MEAN else '') \
+                      + '_' + str(graph_date.year) + '.png'
 
       process_for_day(graph_date, daily_ratings, fig, ax)
 

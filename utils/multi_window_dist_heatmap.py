@@ -140,7 +140,7 @@ for typ, frmt in types_and_formats:
   adjusted_end_date = date(GRAPH_DATES[-1].year + 1, 1 ,1)
 
   resolution, aspect_ratio = resolution_by_span(adjusted_start_date, adjusted_end_date, \
-                                                heatmap = True)
+                                                prefer_wide = True)
   fig, ax = plt.subplots(figsize = resolution)
 
   title_text = "Heatmap of Distribution of Ratings by Year" \
