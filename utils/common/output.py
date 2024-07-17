@@ -105,6 +105,16 @@ def get_player_colors(players, by_country = False):
   return player_to_color
 
 
+def resolution_by_span(start_date, end_date):
+  if (end_date.year - start_date.year > 50):
+    resolution = tuple([12.8, 7.2])
+    aspect_ratio = 'widescreen'
+  else:
+    resolution = tuple([7.2, 7.2])
+    aspect_ratio = 'square'
+  return resolution, aspect_ratio
+
+
 def get_timescale_xticks(start_date, end_date, format = 'square'):
   assert format in ['square', 'widescreen']
 

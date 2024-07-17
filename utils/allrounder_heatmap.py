@@ -49,7 +49,7 @@ cbar.set_label(label = 'Rating Scale', size = 'large')
 
 fig.tight_layout()
 
-out_filename = 'out/images/heatmap/allrounders_' \
+out_filename = 'out/images/heatmap/allrounder/' \
                 + ("geometric" if ALLROUNDERS_GEOM_MEAN else "classic") \
                 + '.png'
 Path(out_filename).parent.mkdir(exist_ok = True, parents = True)

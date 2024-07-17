@@ -1,5 +1,5 @@
 from common.data import get_daily_ratings
-from common.output import get_timescale_xticks, pretty_format
+from common.output import get_timescale_xticks, pretty_format, resolution_by_span
 
 from datetime import date, timedelta
 from pathlib import Path
@@ -127,13 +127,7 @@ for typ, frmt in types_and_formats:
 
 
   if SHOW_YEAR_GRAPH and typ == 'batting':
-    if (END_DATE.year - START_DATE.year > 50):
-      resolution = tuple([12.8, 7.2])
-      aspect_ratio = 'widescreen'
-    else:
-      resolution = tuple([7.2, 7.2])
-      aspect_ratio = 'square'
-
+    resolution, aspect_ratio = resolution_by_span(START_DATE, END_DATE)
     fig, ax = plt.subplots(figsize = resolution)
 
     title = 'Number of Days of Data by year: ' + pretty_format(frmt) \

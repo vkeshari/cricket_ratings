@@ -1,5 +1,7 @@
 from common.data import get_daily_ratings
-from common.output import readable_name_and_country, pretty_format, get_type_color
+from common.output import resolution_by_span, pretty_format, get_type_color, \
+                          readable_name_and_country, get_timescale_xticks
+from common.stats import normalize_array
 
 from datetime import date
 from matplotlib import pyplot as plt
@@ -27,11 +29,13 @@ CHANGED_DAYS_CRITERIA = 'rating'
 SHOW_TOP_CHANGES = False
 NUM_SHOW = 20
 
-SHOW_GRAPH = True
-LOG_SCALE = False
-SHOW_PERCENTAGES = False
-MAX_CHANGE = 100
-NUM_BINS = 40
+SHOW_GRAPH = False
+SHOW_HEATMAP = True
+
+NUM_BINS = 100
+MAX_CHANGE = 10
+SHOW_PERCENTAGES = True
+LOG_SCALE = True
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -52,7 +56,8 @@ assert NUM_SHOW >= 5, "NUM_SHOW should be at least 5"
 assert NUM_BINS >= 10 and NUM_BINS <= 100, "NUM_BINS must be between 10 and 100"
 assert MAX_CHANGE >= 1 and MAX_CHANGE <= 500, "MAX_CHANGE must be between 1 and 500"
 if SHOW_PERCENTAGES or LOG_SCALE:
-  assert SHOW_GRAPH, "SHOW_PERCENTAGES or LOG_SCALE requested without SHOW_GRAPH"
+  assert SHOW_GRAPH or SHOW_HEATMAP, \
+          "SHOW_PERCENTAGES or LOG_SCALE requested without SHOW_GRAPH or SHOW_HEATMAP"
 
 
 types_and_formats = []
@@ -98,10 +103,11 @@ for typ, frmt in types_and_formats:
 
   all_changes = sorted(all_changes, key = lambda c: c[0], reverse = True)
 
-  top_increases = all_changes[ : NUM_SHOW]
-  top_decreases = reversed(all_changes[-NUM_SHOW : ])
 
   if SHOW_TOP_CHANGES:
+    top_increases = all_changes[ : NUM_SHOW]
+    top_decreases = reversed(all_changes[-NUM_SHOW : ])
+
     print()
     print("Top daily rating gains")
     print("Gain\tRating\tDate\tPlayer")
@@ -118,7 +124,6 @@ for typ, frmt in types_and_formats:
 
   if SHOW_GRAPH:
     resolution = tuple([7.2, 7.2])
-
     fig, ax = plt.subplots(figsize = resolution)
 
     if SHOW_PERCENTAGES:
@@ -131,12 +136,10 @@ for typ, frmt in types_and_formats:
         changes.append(pct_change)
     else:
       changes = [c[0] for c in all_changes]
-
     change_bins = np.linspace(-MAX_CHANGE, MAX_CHANGE, NUM_BINS)
     change_intervals = np.histogram(changes, change_bins)[0]
-    ymax = math.ceil(max(change_intervals) / 1000) * 1000
 
-    title = 'Distribution of single-day rating changes\n' \
+    title = 'Distribution of Single-Day Rating Changes\n' \
             + pretty_format(frmt, typ) \
             + ' (' + str(START_DATE) + ' to ' + str(END_DATE) + ')'
     ax.set_title(title, fontsize ='xx-large')
@@ -152,7 +155,10 @@ for typ, frmt in types_and_formats:
     xticks_minor = np.linspace(-MAX_CHANGE, MAX_CHANGE, 21)
     ax.set_xticks(xticks_major)
     ax.set_xticks(xticks_minor, minor = True)
-    ax.set_xticklabels(['{v:3.0f}'.format(v = x) for x in xticks_major], fontsize ='large')
+    xticklabels = ['{v:3.0f}'.format(v = x) for x in xticks_major]
+    ax.set_xticklabels(xticklabels, fontsize ='large')
+
+    ymax = math.ceil(max(change_intervals) / 1000) * 1000
 
     if LOG_SCALE:
       plt.yscale('log')
@@ -202,9 +208,92 @@ for typ, frmt in types_and_formats:
     fig.tight_layout()
 
     out_filename = 'out/images/bar/singleday/' + ('PCT_' if SHOW_PERCENTAGES else '') \
-                    + frmt + '_' + typ + '_' \
+                    + ('LOG_' if LOG_SCALE else '') + frmt + '_' + typ + '_' \
                     + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
 
+
+  if SHOW_HEATMAP:
+    resolution, aspect_ratio = resolution_by_span(START_DATE, END_DATE)
+    fig, ax = plt.subplots(figsize = resolution)
+
+    adjusted_end_date = date(END_DATE.year + 1, 1, 1)
+
+    changes_by_year = {}
+    for i, (c, r, d, _) in enumerate(all_changes):
+      yr = d.year
+      if yr not in changes_by_year:
+        changes_by_year[yr] = []
+      if SHOW_PERCENTAGES:
+        if i == 0:
+          continue
+        prev_r = all_changes[i - 1][1]
+        pct_change = c * 100 / prev_r
+        changes_by_year[yr].append(pct_change)
+      else:
+        changes_by_year[yr].append(c)
+
+    change_bins = np.linspace(-MAX_CHANGE, MAX_CHANGE, NUM_BINS)
+
+    title = 'Single-Day Rating Change Heatmap by Year\n' \
+            + pretty_format(frmt, typ) \
+            + ' (' + str(START_DATE) + ' to ' + str(END_DATE) + ')'
+    ax.set_title(title, fontsize ='xx-large')
+
+    if SHOW_PERCENTAGES:
+      ax.set_ylabel('Daily Rating Percent Change', fontsize = 'x-large')
+    else:
+      ax.set_ylabel('Daily Rating Change', fontsize = 'x-large')
+    ax.set_xlabel('Year', fontsize = 'x-large')
+
+    ax.set_ylim(-MAX_CHANGE, MAX_CHANGE)
+    yticks_major = np.linspace(-MAX_CHANGE, MAX_CHANGE, 5)
+    yticks_minor = np.linspace(-MAX_CHANGE, MAX_CHANGE, 21)
+    ax.set_yticks(yticks_major)
+    ax.set_yticks(yticks_minor, minor = True)
+    yticklabels = ['{v:3.0f}'.format(v = y) for y in yticks_major]
+    ax.set_yticklabels(yticklabels, fontsize = 'large')
+
+    xticks_major, xticks_minor, xticklabels = \
+            get_timescale_xticks(START_DATE, END_DATE, format = aspect_ratio)
+
+    ax.set_xticks(xticks_major)
+    ax.set_xticks(xticks_minor, minor = True)
+    ax.set_xticklabels(xticklabels, fontsize ='large')
+
+    ax.grid(True, which = 'major', axis = 'both', alpha = 0.6)
+    ax.grid(True, which = 'minor', axis = 'both', alpha = 0.3)
+
+    heatmap_changes = []
+    for yr in changes_by_year:
+      change_intervals = np.histogram(changes_by_year[yr], change_bins)[0]
+      normalized_intervals = normalize_array(change_intervals)
+      if LOG_SCALE:
+        normalized_intervals = [np.log10(ni) if ni > 0 else -1 \
+                                    for ni in normalized_intervals]
+      heatmap_changes.append(normalized_intervals)
+
+    heatmap_changes = np.array(list(zip(*heatmap_changes)))
+    plt.imshow(heatmap_changes, origin = 'lower', aspect = 'auto', \
+                  extent = (START_DATE, adjusted_end_date, -MAX_CHANGE, MAX_CHANGE))
+
+    cbar_ticks = np.linspace(0, 3, 7)
+    cbar_ticklabels = [str(int(math.pow(10, t))) for t in cbar_ticks]
+    cbar = plt.colorbar(ticks = cbar_ticks)
+    cbar.ax.set_yticklabels(cbar_ticklabels, fontsize = 'medium')
+    if LOG_SCALE:
+      cbar.set_label(label = 'Interval Frequency (log scale)', size = 'x-large')
+    else:
+      cbar.set_label(label = 'Interval Frequency', size = 'x-large')
+    cbar.ax.tick_params(labelsize = 'medium')
+
+    fig.tight_layout()
+
+    out_filename = 'out/images/heatmap/singleday/' + ('PCT_' if SHOW_PERCENTAGES else '') \
+                    + ('LOG_' if LOG_SCALE else '') + frmt + '_' + typ + '_' \
+                    + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
+
+
+  if SHOW_GRAPH or SHOW_HEATMAP:
     Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
     fig.savefig(out_filename)
     print("Written: " + out_filename)
