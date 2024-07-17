@@ -43,7 +43,12 @@ def get_stats_for_list(values, stat_type):
 
 
 def normalize_array(values, normalize_to = 100):
+  if len(values) == 0:
+    return []
   sum_values = sum(values)
+  if sum_values == 0:
+    return [0] * len(values)
+    
   return [v * normalize_to / sum_values for v in values]
 
 

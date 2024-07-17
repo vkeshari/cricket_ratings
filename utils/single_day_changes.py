@@ -42,6 +42,7 @@ ALLROUNDERS_GEOM_MEAN = True
 
 assert TYPE in ['', 'batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['', 'test', 'odi', 't20'], "Invalid FORMAT provided"
+
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
 assert END_DATE <= date.today(), "Future END_DATE requested"
 
@@ -213,16 +214,18 @@ for typ, frmt in types_and_formats:
 
 
   if SHOW_HEATMAP:
-    resolution, aspect_ratio = resolution_by_span(START_DATE, END_DATE)
+    adjusted_start_date = date(START_DATE.year, 1, 1)
+    adjusted_end_date = date(END_DATE.year, 1, 1)
+
+    resolution, aspect_ratio = resolution_by_span(adjusted_start_date, adjusted_end_date)
     fig, ax = plt.subplots(figsize = resolution)
 
-    adjusted_end_date = date(END_DATE.year + 1, 1, 1)
-
-    changes_by_year = {}
+    changes_by_year = {yr: [] for yr in \
+                        range(adjusted_start_date.year, adjusted_end_date.year)}
     for i, (c, r, d, _) in enumerate(all_changes):
       yr = d.year
-      if yr not in changes_by_year:
-        changes_by_year[yr] = []
+      if yr == adjusted_end_date.year:
+        continue
       if SHOW_PERCENTAGES:
         if i == 0:
           continue
@@ -236,7 +239,7 @@ for typ, frmt in types_and_formats:
 
     title = 'Single-Day Rating Change Heatmap by Year\n' \
             + pretty_format(frmt, typ) \
-            + ' (' + str(START_DATE) + ' to ' + str(END_DATE) + ')'
+            + ' (' + str(adjusted_start_date) + ' to ' + str(adjusted_end_date) + ')'
     ax.set_title(title, fontsize ='xx-large')
 
     if SHOW_PERCENTAGES:
@@ -254,7 +257,8 @@ for typ, frmt in types_and_formats:
     ax.set_yticklabels(yticklabels, fontsize = 'large')
 
     xticks_major, xticks_minor, xticklabels = \
-            get_timescale_xticks(START_DATE, END_DATE, format = aspect_ratio)
+            get_timescale_xticks(adjusted_start_date, adjusted_end_date, \
+                                  format = aspect_ratio)
 
     ax.set_xticks(xticks_major)
     ax.set_xticks(xticks_minor, minor = True)
@@ -274,10 +278,15 @@ for typ, frmt in types_and_formats:
 
     heatmap_changes = np.array(list(zip(*heatmap_changes)))
     plt.imshow(heatmap_changes, origin = 'lower', aspect = 'auto', \
-                  extent = (START_DATE, adjusted_end_date, -MAX_CHANGE, MAX_CHANGE))
+                  extent = (adjusted_start_date, adjusted_end_date, \
+                              -MAX_CHANGE, MAX_CHANGE))
 
-    cbar_ticks = np.linspace(0, 3, 7)
-    cbar_ticklabels = [str(int(math.pow(10, t))) for t in cbar_ticks]
+    if LOG_SCALE:
+      cbar_ticks = np.linspace(0, 3, 7)
+      cbar_ticklabels = [str(int(math.pow(10, t))) for t in cbar_ticks]
+    else:
+      cbar_ticks = range(0, 100, 10)
+      cbar_ticklabels = [str(t) for t in cbar_ticks]
     cbar = plt.colorbar(ticks = cbar_ticks)
     cbar.ax.set_yticklabels(cbar_ticklabels, fontsize = 'medium')
     if LOG_SCALE:
@@ -290,7 +299,8 @@ for typ, frmt in types_and_formats:
 
     out_filename = 'out/images/heatmap/singleday/' + ('PCT_' if SHOW_PERCENTAGES else '') \
                     + ('LOG_' if LOG_SCALE else '') + frmt + '_' + typ + '_' \
-                    + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
+                    + str(adjusted_start_date.year) + '_' \
+                    + str(adjusted_end_date.year) + '.png'
 
 
   if SHOW_GRAPH or SHOW_HEATMAP:
