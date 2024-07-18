@@ -83,6 +83,7 @@ def process_for_day(graph_date, daily_ratings):
   bin_counts = normalize_array(aggregated_buckets[graph_date])
   actual_bins = bins[ : -1]
 
+  percentiles = {}
   if PLOT_PERCENTILES:
     stats_bin_size = (MAX_RATING - THRESHOLD) / 100
     stats_bin_stops = np.linspace(THRESHOLD, MAX_RATING, 101)
@@ -95,17 +96,17 @@ def process_for_day(graph_date, daily_ratings):
     stats_bin_counts = normalize_array(stats_buckets[graph_date])
     stats_bins = stats_bins[ : -1]
 
-  all_percentiles = {}
-  if PLOT_PERCENTILES:
     for p in PLOT_PERCENTILES:
       cum_sum = 0
       for i, b in enumerate(stats_bins):
         cum_sum += stats_bin_counts[i]
         if cum_sum >= p:
-          all_percentiles[p] = b
+          percentiles[p] = b
           break
+      if p not in percentiles:
+        percentiles[p] = THRESHOLD
 
-  return bin_counts, all_percentiles
+  return bin_counts, percentiles
 
 
 types_and_formats = []
@@ -144,8 +145,9 @@ for typ, frmt in types_and_formats:
   fig, ax = plt.subplots(figsize = resolution)
 
   title_text = "Heatmap of Distribution of Ratings by Year" \
-                + "\n" + pretty_format(frmt, typ) + ": "\
-                + str(adjusted_start_date) + " to " + str(adjusted_end_date) \
+                + "\n" + pretty_format(frmt, typ) \
+                + ("(GM)" if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
+                + ": " + str(adjusted_start_date) + " to " + str(adjusted_end_date) \
                 + ' (' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
   ax.set_title(title_text, fontsize ='x-large')
 
@@ -196,14 +198,32 @@ for typ, frmt in types_and_formats:
     cbar.set_label(label = 'Interval Frequency', size = 'x-large')
   cbar.ax.tick_params(labelsize = 'medium')
 
+  xs = list(all_percentiles.keys())
+  p_to_vals = {}
+  for d in all_percentiles:
+    for p in all_percentiles[d]:
+      if p not in p_to_vals:
+        p_to_vals[p] = []
+      p_to_vals[p].append(all_percentiles[d][p])
+
+  for p in p_to_vals:
+    plt.plot(xs, p_to_vals[p],
+            linestyle = '-', linewidth = 5, antialiased = True, \
+            alpha = 0.4, color = 'red')
+    plt.text(adjusted_end_date, p_to_vals[p][-1], s = "p" + str(p), \
+              color = 'red', alpha = 0.8, fontsize = 'medium', \
+              horizontalalignment = 'left', verticalalignment = 'center')
+
   fig.tight_layout()
 
   out_filename = 'out/images/heatmap/distagg/' + str(THRESHOLD) + '_' \
                   + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
                   + ('LOG_' if LOG_SCALE else '') \
+                  + ('PCT_' if PLOT_PERCENTILES else '') \
                   + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
-                  + frmt + '_' + typ + '_' \
-                  + str(adjusted_start_date.year) + '_' \
+                  + frmt + '_' + typ \
+                  + ('GEOM' if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
+                  + '_' + str(adjusted_start_date.year) + '_' \
                   + str(adjusted_end_date.year) + '.png'
 
   Path(out_filename).parent.mkdir(exist_ok = True, parents = True)

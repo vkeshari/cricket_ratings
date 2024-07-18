@@ -121,6 +121,8 @@ def process_for_day(graph_date, daily_ratings, fig, ax):
         if cum_sum >= p:
           all_percentiles[p] = b
           break
+      if p not in all_percentiles:
+        all_percentiles[p] = THRESHOLD
 
   xs_fit, ys_fit, fit_mean = [], [], 0
   if FIT_CURVE:

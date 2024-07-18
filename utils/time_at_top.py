@@ -34,6 +34,9 @@ assert NUM_TOP > 0, "NUM_TOP must be positive"
 assert MAX_PLAYERS >= NUM_TOP, "MAX_PLAYERS must be at least NUM_TOP"
 assert MAX_NAMES <= MAX_PLAYERS, "MAX_NAMES must be at most MAX_PLAYERS"
 
+if COLOR_BY_COUNTRY:
+  assert SHOW_GRAPH, "COLOR_BY_COUNTRY enabled without SHOW_GRAPH"
+
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
 
