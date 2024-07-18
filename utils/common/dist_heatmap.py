@@ -10,10 +10,10 @@ import math
 
 
 def plot_dist_heatmap(graph_dates, all_bin_counts, all_percentiles, \
-                        frmt, typ, agg_window, agg_type, \
+                        frmt, typ, agg_window, agg_type, agg_title, \
                         threshold, max_rating, bin_size, \
                         plot_percentiles = False, \
-                        log_scale = False, \
+                        log_scale = False, normalize = False, \
                         allrounders_geom_mean = True):
 
   adjusted_start_date = graph_dates[0]
@@ -23,7 +23,8 @@ def plot_dist_heatmap(graph_dates, all_bin_counts, all_percentiles, \
                                                 prefer_wide = True)
   fig, ax = plt.subplots(figsize = resolution)
 
-  title_text = "Heatmap of " + str(agg_window).title() + " Distribution of Ratings" \
+  title_text = "Heatmap of " + agg_title + " Distribution of Ratings" \
+                + (" (Rescaled)" if normalize else '') \
                 + "\n" + pretty_format(frmt, typ) \
                 + ("(GM)" if typ == 'allrounder' and allrounders_geom_mean else '') \
                 + ": " + str(adjusted_start_date) + " to " + str(adjusted_end_date) \
@@ -98,6 +99,7 @@ def plot_dist_heatmap(graph_dates, all_bin_counts, all_percentiles, \
 
   out_filename = 'out/images/heatmap/distagg/' + str(threshold) + '_' \
                   + str(max_rating) + '_' + str(bin_size) + '_' \
+                  + ('NORM_' if normalize else '') \
                   + ('LOG_' if log_scale else '') \
                   + ('PCT_' if plot_percentiles else '') \
                   + agg_window + '_' + agg_type + '_' \

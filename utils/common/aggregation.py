@@ -1,4 +1,4 @@
-from common.stats import get_stats_for_list, normalize_array, VALID_STATS
+from common.stats import get_stats_for_list, normalize_array, fit_exp_curve, VALID_STATS
 
 from datetime import date, timedelta
 

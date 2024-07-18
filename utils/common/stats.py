@@ -1,5 +1,6 @@
 from fitter import Fitter
 from scipy.optimize import curve_fit
+from sklearn.preprocessing import power_transform
 
 import numpy as np
 
@@ -53,7 +54,8 @@ def normalize_array(values, normalize_to = 100):
   return [v * normalize_to / sum_values for v in values]
 
 
-def fit_dist_to_hist(bin_counts, bins, bin_width, range = (0, 1), scale_bins = 1):
+def sample_from_distribution(bin_counts, bins, bin_width, \
+                              val_range = (0, 1), scale_bins = 1):
   all_vals = []
   rng = np.random.default_rng()
   for i, b in enumerate(bins):
@@ -62,9 +64,27 @@ def fit_dist_to_hist(bin_counts, bins, bin_width, range = (0, 1), scale_bins = 1
     scaled_vals = [(v - range[0]) / (range[1] - range[0]) for v in vals]
     all_vals.append(scaled_vals)
   all_vals = np.concatenate(all_vals)
-  print ("Data points for fit: " + str(len(all_vals)))
+  print ("Data points sampled: " + str(len(all_vals)))
 
-  fit = Fitter(all_vals)
+  return all_vals
+
+
+def make_distribution_normal(bin_counts, bins, bin_width, val_range, scale_bins):
+  sampled_vals = sample_from_distribution(bin_counts, bins, bin_width, \
+                                          val_range, scale_bins)
+  normalized = power_transform(sampled_vals.reshape(-1, 1)).reshape(1, -1).flatten()
+  normalized = [val_range[0] + v * (val_range[1] - val_range[0]) for v in normalized]
+  dist = np.histogram(normalized, bins = bins + [bins[-1] + bin_width])[0]
+  dist = normalize_array(dist)
+
+  return dist, bins
+
+
+def fit_dist_to_hist(bin_counts, bins, bin_width, val_range, scale_bins):
+  sampled_vals = sample_from_distribution(bin_counts, bins, bin_width, \
+                                          val_range, scale_bins)
+
+  fit = Fitter(sampled_vals)
   fit.fit()
   print ("Fit complete!")
 

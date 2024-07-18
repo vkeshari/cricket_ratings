@@ -31,6 +31,7 @@ CHANGED_DAYS_CRITERIA = 'rating'
 
 LOG_SCALE = True
 PLOT_PERCENTILES = []
+NORMALIZE = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -99,6 +100,7 @@ for typ, frmt in types_and_formats:
 
   plot_dist_heatmap(GRAPH_DATES, all_bin_counts, all_percentiles, \
                     frmt, typ, agg_window = AGGREGATION_WINDOW, agg_type = BIN_AGGREGATE, \
+                    agg_title = str(AGGREGATION_WINDOW).title(), \
                     threshold = THRESHOLD, max_rating = MAX_RATING, bin_size = BIN_SIZE, \
                     plot_percentiles = len(PLOT_PERCENTILES) > 0, log_scale = LOG_SCALE, \
-                    allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
+                    normalize = NORMALIZE, allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)

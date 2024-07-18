@@ -2,7 +2,7 @@ from common.aggregation import is_aggregation_window_start, VALID_AGGREGATIONS, 
                                 get_single_window_distribution
 from common.data import get_daily_ratings
 from common.output import pretty_format, get_type_color
-from common.stats import fit_exp_curve, normalize_array, VALID_STATS
+from common.stats import VALID_STATS
 
 from datetime import date
 from matplotlib import pyplot as plt, animation

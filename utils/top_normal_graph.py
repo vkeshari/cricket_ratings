@@ -142,7 +142,8 @@ def get_normalized_ratings(aggregate_ratings, dates_to_show):
     day_ratings = aggregate_ratings[d]
     day_ratings = {p: (r - THRESHOLD) / (MAX_RATING - THRESHOLD) \
                               for (p, r) in day_ratings.items() if r >= THRESHOLD}
-    day_ratings = dict(sorted(day_ratings.items(), key = lambda item: item[1], reverse = True))
+    day_ratings = dict(sorted(day_ratings.items(), \
+                              key = lambda item: item[1], reverse = True))
 
     day_vals = np.array(list(day_ratings.values()))
     normalized_vals = power_transform(day_vals.reshape(-1, 1)).reshape(1, -1).flatten()
@@ -175,7 +176,8 @@ if SHOW_TOP_MEDALS or SHOW_GRAPH:
   reversed_stops = list(reversed(actual_sigma_stops))
 
   graph_metrics = get_graph_metrics(metrics_bins, stops = reversed_stops, \
-                                    dates = dates_to_show, cumulatives = GRAPH_CUMULATIVES)
+                                    dates = dates_to_show, \
+                                    cumulatives = GRAPH_CUMULATIVES)
 
 
   medal_stats = get_medal_stats(graph_metrics, stops = reversed_stops, \

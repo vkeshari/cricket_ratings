@@ -1,7 +1,7 @@
 from common.aggregation import is_aggregation_window_start, VALID_AGGREGATIONS, \
                                 get_single_window_distribution
 from common.data import get_daily_ratings
-from common.stats import fit_dist_to_hist, normalize_array, VALID_STATS
+from common.stats import fit_dist_to_hist, VALID_STATS
 
 from datetime import date
 from fitter import Fitter
@@ -105,4 +105,4 @@ for typ, frmt in types_and_formats:
       print ("TOTAL:\t{t:5.2f}".format(t = sum(bin_counts)))
 
     dist_fit = fit_dist_to_hist(bin_counts, actual_bins, bin_width = BIN_SIZE, \
-                                range = (THRESHOLD, MAX_RATING), scale_bins = 100)
+                                val_range = (THRESHOLD, MAX_RATING), scale_bins = 100)
