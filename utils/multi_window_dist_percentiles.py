@@ -15,18 +15,18 @@ import math
 # ['', 'batting', 'bowling', 'allrounder']
 TYPE = ''
 # ['', 'test', 'odi', 't20']
-FORMAT = 't20'
-
-START_DATE = date(2011, 1, 1)
-END_DATE = date(2024, 1, 1)
+FORMAT = 'test'
 
 # Graph dates
+START_DATE = date(1930, 1, 1)
+END_DATE = date(1940, 1, 1)
+
 GRAPH_DATES = [date(y, 1, 1) for y in range(START_DATE.year, END_DATE.year)]
 
 # Upper and lower bounds of ratings to show
-THRESHOLD = 500
+THRESHOLD = 0
 MAX_RATING = 1000
-BIN_SIZE = 10
+BIN_SIZE = 50
 
 # See common.aggregation.VALID_AGGREGATIONS for possible windows
 AGGREGATION_WINDOW = 'yearly'
@@ -39,7 +39,7 @@ CHANGED_DAYS_CRITERIA = 'rating'
 SHOW_BIN_COUNTS = False
 SHOW_GRAPH = True
 PLOT_PERCENTILES = [50, 75, 90]
-RATING_FRACTIONS = True
+RATING_FRACTIONS = False
 STD = 1
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
@@ -133,7 +133,7 @@ for typ, frmt in types_and_formats:
     fig, ax = plt.subplots(figsize = resolution)
 
     title_text = "Distribution of " + pretty_format(frmt, typ) \
-                  + " percentiles by rating\n" \
+                  + " Percentiles by Rating\n" \
                   + str(START_DATE) + ' to ' + str(END_DATE) \
                   + ' (' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
     ax.set_title(title_text, fontsize ='xx-large')

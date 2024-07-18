@@ -129,7 +129,7 @@ for typ, frmt in types_and_formats:
     fig, ax = plt.subplots(figsize = resolution)
 
     title_text = "Distribution of " + pretty_format(frmt, typ) \
-                  + " ratings by percentile\n" \
+                  + " Ratings by Percentile\n" \
                   + str(START_DATE) + ' to ' + str(END_DATE) \
                   + ' (' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
     ax.set_title(title_text, fontsize ='xx-large')
