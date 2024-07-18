@@ -15,7 +15,7 @@ TYPE = ''
 FORMAT = 't20'
 
 # Graph dates
-GRAPH_DATES = [date(2024, 1, 1)]
+GRAPH_DATES = [date(2024, 7, 1)]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
@@ -151,7 +151,7 @@ for typ, frmt in types_and_formats:
                       + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
                       + frmt + '_' + typ \
                       + ("GEOM" if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
-                      + '_' + str(graph_date.year) + '.png'
+                      + '_' + str(graph_date.year) + '_' + str(graph_date.month) + '.png'
 
       Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
       fig.savefig(out_filename)

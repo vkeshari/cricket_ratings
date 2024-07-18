@@ -296,7 +296,8 @@ for typ, frmt in types_and_formats:
 
     fig.tight_layout()
 
-    out_filename = 'out/images/heatmap/singleday/' + ('PCT_' if SHOW_PERCENTAGES else '') \
+    out_filename = 'out/images/heatmap/singledaychange/' \
+                    + ('PCT_' if SHOW_PERCENTAGES else '') \
                     + ('LOG_' if LOG_SCALE else '') + frmt + '_' + typ + '_' \
                     + str(adjusted_start_date.year) + '_' \
                     + str(adjusted_end_date.year) + '.png'

@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from pathlib import Path
 
 # ['batting', 'bowling', 'allrounder']
-TYPE = 'batting'
+TYPE = ''
 # ['test', 'odi', 't20']
 FORMAT = 't20'
 
@@ -135,10 +135,10 @@ for typ, frmt in types_and_formats:
       fig.tight_layout()
 
       out_filename = 'out/images/bar/topplayers/' + str(THRESHOLD) + '_' \
-                      + str(MAX_RATING) + '_' str(NUM_SHOW) + '_' \
+                      + str(MAX_RATING) + '_' + str(NUM_SHOW) + '_' \
                       + frmt + '_' + typ \
                       + ("GEOM" if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
-                      + '_' + str(graph_date.year) + '.png'
+                      + '_' + str(GRAPH_DATE.year) + '_' + str(GRAPH_DATE.month) + '.png'
 
       Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
       fig.savefig(out_filename)
