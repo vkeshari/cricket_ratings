@@ -8,9 +8,6 @@ from datetime import date
 from matplotlib import pyplot as plt
 from pathlib import Path
 
-import numpy as np
-import math
-
 # ['', 'batting', 'bowling', 'allrounder']
 TYPE = ''
 # ['', 'test', 'odi', 't20']
@@ -33,7 +30,7 @@ BIN_AGGREGATE = 'avg'
 CHANGED_DAYS_CRITERIA = 'rating'
 
 LOG_SCALE = True
-PLOT_PERCENTILES = [50, 75, 90]
+PLOT_PERCENTILES = []
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
