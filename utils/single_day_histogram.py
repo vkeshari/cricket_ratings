@@ -102,8 +102,9 @@ for typ, frmt in types_and_formats:
       resolution = tuple([7.2, 7.2])
       fig, ax = plt.subplots(figsize = resolution)
 
-      title_text = "Distribution of " + pretty_format(frmt, typ) \
-                    + " by rating\n" + str(graph_date)
+      title_text = "Distribution of " + pretty_format(frmt, typ) + " by Rating" \
+                    + ("(GM)" if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
+                    + "\n" + str(graph_date)
       ax.set_title(title_text, fontsize ='xx-large')
 
       ax.set_ylabel('No. of players', fontsize ='x-large')
@@ -148,8 +149,9 @@ for typ, frmt in types_and_formats:
 
       out_filename = 'out/images/hist/singleday/' + str(THRESHOLD) + '_' \
                       + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
-                      + frmt + '_' + typ + '_' \
-                      + str(graph_date.year) + '.png'
+                      + frmt + '_' + typ \
+                      + ("GEOM" if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
+                      + '_' + str(graph_date.year) + '.png'
 
       Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
       fig.savefig(out_filename)

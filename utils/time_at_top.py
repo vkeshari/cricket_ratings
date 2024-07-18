@@ -119,10 +119,10 @@ for typ, frmt in types_and_formats:
     fig, ax = plt.subplots(figsize = resolution)
 
     title_text = pretty_format(frmt, typ) \
-                  + " by no. of days spent in Top " + str(NUM_TOP) + " Ranks"
+                  + " by No. of Days Spent in Top " + str(NUM_TOP) + " Ranks"
     ax.set_title(title_text, fontsize ='xx-large')
 
-    ax.set_ylabel("No. of Days", fontsize ='x-large')
+    ax.set_ylabel("No. of days", fontsize ='x-large')
 
     days_list = [s['days_at_top'] for s in sorted_top_stats.values()][ : MAX_PLAYERS]
 
