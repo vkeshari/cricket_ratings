@@ -1,12 +1,11 @@
 from common.aggregation import is_aggregation_window_start, VALID_AGGREGATIONS, \
                                 get_single_window_distribution
 from common.data import get_daily_ratings
-from common.output import pretty_format, get_type_color, resolution_by_span, \
-                          get_timescale_xticks
-from common.stats import fit_exp_curve, normalize_array, VALID_STATS
+from common.dist_heatmap import plot_dist_heatmap
+from common.stats import VALID_STATS
 
 from datetime import date
-from matplotlib import pyplot as plt, animation
+from matplotlib import pyplot as plt
 from pathlib import Path
 
 import numpy as np
@@ -34,7 +33,7 @@ BIN_AGGREGATE = 'avg'
 CHANGED_DAYS_CRITERIA = 'rating'
 
 LOG_SCALE = True
-PLOT_PERCENTILES = []
+PLOT_PERCENTILES = [50, 75, 90]
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -101,97 +100,8 @@ for typ, frmt in types_and_formats:
     all_bin_counts[graph_date] = bin_counts
     all_percentiles[graph_date] = percentiles
 
-
-  adjusted_start_date = GRAPH_DATES[0]
-  adjusted_end_date = date(GRAPH_DATES[-1].year + 1, 1 ,1)
-
-  resolution, aspect_ratio = resolution_by_span(adjusted_start_date, adjusted_end_date, \
-                                                prefer_wide = True)
-  fig, ax = plt.subplots(figsize = resolution)
-
-  title_text = "Heatmap of Distribution of Ratings by Year" \
-                + "\n" + pretty_format(frmt, typ) \
-                + ("(GM)" if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
-                + ": " + str(adjusted_start_date) + " to " + str(adjusted_end_date) \
-                + ' (' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
-  ax.set_title(title_text, fontsize ='x-large')
-
-  ax.set_ylabel('No. of players (normalized to 100)', fontsize ='x-large')
-
-  ax.set_ylabel('Rating', fontsize ='x-large')
-  ax.set_ylim(THRESHOLD, MAX_RATING)
-  possible_yticks_major = range(0, 1000, 100)
-  possible_yticks_minor = range(0, 1000, 20)
-  yticks_major = [r for r in possible_yticks_major if r >= THRESHOLD and r <= MAX_RATING]
-  yticks_minor= [r for r in possible_yticks_minor if r >= THRESHOLD and r <= MAX_RATING]
-  ax.set_yticks(yticks_major)
-  ax.set_yticks(yticks_minor, minor = True)
-  ax.set_yticklabels([str(y) for y in yticks_major], fontsize ='large')
-
-  xticks_major, xticks_minor, xticklabels = \
-          get_timescale_xticks(adjusted_start_date, adjusted_end_date, \
-                                format = aspect_ratio)
-  ax.set_xticks(xticks_major)
-  ax.set_xticks(xticks_minor, minor = True)
-  ax.set_xticklabels(xticklabels, fontsize ='large')
-
-  ax.grid(True, which = 'major', axis = 'both', alpha = 0.6)
-  ax.grid(True, which = 'minor', axis = 'both', alpha = 0.3)
-
-  heatmap_changes = np.array(list(zip(*all_bin_counts.values())))
-  if LOG_SCALE:
-    for i, hc in enumerate(heatmap_changes):
-      log_vals = [np.log10(v) if v > 0 else -1.5 for v in hc]
-      heatmap_changes[i] = log_vals
-
-  plt.imshow(heatmap_changes, origin = 'lower', aspect = 'auto', \
-                extent = (adjusted_start_date, adjusted_end_date, \
-                            THRESHOLD, MAX_RATING))
-
-
-  if LOG_SCALE:
-    cbar_ticks = np.linspace(0, 3, 7)
-    cbar_ticklabels = [str(int(math.pow(10, t))) for t in cbar_ticks]
-  else:
-    cbar_ticks = range(0, 100, 10)
-    cbar_ticklabels = [str(t) for t in cbar_ticks]
-  cbar = plt.colorbar(ticks = cbar_ticks, aspect = 25)
-  cbar.ax.set_yticklabels(cbar_ticklabels, fontsize = 'medium')
-  if LOG_SCALE:
-    cbar.set_label(label = 'Interval Frequency (log scale)', size = 'x-large')
-  else:
-    cbar.set_label(label = 'Interval Frequency', size = 'x-large')
-  cbar.ax.tick_params(labelsize = 'medium')
-
-  xs = list(all_percentiles.keys())
-  p_to_vals = {}
-  for d in all_percentiles:
-    for p in all_percentiles[d]:
-      if p not in p_to_vals:
-        p_to_vals[p] = []
-      p_to_vals[p].append(all_percentiles[d][p])
-
-  for p in p_to_vals:
-    plt.plot(xs, p_to_vals[p],
-            linestyle = '-', linewidth = 5, antialiased = True, \
-            alpha = 0.4, color = 'red')
-    plt.text(adjusted_end_date, p_to_vals[p][-1], s = "p" + str(p), \
-              color = 'red', alpha = 0.8, fontsize = 'medium', \
-              horizontalalignment = 'left', verticalalignment = 'center')
-
-  fig.tight_layout()
-
-  out_filename = 'out/images/heatmap/distagg/' + str(THRESHOLD) + '_' \
-                  + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
-                  + ('LOG_' if LOG_SCALE else '') \
-                  + ('PCT_' if PLOT_PERCENTILES else '') \
-                  + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
-                  + frmt + '_' + typ \
-                  + ('GEOM' if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
-                  + '_' + str(adjusted_start_date.year) + '_' \
-                  + str(adjusted_end_date.year) + '.png'
-
-  Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
-  fig.savefig(out_filename)
-  print("Written: " + out_filename)
-
+  plot_dist_heatmap(GRAPH_DATES, all_bin_counts, all_percentiles, \
+                    frmt, typ, agg_window = AGGREGATION_WINDOW, agg_type = BIN_AGGREGATE, \
+                    threshold = THRESHOLD, max_rating = MAX_RATING, bin_size = BIN_SIZE, \
+                    plot_percentiles = len(PLOT_PERCENTILES) > 0, log_scale = LOG_SCALE, \
+                    allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
