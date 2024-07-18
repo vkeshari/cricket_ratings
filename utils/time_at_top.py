@@ -1,6 +1,7 @@
 from common.data import get_daily_ratings
 from common.output import readable_name_and_country, get_player_colors, pretty_format
 
+from datetime import date
 from matplotlib import pyplot as plt
 from pathlib import Path
 
@@ -25,6 +26,8 @@ MAX_NAMES = 10
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
 
+EPOCH = date(1901, 1, 1)
+
 assert TYPE in ['', 'batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['', 'test', 'odi', 't20'], "Invalid FORMAT provided"
 assert NUM_TOP > 0, "NUM_TOP must be positive"
@@ -40,7 +43,8 @@ def get_top_player_stats(daily_ratings, daily_ranks, num_top):
   for d in daily_ranks:
     for p in daily_ranks[d]:
       if p not in player_stats:
-        player_stats[p] = {'min_rank': 100, 'max_rating': 0, 'days_at_top': 0}
+        player_stats[p] = {'min_rank': 100, 'max_rating': 0, 'days_at_top': 0, \
+                            'max_rating_date' : EPOCH}
 
       rank = daily_ranks[d][p]
       if rank < player_stats[p]['min_rank']:
@@ -52,13 +56,16 @@ def get_top_player_stats(daily_ratings, daily_ranks, num_top):
   for d in daily_ratings:
     for p in daily_ratings[d]:
       if p not in player_stats:
-        player_stats[p] = {'min_rank': 100, 'max_rating': 0, 'days_at_top': 0}
+        player_stats[p] = {'min_rank': 100, 'max_rating': 0, 'days_at_top': 0, \
+                            'max_rating_date' : EPOCH}
 
       rating = daily_ratings[d][p]
       if rating > player_stats[p]['max_rating']:
         player_stats[p]['max_rating'] = rating
+        player_stats[p]['max_rating_date'] = d
 
   return player_stats
+
 
 types_and_formats = []
 if TYPE and FORMAT:
@@ -96,8 +103,10 @@ for typ, frmt in types_and_formats:
       days_at_top = sorted_top_stats[p]['days_at_top']
       min_rank = sorted_top_stats[p]['min_rank']
       max_rating = sorted_top_stats[p]['max_rating']
-      print (str(i + 1) + '\tMax Rating: ' + str(max_rating) + '\t\tBest Rank: ' \
-              + str(min_rank) + '\tDays in top ' + str(NUM_TOP) + ': ' + str(days_at_top) \
+      max_rating_date = sorted_top_stats[p]['max_rating_date']
+      print (str(i + 1) + '\tMax Rating: ' + str(max_rating) + '\t\ton\t'
+              + str(max_rating_date) + '\t\tBest Rank:\t' \
+              + str(min_rank) + '\tDays in top ' + str(NUM_TOP) + ':\t' + str(days_at_top) \
               + '\t' + readable_name_and_country(p))
       if i == MAX_PLAYERS - 1:
         break
