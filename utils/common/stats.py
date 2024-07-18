@@ -61,10 +61,9 @@ def sample_from_distribution(bin_counts, bins, bin_width, \
   for i, b in enumerate(bins):
     vals = rng.integers(low = b, high = b + bin_width, \
                         size = round(bin_counts[i] * scale_bins))
-    scaled_vals = [(v - range[0]) / (range[1] - range[0]) for v in vals]
+    scaled_vals = [(v - val_range[0]) / (val_range[1] - val_range[0]) for v in vals]
     all_vals.append(scaled_vals)
   all_vals = np.concatenate(all_vals)
-  print ("Data points sampled: " + str(len(all_vals)))
 
   return all_vals
 
@@ -72,12 +71,19 @@ def sample_from_distribution(bin_counts, bins, bin_width, \
 def make_distribution_normal(bin_counts, bins, bin_width, val_range, scale_bins):
   sampled_vals = sample_from_distribution(bin_counts, bins, bin_width, \
                                           val_range, scale_bins)
+  
   normalized = power_transform(sampled_vals.reshape(-1, 1)).reshape(1, -1).flatten()
   normalized = [val_range[0] + v * (val_range[1] - val_range[0]) for v in normalized]
-  dist = np.histogram(normalized, bins = bins + [bins[-1] + bin_width])[0]
+  
+  hist_bins = bins + [bins[-1] + bin_width]
+  dist = np.histogram(normalized, bins = hist_bins)[0]
   dist = normalize_array(dist)
+  
+  assert len(bin_counts) == len(dist), \
+          "Mismatch in no. of bins after normalization: {v1} vs {v2}" \
+                  .format(v1 = len(bin_counts), v2 = len(dist))
 
-  return dist, bins
+  return dist
 
 
 def fit_dist_to_hist(bin_counts, bins, bin_width, val_range, scale_bins):

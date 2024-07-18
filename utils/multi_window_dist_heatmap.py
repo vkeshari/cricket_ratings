@@ -93,7 +93,8 @@ for typ, frmt in types_and_formats:
                                             threshold = THRESHOLD, \
                                             max_rating = MAX_RATING, \
                                             bin_size = BIN_SIZE, \
-                                            get_percentiles = PLOT_PERCENTILES)
+                                            get_percentiles = PLOT_PERCENTILES, \
+                                            normalize = NORMALIZE)
 
     all_bin_counts[graph_date] = bin_counts
     all_percentiles[graph_date] = percentiles

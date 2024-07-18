@@ -1,4 +1,5 @@
-from common.stats import get_stats_for_list, normalize_array, fit_exp_curve, VALID_STATS
+from common.stats import get_stats_for_list, normalize_array, fit_exp_curve, \
+                          make_distribution_normal, VALID_STATS
 
 from datetime import date, timedelta
 
@@ -129,11 +130,13 @@ def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
 
 def get_single_window_distribution(daily_ratings, agg_date, agg_window, agg_type, \
                                     threshold, max_rating, bin_size, \
-                                    get_percentiles = [], fit_curve = False):
-  next_d = get_next_aggregation_window_start(agg_date, agg_window)
+                                    get_percentiles = [], fit_curve = False, \
+                                    normalize = False):
 
+  next_d = get_next_aggregation_window_start(agg_date, agg_window)
   date_to_agg_date = {d: agg_date for d in daily_ratings \
                               if d >= agg_date and d < next_d}
+
   bin_stops = list(range(threshold, max_rating, bin_size)) + [max_rating]
 
   aggregated_buckets, bins = get_aggregated_distribution(daily_ratings, \
@@ -145,9 +148,15 @@ def get_single_window_distribution(daily_ratings, agg_date, agg_window, agg_type
   bin_counts = normalize_array(aggregated_buckets[agg_date])
   actual_bins = bins[ : -1]
 
+  if normalize:
+    bin_counts = make_distribution_normal(bin_counts, bins = actual_bins, \
+                                            bin_width = bin_size, \
+                                            val_range = (threshold, max_rating), \
+                                            scale_bins = 100)
+
   if get_percentiles or fit_curve:
     stats_bin_size = (max_rating - threshold) / 100
-    stats_bin_stops = np.linspace(threshold, max_rating, 101)
+    stats_bin_stops = list(np.linspace(threshold, max_rating, 101))
     stats_buckets, stats_bins = get_aggregated_distribution(daily_ratings, \
                                     agg_dates = [agg_date], \
                                     date_to_agg_date = date_to_agg_date, \
@@ -156,6 +165,13 @@ def get_single_window_distribution(daily_ratings, agg_date, agg_window, agg_type
 
     stats_bin_counts = normalize_array(stats_buckets[agg_date])
     stats_bins = stats_bins[ : -1]
+
+    if normalize:
+      stats_bin_counts = make_distribution_normal(stats_bin_counts, \
+                                                    bins = stats_bins, \
+                                                    bin_width = stats_bin_size, \
+                                                    val_range = (threshold, max_rating), \
+                                                    scale_bins = 100)
 
   all_percentiles = {}
   if get_percentiles:
@@ -177,7 +193,6 @@ def get_single_window_distribution(daily_ratings, agg_date, agg_window, agg_type
                                           xs_range = (threshold, max_rating))
     ys_fit = [y * (bin_size / stats_bin_size) for y in ys_fit]
     fit_mean = round(exp_mean)
-    print("Exp mean: " + str(fit_mean))
 
   return bin_counts, actual_bins, all_percentiles, (xs_fit, ys_fit, fit_mean)
 
