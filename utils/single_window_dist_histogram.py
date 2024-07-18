@@ -1,6 +1,5 @@
-from common.aggregation import is_aggregation_window_start, \
-                                get_next_aggregation_window_start, \
-                                get_aggregated_distribution, VALID_AGGREGATIONS
+from common.aggregation import is_aggregation_window_start, VALID_AGGREGATIONS, \
+                                get_single_window_distribution
 from common.data import get_daily_ratings
 from common.output import pretty_format, get_type_color
 from common.stats import fit_exp_curve, normalize_array, VALID_STATS
@@ -85,54 +84,14 @@ def get_rating_fraction(r):
 def process_for_day(graph_date, daily_ratings, fig, ax):
   print (graph_date)
 
-  next_d = get_next_aggregation_window_start(graph_date, AGGREGATION_WINDOW)
-
-  date_to_agg_date = {d: graph_date for d in daily_ratings \
-                              if d >= graph_date and d < next_d}
-  bin_stops = list(range(THRESHOLD, MAX_RATING, BIN_SIZE)) + [MAX_RATING]
-
-  aggregated_buckets, bins = get_aggregated_distribution(daily_ratings, \
-                                    agg_dates = [graph_date], \
-                                    date_to_agg_date = date_to_agg_date, \
-                                    dist_aggregate = BIN_AGGREGATE, \
-                                    bin_stops = bin_stops)
-
-  bin_counts = normalize_array(aggregated_buckets[graph_date])
-  actual_bins = bins[ : -1]
-
-  if PLOT_PERCENTILES or FIT_CURVE:
-    stats_bin_size = (MAX_RATING - THRESHOLD) / 100
-    stats_bin_stops = np.linspace(THRESHOLD, MAX_RATING, 101)
-    stats_buckets, stats_bins = get_aggregated_distribution(daily_ratings, \
-                                    agg_dates = [graph_date], \
-                                    date_to_agg_date = date_to_agg_date, \
-                                    dist_aggregate = BIN_AGGREGATE, \
-                                    bin_stops = stats_bin_stops)
-
-    stats_bin_counts = normalize_array(stats_buckets[graph_date])
-    stats_bins = stats_bins[ : -1]
-
-  all_percentiles = {}
-  if PLOT_PERCENTILES:
-    for p in PLOT_PERCENTILES:
-      cum_sum = 0
-      for i, b in enumerate(stats_bins):
-        cum_sum += stats_bin_counts[i]
-        if cum_sum >= p:
-          all_percentiles[p] = b
-          break
-      if p not in all_percentiles:
-        all_percentiles[p] = THRESHOLD
-
-  xs_fit, ys_fit, fit_mean = [], [], 0
-  if FIT_CURVE:
-    xs_fit = range(THRESHOLD, MAX_RATING)
-    ys_fit, exp_mean, cov = fit_exp_curve(xs = stats_bins, ys = stats_bin_counts, \
-                                          xs_new = xs_fit, \
-                                          xs_range = (THRESHOLD, MAX_RATING))
-    ys_fit = [y * (BIN_SIZE / stats_bin_size) for y in ys_fit]
-    fit_mean = round(exp_mean)
-    print("Exp mean: " + str(fit_mean))
+  bin_counts, actual_bins, all_percentiles, (xs_fit, ys_fit, fit_mean) = \
+          get_single_window_distribution(daily_ratings, agg_date = graph_date, \
+                                          agg_window = AGGREGATION_WINDOW, \
+                                          agg_type = BIN_AGGREGATE, \
+                                          threshold = THRESHOLD, max_rating = MAX_RATING, \
+                                          bin_size = BIN_SIZE, \
+                                          get_percentiles = PLOT_PERCENTILES, \
+                                          fit_curve = FIT_CURVE)
 
 
   if SHOW_BIN_COUNTS:

@@ -1,6 +1,5 @@
-from common.aggregation import is_aggregation_window_start, \
-                                get_next_aggregation_window_start, \
-                                get_aggregated_distribution, VALID_AGGREGATIONS
+from common.aggregation import is_aggregation_window_start, VALID_AGGREGATIONS, \
+                                get_single_window_distribution
 from common.data import get_daily_ratings
 from common.output import pretty_format, get_type_color, resolution_by_span, \
                           get_timescale_xticks
@@ -66,49 +65,6 @@ for p in PLOT_PERCENTILES:
   assert p >= 0 and p < 100, "Each value in PLOT_PERCENTILES must be between 0 and 100"
 
 
-def process_for_day(graph_date, daily_ratings):
-
-  next_d = get_next_aggregation_window_start(graph_date, AGGREGATION_WINDOW)
-
-  date_to_agg_date = {d: graph_date for d in daily_ratings \
-                              if d >= graph_date and d < next_d}
-  bin_stops = list(range(THRESHOLD, MAX_RATING, BIN_SIZE)) + [MAX_RATING]
-
-  aggregated_buckets, bins = get_aggregated_distribution(daily_ratings, \
-                                    agg_dates = [graph_date], \
-                                    date_to_agg_date = date_to_agg_date, \
-                                    dist_aggregate = BIN_AGGREGATE, \
-                                    bin_stops = bin_stops)
-
-  bin_counts = normalize_array(aggregated_buckets[graph_date])
-  actual_bins = bins[ : -1]
-
-  percentiles = {}
-  if PLOT_PERCENTILES:
-    stats_bin_size = (MAX_RATING - THRESHOLD) / 100
-    stats_bin_stops = np.linspace(THRESHOLD, MAX_RATING, 101)
-    stats_buckets, stats_bins = get_aggregated_distribution(daily_ratings, \
-                                    agg_dates = [graph_date], \
-                                    date_to_agg_date = date_to_agg_date, \
-                                    dist_aggregate = BIN_AGGREGATE, \
-                                    bin_stops = stats_bin_stops)
-
-    stats_bin_counts = normalize_array(stats_buckets[graph_date])
-    stats_bins = stats_bins[ : -1]
-
-    for p in PLOT_PERCENTILES:
-      cum_sum = 0
-      for i, b in enumerate(stats_bins):
-        cum_sum += stats_bin_counts[i]
-        if cum_sum >= p:
-          percentiles[p] = b
-          break
-      if p not in percentiles:
-        percentiles[p] = THRESHOLD
-
-  return bin_counts, percentiles
-
-
 types_and_formats = []
 if TYPE and FORMAT:
   types_and_formats.append((TYPE, FORMAT))
@@ -133,9 +89,18 @@ for typ, frmt in types_and_formats:
 
   all_bin_counts, all_percentiles = {}, {}
   for graph_date in GRAPH_DATES:
-    bin_counts, percentiles = process_for_day(graph_date, daily_ratings)
+    bin_counts, actual_bins, percentiles, _ = \
+            get_single_window_distribution(daily_ratings, agg_date = graph_date, \
+                                            agg_window = AGGREGATION_WINDOW, \
+                                            agg_type = BIN_AGGREGATE, \
+                                            threshold = THRESHOLD, \
+                                            max_rating = MAX_RATING, \
+                                            bin_size = BIN_SIZE, \
+                                            get_percentiles = PLOT_PERCENTILES)
+
     all_bin_counts[graph_date] = bin_counts
     all_percentiles[graph_date] = percentiles
+
 
   adjusted_start_date = GRAPH_DATES[0]
   adjusted_end_date = date(GRAPH_DATES[-1].year + 1, 1 ,1)

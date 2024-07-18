@@ -1,6 +1,5 @@
-from common.aggregation import is_aggregation_window_start, \
-                                get_next_aggregation_window_start, \
-                                get_aggregated_distribution, VALID_AGGREGATIONS
+from common.aggregation import is_aggregation_window_start, VALID_AGGREGATIONS, \
+                                get_single_window_distribution
 from common.data import get_daily_ratings
 from common.stats import fit_dist_to_hist, normalize_array, VALID_STATS
 
@@ -89,21 +88,12 @@ for typ, frmt in types_and_formats:
   for graph_date in GRAPH_DATES:
     print (graph_date)
 
-    next_d = get_next_aggregation_window_start(graph_date, AGGREGATION_WINDOW)
-
-    date_to_agg_date = {d: graph_date for d in daily_ratings \
-                                if d >= graph_date and d < next_d}
-    bin_stops = list(range(THRESHOLD, MAX_RATING, BIN_SIZE)) + [MAX_RATING]
-
-    aggregated_buckets, bins = get_aggregated_distribution(daily_ratings, \
-                                      agg_dates = [graph_date], \
-                                      date_to_agg_date = date_to_agg_date, \
-                                      dist_aggregate = BIN_AGGREGATE, \
-                                      bin_stops = bin_stops)
-
-    bin_counts = normalize_array(aggregated_buckets[graph_date])
-    actual_bins = bins[ : -1]
-
+    bin_counts, actual_bins, _, _ = \
+        get_single_window_distribution(daily_ratings, agg_date = graph_date, \
+                                        agg_window = AGGREGATION_WINDOW, \
+                                        agg_type = BIN_AGGREGATE, \
+                                        threshold = THRESHOLD, max_rating = MAX_RATING, \
+                                        bin_size = BIN_SIZE)
 
     if SHOW_BIN_COUNTS:
       print("=== " + AGGREGATION_WINDOW + " " + BIN_AGGREGATE \

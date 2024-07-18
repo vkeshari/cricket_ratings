@@ -127,6 +127,62 @@ def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
   return aggregated_buckets, bin_stops
 
 
+def get_single_window_distribution(daily_ratings, agg_date, agg_window, agg_type, \
+                                    threshold, max_rating, bin_size, \
+                                    get_percentiles = [], fit_curve = False):
+  next_d = get_next_aggregation_window_start(agg_date, agg_window)
+
+  date_to_agg_date = {d: agg_date for d in daily_ratings \
+                              if d >= agg_date and d < next_d}
+  bin_stops = list(range(threshold, max_rating, bin_size)) + [max_rating]
+
+  aggregated_buckets, bins = get_aggregated_distribution(daily_ratings, \
+                                    agg_dates = [agg_date], \
+                                    date_to_agg_date = date_to_agg_date, \
+                                    dist_aggregate = agg_type, \
+                                    bin_stops = bin_stops)
+
+  bin_counts = normalize_array(aggregated_buckets[agg_date])
+  actual_bins = bins[ : -1]
+
+  if get_percentiles or fit_curve:
+    stats_bin_size = (max_rating - threshold) / 100
+    stats_bin_stops = np.linspace(threshold, max_rating, 101)
+    stats_buckets, stats_bins = get_aggregated_distribution(daily_ratings, \
+                                    agg_dates = [agg_date], \
+                                    date_to_agg_date = date_to_agg_date, \
+                                    dist_aggregate = agg_type, \
+                                    bin_stops = stats_bin_stops)
+
+    stats_bin_counts = normalize_array(stats_buckets[agg_date])
+    stats_bins = stats_bins[ : -1]
+
+  all_percentiles = {}
+  if get_percentiles:
+    for p in get_percentiles:
+      cum_sum = 0
+      for i, b in enumerate(stats_bins):
+        cum_sum += stats_bin_counts[i]
+        if cum_sum >= p:
+          all_percentiles[p] = b
+          break
+      if p not in all_percentiles:
+        all_percentiles[p] = threshold
+
+  xs_fit, ys_fit, fit_mean = [], [], 0
+  if fit_curve:
+    xs_fit = range(threshold, max_rating)
+    ys_fit, exp_mean, cov = fit_exp_curve(xs = stats_bins, ys = stats_bin_counts, \
+                                          xs_new = xs_fit, \
+                                          xs_range = (threshold, max_rating))
+    ys_fit = [y * (bin_size / stats_bin_size) for y in ys_fit]
+    fit_mean = round(exp_mean)
+    print("Exp mean: " + str(fit_mean))
+
+  return bin_counts, actual_bins, all_percentiles, (xs_fit, ys_fit, fit_mean)
+
+
+
 def get_metrics_by_stops(aggregate_ratings, stops, dates, \
                             by_percentage = False, show_bin_counts = False):
   assert not set(dates) - aggregate_ratings.keys(), \
