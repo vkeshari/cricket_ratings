@@ -135,7 +135,7 @@ for typ, frmt in types_and_formats:
   resolution = tuple([12.8, 7.2])
   fig, ax = plt.subplots(figsize = resolution)
 
-  ax.set_title("No. of " + pretty_format(frmt, typ) + " above rating" \
+  ax.set_title("No. of " + pretty_format(frmt, typ) + " Above Rating" \
                     + "\n" + str(START_DATE) + " to " + str(END_DATE), \
                 fontsize ='xx-large')
 

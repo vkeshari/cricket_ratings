@@ -78,7 +78,7 @@ def make_distribution_normal(bin_counts, bins, bin_width, val_range, scale_bins)
   hist_bins = bins + [bins[-1] + bin_width]
   dist = np.histogram(normalized, bins = hist_bins)[0]
   dist = normalize_array(dist)
-  
+
   assert len(bin_counts) == len(dist), \
           "Mismatch in no. of bins after normalization: {v1} vs {v2}" \
                   .format(v1 = len(bin_counts), v2 = len(dist))

@@ -31,7 +31,7 @@ CHANGED_DAYS_CRITERIA = 'rating'
 
 LOG_SCALE = True
 PLOT_PERCENTILES = []
-NORMALIZE = False
+RESCALE = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -94,7 +94,7 @@ for typ, frmt in types_and_formats:
                                             max_rating = MAX_RATING, \
                                             bin_size = BIN_SIZE, \
                                             get_percentiles = PLOT_PERCENTILES, \
-                                            normalize = NORMALIZE)
+                                            rescale = RESCALE)
 
     all_bin_counts[graph_date] = bin_counts
     all_percentiles[graph_date] = percentiles
@@ -104,4 +104,4 @@ for typ, frmt in types_and_formats:
                     agg_title = str(AGGREGATION_WINDOW).title(), \
                     threshold = THRESHOLD, max_rating = MAX_RATING, bin_size = BIN_SIZE, \
                     plot_percentiles = len(PLOT_PERCENTILES) > 0, log_scale = LOG_SCALE, \
-                    normalize = NORMALIZE, allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
+                    rescale = RESCALE, allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)

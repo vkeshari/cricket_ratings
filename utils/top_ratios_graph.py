@@ -186,8 +186,8 @@ if SHOW_GRAPH:
                         'START_DATE': START_DATE, 'END_DATE': END_DATE, \
                         'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
                         'AGG_TYPE': PLAYER_AGGREGATE, 'AGG_LOCATION': 'y', \
-                        'LABEL_METRIC': 'No. of players', \
-                        'LABEL_KEY': 'ratio', 'LABEL_TEXT': 'Ratio vs top player', \
+                        'LABEL_METRIC': 'No. of Players', \
+                        'LABEL_KEY': 'ratio', 'LABEL_TEXT': 'Ratio vs Top Player', \
                         'DTYPE': DTYPE, \
                         }
 

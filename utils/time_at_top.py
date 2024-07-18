@@ -99,7 +99,7 @@ for typ, frmt in types_and_formats:
                                       reverse = True))
 
   if SHOW_TABLE:
-    print ("Players by longest time spent in top " + str(NUM_TOP) + ' rankings :' \
+    print ("Players by Longest Time Spent in Top " + str(NUM_TOP) + ' Rankings :' \
             + '\t' + frmt + '\t' + typ)
 
     for i, p in enumerate(sorted_top_stats):

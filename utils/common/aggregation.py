@@ -131,7 +131,7 @@ def get_aggregated_distribution(daily_ratings, agg_dates, date_to_agg_date, \
 def get_single_window_distribution(daily_ratings, agg_date, agg_window, agg_type, \
                                     threshold, max_rating, bin_size, \
                                     get_percentiles = [], fit_curve = False, \
-                                    normalize = False):
+                                    rescale = False):
 
   next_d = get_next_aggregation_window_start(agg_date, agg_window)
   date_to_agg_date = {d: agg_date for d in daily_ratings \
@@ -148,7 +148,7 @@ def get_single_window_distribution(daily_ratings, agg_date, agg_window, agg_type
   bin_counts = normalize_array(aggregated_buckets[agg_date])
   actual_bins = bins[ : -1]
 
-  if normalize:
+  if rescale:
     bin_counts = make_distribution_normal(bin_counts, bins = actual_bins, \
                                             bin_width = bin_size, \
                                             val_range = (threshold, max_rating), \
@@ -166,7 +166,7 @@ def get_single_window_distribution(daily_ratings, agg_date, agg_window, agg_type
     stats_bin_counts = normalize_array(stats_buckets[agg_date])
     stats_bins = stats_bins[ : -1]
 
-    if normalize:
+    if rescale:
       stats_bin_counts = make_distribution_normal(stats_bin_counts, \
                                                     bins = stats_bins, \
                                                     bin_width = stats_bin_size, \

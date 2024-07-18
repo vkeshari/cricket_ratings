@@ -61,7 +61,7 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   resolution = tuple([7.2, 7.2])
   fig, ax = plt.subplots(figsize = resolution)
 
-  title_text = annotations['LABEL_METRIC'] + " above " \
+  title_text = annotations['LABEL_METRIC'] + " Above " \
                 + annotations['LABEL_TEXT'] + "\n" \
                 + pretty_format(annotations['FORMAT'], annotations['TYPE']) \
                 + ' (' + str(annotations['START_DATE']) \

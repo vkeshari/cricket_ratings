@@ -133,7 +133,7 @@ for typ, frmt in types_and_formats:
                         'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
                         'AGG_TYPE': BIN_AGGREGATE, 'AGG_LOCATION': 'x', \
                         'LABEL_METRIC': 'No. of players', \
-                        'LABEL_METRIC': 'Percent of ' + str(THRESHOLD) + '+ players', \
+                        'LABEL_METRIC': 'Percent of ' + str(THRESHOLD) + '+ Players', \
                         'LABEL_KEY': 'rating', 'LABEL_TEXT': 'Rating', \
                         'DTYPE': 'int', \
                         }

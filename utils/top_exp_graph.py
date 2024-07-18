@@ -224,8 +224,8 @@ if SHOW_GRAPH:
                         'START_DATE': START_DATE, 'END_DATE': END_DATE, \
                         'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
                         'AGG_TYPE': PLAYER_AGGREGATE, 'AGG_LOCATION': 'y', \
-                        'LABEL_METRIC': 'No. of players', \
-                        'LABEL_KEY': 'std dev', 'LABEL_TEXT': 'Exponential std devs', \
+                        'LABEL_METRIC': 'No. of Players', \
+                        'LABEL_KEY': 'std dev', 'LABEL_TEXT': 'Exponential Std Devs', \
                         'DTYPE': DTYPE, \
                         }
 

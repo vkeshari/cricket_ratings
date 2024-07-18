@@ -13,18 +13,21 @@ def plot_dist_heatmap(graph_dates, all_bin_counts, all_percentiles, \
                         frmt, typ, agg_window, agg_type, agg_title, \
                         threshold, max_rating, bin_size, \
                         plot_percentiles = False, \
-                        log_scale = False, normalize = False, \
+                        log_scale = False, rescale = False, \
                         allrounders_geom_mean = True):
+
+  assert agg_window == 'yearly', "Only yearly windows supported"
 
   adjusted_start_date = graph_dates[0]
   adjusted_end_date = date(graph_dates[-1].year + 1, 1 ,1)
+  date_diff = (graph_dates[1] - graph_dates[0])
 
   resolution, aspect_ratio = resolution_by_span(adjusted_start_date, adjusted_end_date, \
                                                 prefer_wide = True)
   fig, ax = plt.subplots(figsize = resolution)
 
   title_text = "Heatmap of " + agg_title + " Distribution of Ratings" \
-                + (" (Rescaled)" if normalize else '') \
+                + (" (Rescaled)" if rescale else '') \
                 + "\n" + pretty_format(frmt, typ) \
                 + ("(GM)" if typ == 'allrounder' and allrounders_geom_mean else '') \
                 + ": " + str(adjusted_start_date) + " to " + str(adjusted_end_date) \
@@ -42,6 +45,8 @@ def plot_dist_heatmap(graph_dates, all_bin_counts, all_percentiles, \
   ax.set_yticks(yticks_major)
   ax.set_yticks(yticks_minor, minor = True)
   ax.set_yticklabels([str(y) for y in yticks_major], fontsize ='large')
+
+  ax.set_xlabel('Date', fontsize ='x-large')
 
   xticks_major, xticks_minor, xticklabels = \
           get_timescale_xticks(adjusted_start_date, adjusted_end_date, \
@@ -63,13 +68,14 @@ def plot_dist_heatmap(graph_dates, all_bin_counts, all_percentiles, \
                 extent = (adjusted_start_date, adjusted_end_date, \
                             threshold, max_rating))
 
+  ymax = max([max(hc) for hc in heatmap_changes])
 
   if log_scale:
-    cbar_ticks = np.linspace(0, 3, 7)
-    cbar_ticklabels = [str(int(math.pow(10, t))) for t in cbar_ticks]
+    cbar_ticks = list(np.linspace(-ymax, ymax, 11))
+    cbar_ticklabels = ['{l:.1f}'.format(l = math.pow(10, t)) for t in cbar_ticks]
   else:
-    cbar_ticks = range(0, 100, 10)
-    cbar_ticklabels = [str(t) for t in cbar_ticks]
+    cbar_ticks = list(np.linspace(0, ymax, 6))
+    cbar_ticklabels = ['{l:.1f}'.format(l = t) for t in cbar_ticks]
   cbar = plt.colorbar(ticks = cbar_ticks, aspect = 25)
   cbar.ax.set_yticklabels(cbar_ticklabels, fontsize = 'medium')
   if log_scale:
@@ -79,7 +85,7 @@ def plot_dist_heatmap(graph_dates, all_bin_counts, all_percentiles, \
   cbar.ax.tick_params(labelsize = 'medium')
 
   if plot_percentiles:
-    xs = list(all_percentiles.keys())
+    xs = [x + date_diff / 2 for x in all_percentiles.keys()]
     p_to_vals = {}
     for d in all_percentiles:
       for p in all_percentiles[d]:
@@ -99,7 +105,7 @@ def plot_dist_heatmap(graph_dates, all_bin_counts, all_percentiles, \
 
   out_filename = 'out/images/heatmap/distagg/' + str(threshold) + '_' \
                   + str(max_rating) + '_' + str(bin_size) + '_' \
-                  + ('NORM_' if normalize else '') \
+                  + ('RESC_' if rescale else '') \
                   + ('LOG_' if log_scale else '') \
                   + ('PCT_' if plot_percentiles else '') \
                   + agg_window + '_' + agg_type + '_' \
