@@ -2,7 +2,6 @@ from common.aggregation import is_aggregation_window_start
 from common.output import string_to_date
 
 from os import listdir
-import math
 
 
 def get_days_with_change(daily_data, agg_window):
@@ -59,8 +58,8 @@ def get_daily_ratings(typ, frmt, changed_days_criteria = '', agg_window = '', \
         dates_parsed.add(d)
 
       rating = eval(parts[2])
-      if typ == 'allrounder' and allrounders_geom_mean:
-        rating = int(math.sqrt(rating * 1000))
+      if typ == 'allrounder' and not allrounders_geom_mean:
+        rating = int((rating ^ 2) / 1000)
       daily_ratings[d][p] = rating
 
       rank = eval(parts[1])

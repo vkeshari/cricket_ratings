@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 from pathlib import Path
 
+import math
+
 # ['batting', 'bowling', 'allrounder']
 TYPE = {'batting', 'bowling', 'allrounder'}
 # ['test', 'odi', 't20']
@@ -128,14 +130,14 @@ def parse_all_dates(typ):
 
   if VALIDATION:
     if validate_data(START_DATE, END_DATE, typ, FORMAT, player_data):
-      print ('VALIDATION SUCCESS')
+      print (typ + ': VALIDATION SUCCESS')
       return player_data
     else:
-      print ('VALIDATION FAILED')
+      print (typ + ': VALIDATION FAILED')
       return {}
-    else:
-      print ('VALIDATION SKIPPED')
-      return player_data
+  else:
+    print (typ + ': VALIDATION SKIPPED')
+    return player_data
 
 
 def build_allrounder_data(player_data_by_format):
@@ -160,7 +162,7 @@ def build_allrounder_data(player_data_by_format):
         bowling_rating = bowling_player_data[key]['ratings'][date_str]['rating']
         all_player_data[key]['ratings'][date_str] = {}
         all_player_data[key]['ratings'][date_str]['rank'] = 0
-        rating = int(batting_rating * bowling_rating / 1000)
+        rating = int(math.sqrt(batting_rating * bowling_rating))
         if rating > max_ever:
           max_ever = rating
         all_player_data[key]['ratings'][date_str]['rating'] = rating
