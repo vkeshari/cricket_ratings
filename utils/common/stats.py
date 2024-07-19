@@ -71,12 +71,16 @@ def sample_from_distribution(bin_counts, bins, bin_width, \
 def make_distribution_normal(bin_counts, bins, bin_width, val_range, scale_bins):
   sampled_vals = sample_from_distribution(bin_counts, bins, bin_width, \
                                           val_range, scale_bins)
-  
+
   normalized = power_transform(sampled_vals.reshape(-1, 1)).reshape(1, -1).flatten()
-  normalized = [val_range[0] + v * (val_range[1] - val_range[0]) for v in normalized]
+
+  val_range_size = (val_range[1] - val_range[0])
+  mid_point = val_range[0] + val_range_size / 2
+  sigma_size = val_range_size / 5
+  scaled_normalized = [mid_point + v * sigma_size for v in normalized]
   
   hist_bins = bins + [bins[-1] + bin_width]
-  dist = np.histogram(normalized, bins = hist_bins)[0]
+  dist = np.histogram(scaled_normalized, bins = hist_bins)[0]
   dist = normalize_array(dist)
 
   assert len(bin_counts) == len(dist), \

@@ -40,6 +40,8 @@ FIT_CURVE = False
 FIXED_YMAX = True
 ANIMATE = True
 
+RESCALE = False
+
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
 
@@ -91,7 +93,7 @@ def process_for_day(graph_date, daily_ratings, fig, ax):
                                           threshold = THRESHOLD, max_rating = MAX_RATING, \
                                           bin_size = BIN_SIZE, \
                                           get_percentiles = PLOT_PERCENTILES, \
-                                          fit_curve = FIT_CURVE)
+                                          fit_curve = FIT_CURVE, rescale = RESCALE)
 
 
   if SHOW_BIN_COUNTS:
@@ -104,9 +106,9 @@ def process_for_day(graph_date, daily_ratings, fig, ax):
     print ("TOTAL:\t{t:5.2f}".format(t = sum(bin_counts)))
 
   if SHOW_GRAPH:
-    title_text = "Distribution of " + pretty_format(frmt, typ) \
-                  + " by Rating " \
+    title_text = "Distribution of " + pretty_format(frmt, typ) + " by Rating " \
                   + ("(GM)" if ALLROUNDERS_GEOM_MEAN and typ == 'allrounder' else '') \
+                  + ("(Rescaled)" if RESCALE else '') \
                   + "\n" + str(graph_date) \
                   + '(' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
     ax.set_title(title_text, fontsize ='xx-large')
@@ -201,6 +203,7 @@ for typ, frmt in types_and_formats:
   if ANIMATE:
     out_filename = 'out/images/hist/distagg/ANIMATE_' + str(THRESHOLD) + '_' \
                     + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
+                    + ('RESC_' if RESCALE else '') \
                     + ('PF_' if PLOT_PERCENTILES and RATING_FRACTIONS else '') \
                     + ('FIT_' if FIT_CURVE else '') \
                     + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
@@ -226,6 +229,7 @@ for typ, frmt in types_and_formats:
     for graph_date in GRAPH_DATES:
       out_filename = 'out/images/hist/distagg/' + str(THRESHOLD) + '_' \
                       + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
+                      + ('RESC_' if RESCALE else '') \
                       + ('PF_' if PLOT_PERCENTILES and RATING_FRACTIONS else '') \
                       + ('FIT_' if FIT_CURVE else '') \
                       + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \

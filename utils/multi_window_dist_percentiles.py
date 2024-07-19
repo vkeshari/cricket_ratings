@@ -1,6 +1,5 @@
-from common.aggregation import is_aggregation_window_start, \
-                                get_next_aggregation_window_start, \
-                                get_aggregated_distribution, VALID_AGGREGATIONS
+from common.aggregation import is_aggregation_window_start, VALID_AGGREGATIONS, \
+                                get_single_window_distribution
 from common.data import get_daily_ratings
 from common.output import get_colors_from_scale, pretty_format
 from common.stats import get_stats_for_list, normalize_array, VALID_STATS
@@ -41,6 +40,8 @@ SHOW_GRAPH = True
 PLOT_PERCENTILES = [50, 75, 90]
 RATING_FRACTIONS = False
 STD = 1
+
+RESCALE = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -101,31 +102,20 @@ for typ, frmt in types_and_formats:
   percentiles_by_window = {p: [] for p in PLOT_PERCENTILES}
 
   for graph_date in GRAPH_DATES:
-    next_d = get_next_aggregation_window_start(graph_date, AGGREGATION_WINDOW)
 
-    date_to_agg_date = {d: graph_date for d in daily_ratings \
-                                if d >= graph_date and d < next_d}
+    _, _, percentiles, _ = \
+        get_single_window_distribution(daily_ratings, agg_date = graph_date, \
+                                        agg_window = AGGREGATION_WINDOW, \
+                                        agg_type = BIN_AGGREGATE, \
+                                        threshold = THRESHOLD, \
+                                        max_rating = MAX_RATING, \
+                                        bin_size = 100, \
+                                        get_percentiles = PLOT_PERCENTILES, \
+                                        rescale = RESCALE)
 
-    stats_bin_size = (MAX_RATING - THRESHOLD) / 100
-    stats_bin_stops = np.linspace(THRESHOLD, MAX_RATING, 101)
-    stats_buckets, stats_bins = get_aggregated_distribution(daily_ratings, \
-                                    agg_dates = [graph_date], \
-                                    date_to_agg_date = date_to_agg_date, \
-                                    dist_aggregate = BIN_AGGREGATE, \
-                                    bin_stops = stats_bin_stops)
-
-    stats_bin_counts = normalize_array(stats_buckets[graph_date])
-    actual_stats_bins = stats_bins[ : -1]
-
-    for p in PLOT_PERCENTILES:
-      cum_sum = 0
-      for i, b in enumerate(actual_stats_bins):
-        cum_sum += stats_bin_counts[i]
-        if cum_sum >= p:
-          percentiles_by_window[p].append(b)
-          break
-
-  print ("Percentile data built for " + str(len(percentiles_by_window)) + " years")
+    for p in percentiles:
+      percentiles_by_window[p].append(percentiles[p])
+  print ("Percentile data built for " + str(len(GRAPH_DATES)) + " years")
 
 
   if SHOW_GRAPH:
@@ -133,13 +123,20 @@ for typ, frmt in types_and_formats:
     fig, ax = plt.subplots(figsize = resolution)
 
     title_text = "Distribution of " + pretty_format(frmt, typ) \
-                  + " Percentiles by Rating\n" \
-                  + str(START_DATE) + ' to ' + str(END_DATE) \
+                  + " Percentiles by Rating" \
+                  + ("(GM)" if ALLROUNDERS_GEOM_MEAN and typ == 'allrounder' else '') \
+                  + ("(Rescaled)" if RESCALE else '') \
+                  + "\n" + str(START_DATE) + ' to ' + str(END_DATE) \
                   + ' (' + AGGREGATION_WINDOW + ' ' + BIN_AGGREGATE + ')'
     ax.set_title(title_text, fontsize ='xx-large')
 
     ax.set_ylabel('No. of years', fontsize ='x-large')
-    ymax = max(10, int(BIN_SIZE / 2))
+    if BIN_SIZE >= 50:
+      ymax = BIN_SIZE
+    elif BIN_SIZE >= 20:
+      ymax = BIN_SIZE * 2
+    else:
+      ymax = max(20, BIN_SIZE * 2)
     ax.set_ylim(0, ymax)
     if ymax < 30:
       ytick_size = 1
@@ -190,10 +187,14 @@ for typ, frmt in types_and_formats:
 
     out_filename = 'out/images/hist/percentiles/' + str(THRESHOLD) + '_' \
                     + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' + str(STD) + 'std_' \
+                    + str(len(PLOT_PERCENTILES)) + "Ps_" \
+                    + ('RESC_' if RESCALE else '') \
                     + ('PF_' if PLOT_PERCENTILES and RATING_FRACTIONS else '') \
                     + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
-                    + frmt + '_' + typ + '_' \
-                    + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
+                    + frmt + '_' + typ \
+                    + ('GEOM' if typ == 'allrounder' \
+                              and ALLROUNDERS_GEOM_MEAN else '') \
+                    + '_' + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
 
     Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
     fig.savefig(out_filename)
