@@ -3,6 +3,7 @@ from common.output import string_to_date
 
 from os import listdir
 
+import math
 
 def get_days_with_change(daily_data, agg_window):
   assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
@@ -59,7 +60,7 @@ def get_daily_ratings(typ, frmt, changed_days_criteria = '', agg_window = '', \
 
       rating = eval(parts[2])
       if typ == 'allrounder' and not allrounders_geom_mean:
-        rating = int((rating ^ 2) / 1000)
+        rating = int(math.pow(rating, 2) / 1000)
       daily_ratings[d][p] = rating
 
       rank = eval(parts[1])

@@ -35,6 +35,7 @@ RESCALE = False
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
+
 if TYPE:
   assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 if FORMAT:
