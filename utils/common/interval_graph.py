@@ -110,7 +110,7 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   xticks_minor = list(range(0, math.floor(xmax + 1), xtickminor))
 
   ax.set_xticks(xticks_major)
-  ax.grid(True, which = 'major', axis = 'x', alpha = 0.8)
+  ax.grid(True, which = 'major', axis = 'both', alpha = 0.8)
   ax.set_xticks(xticks_minor, minor = True)
   ax.grid(True, which = 'minor', axis = 'x', alpha = 0.4)
 

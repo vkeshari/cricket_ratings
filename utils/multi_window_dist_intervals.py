@@ -4,7 +4,7 @@ from common.aggregation import is_aggregation_window_start, \
 from common.data import get_daily_ratings
 from common.interval_metrics import get_graph_metrics
 from common.interval_graph import plot_interval_graph
-from common.stats import normalize_array, VALID_STATS
+from common.stats import normalize_array, make_distribution_normal, VALID_STATS
 
 from datetime import date
 from pathlib import Path
@@ -36,6 +36,9 @@ SHOW_GRAPH = True
 GRAPH_CUMULATIVES = True
 TRIM_EMPTY_ROWS = True
 HIDE_THRESHOLD = False
+TRIM_GRAPH_TO = 0
+
+RESCALE = True
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -61,8 +64,9 @@ assert (MAX_RATING - THRESHOLD) % BIN_SIZE == 0, \
 assert AGGREGATION_WINDOW in VALID_AGGREGATIONS, "Invalid AGGREGATION_WINDOW provided"
 assert BIN_AGGREGATE in VALID_STATS, "Invalid BIN_AGGREGATE provided"
 
-if TRIM_EMPTY_ROWS or GRAPH_CUMULATIVES:
-  assert SHOW_GRAPH, "TRIM_EMPTY_ROWS or GRAPH_CUMULATIVES set but SHOW_GRAPH not set"
+if TRIM_EMPTY_ROWS or GRAPH_CUMULATIVES or TRIM_GRAPH_TO:
+  assert SHOW_GRAPH, "TRIM_EMPTY_ROWS, GRAPH_CUMULATIVES  or TRIM_GRAPH_TO set " \
+                        + "but SHOW_GRAPH not set"
 
 types_and_formats = []
 if TYPE and FORMAT:
@@ -94,7 +98,7 @@ for typ, frmt in types_and_formats:
                                               aggregation_dates)
 
   bin_stops = range(THRESHOLD, MAX_RATING + 1, BIN_SIZE)
-  actual_bin_stops = bin_stops[ : -1]
+  actual_bin_stops = list(bin_stops)[ : -1]
 
   for i, d in enumerate(aggregation_dates):
     if d.year in SKIP_YEARS:
@@ -107,8 +111,12 @@ for typ, frmt in types_and_formats:
                                     date_to_agg_date = date_to_agg_date, \
                                     dist_aggregate = BIN_AGGREGATE, \
                                     bin_stops = bin_stops, normalize_to = 100)
-  for b in aggregated_buckets:
-    aggregated_buckets[b] = normalize_array(aggregated_buckets[b])
+  for d in aggregated_buckets:
+    aggregated_buckets[d] = normalize_array(aggregated_buckets[d])
+    if RESCALE:
+      aggregated_buckets[d] = make_distribution_normal(aggregated_buckets[d], \
+                                    bins = actual_bin_stops, bin_width = BIN_SIZE, \
+                                    val_range = (THRESHOLD, MAX_RATING), scale_bins = 100)
 
   reversed_stops = list(reversed(actual_bin_stops))
   metrics_bins = {actual_bin_stops[s]: vals \
@@ -132,15 +140,20 @@ for typ, frmt in types_and_formats:
                         'START_DATE': START_DATE, 'END_DATE': END_DATE, \
                         'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
                         'AGG_TYPE': BIN_AGGREGATE, 'AGG_LOCATION': 'x', \
-                        'LABEL_METRIC': 'No. of players', \
-                        'LABEL_METRIC': 'Percent of ' + str(THRESHOLD) + '+ Players', \
-                        'LABEL_KEY': 'rating', 'LABEL_TEXT': 'Rating', \
+                        'LABEL_METRIC': 'Percent of ' \
+                                + ((str(THRESHOLD) + '+ ') if THRESHOLD else '') \
+                                + 'Players', \
+                        'LABEL_KEY': 'rating',
+                        'LABEL_TEXT': 'Rating' + (" (Rescaled)" if RESCALE else ''), \
                         'DTYPE': 'int', \
                         }
 
-    yparams_min = THRESHOLD
-    if HIDE_THRESHOLD:
-      yparams_min += BIN_SIZE
+    if TRIM_GRAPH_TO:
+      yparams_min = TRIM_GRAPH_TO
+    else:
+      yparams_min = THRESHOLD
+      if HIDE_THRESHOLD:
+        yparams_min += BIN_SIZE
     yparams_max = MAX_RATING
     if TRIM_EMPTY_ROWS:
       for i, s in enumerate(reversed_stops):
@@ -152,6 +165,8 @@ for typ, frmt in types_and_formats:
 
     out_filename = 'out/images/interval/avgratings/' + str(THRESHOLD) + '_' \
                     + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
+                    + ("TRIM" + str(TRIM_GRAPH_TO) + '_' if TRIM_GRAPH_TO else '') \
+                    + ("RESC_" if RESCALE else '') \
                     + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
                     + frmt + '_' + typ + '_' \
                     + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
