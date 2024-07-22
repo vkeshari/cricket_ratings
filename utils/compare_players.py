@@ -175,6 +175,8 @@ for typ, frmt in types_and_formats:
     fig, ax = plt.subplots(figsize = resolution)
 
     ax.set_title("Comparison of " + pretty_format(frmt, typ) \
+                      +("(GEOM)" if typ == 'allrounder' \
+                                and ALLROUNDERS_GEOM_MEAN else '') \
                       + "\n" + str(START_DATE) + " to " + str(END_DATE), \
                   fontsize ='xx-large')
 
@@ -258,8 +260,9 @@ for typ, frmt in types_and_formats:
       for r in COMPARE_RANKS:
         comparison_text += str(r) + '_'
     out_filename = 'out/images/line/comparison/' + comparison_text \
-                    + frmt + '_' + typ + '_' \
-                    + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
+                    + frmt + '_' + typ \
+                    + ("GEOM" if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
+                    + '_' + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
 
     Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
     fig.savefig(out_filename)
