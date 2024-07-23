@@ -281,18 +281,18 @@ for typ, frmt in types_and_formats:
                               -MAX_CHANGE, MAX_CHANGE))
 
     if LOG_SCALE:
-      cbar_ticks = np.linspace(0, 3, 7)
-      cbar_ticklabels = [str(int(math.pow(10, t))) for t in cbar_ticks]
+      cbar_ticks = np.linspace(0, 3, 10)
+      cbar_ticklabels = [str(round(math.pow(10, t))) for t in cbar_ticks]
     else:
       cbar_ticks = range(0, 100, 10)
       cbar_ticklabels = [str(t) for t in cbar_ticks]
-    cbar = plt.colorbar(ticks = cbar_ticks, aspect = 25)
-    cbar.ax.set_yticklabels(cbar_ticklabels, fontsize = 'medium')
+    cbar = plt.colorbar(ticks = cbar_ticks, aspect = 50)
+    cbar.ax.set_yticklabels(cbar_ticklabels, fontsize = 'large')
     if LOG_SCALE:
       cbar.set_label(label = 'Interval Frequency (log scale)', size = 'x-large')
     else:
       cbar.set_label(label = 'Interval Frequency', size = 'x-large')
-    cbar.ax.tick_params(labelsize = 'medium')
+    cbar.ax.tick_params(labelsize = 'large')
 
     fig.tight_layout()
 
