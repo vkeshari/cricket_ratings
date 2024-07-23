@@ -216,12 +216,11 @@ for typ, frmt in types_and_formats:
     writer = animation.FFMpegWriter(fps = 2, bitrate = 5000)
     with writer.saving(fig, out_filename, dpi = 100):
       for graph_date in GRAPH_DATES:
-        ax.clear()
-
         process_for_day(graph_date, daily_ratings, fig, ax)
 
         plt.draw()
         writer.grab_frame()
+        ax.clear()
 
     print("Written: " + out_filename)
 
@@ -245,3 +244,4 @@ for typ, frmt in types_and_formats:
       fig.savefig(out_filename)
       print("Written: " + out_filename)
 
+      ax.clear()

@@ -149,6 +149,7 @@ for typ, frmt in types_and_formats:
 
       out_filename = 'out/images/hist/singleday/' + str(THRESHOLD) + '_' \
                       + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
+                      + (str(len(PLOT_STATS)) + "STATS_" if PLOT_STATS else '') \
                       + frmt + '_' + typ \
                       + ("GEOM" if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
                       + '_' + str(graph_date.year) + '_' + str(graph_date.month) + '.png'
