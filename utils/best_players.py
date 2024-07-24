@@ -42,6 +42,8 @@ if COLOR_BY_COUNTRY:
 
 assert SORT_BY_TIME_AT_TOP ^ SORT_BY_MAX_RATING, \
         "Exactly one of SORT_BY_TIME_AT_TOP or SORT_BY_MAX_RATING should be set"
+if SORT_BY_MAX_RATING:
+  assert not SHOW_GRAPH, "SHOW_GRAPH not supported for SORT_BY_MAX_RATING"
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 

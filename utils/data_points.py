@@ -13,7 +13,6 @@ ONE_YEAR = timedelta(days = 365)
 TYPE = 'batting'
 # ['test', 'odi', 't20']
 FORMAT = 't20'
-PLAYERS_DIR = 'players/' + TYPE + '/' + FORMAT
 
 START_DATE = date(2007, 1, 1)
 END_DATE = date(2024, 7, 1)

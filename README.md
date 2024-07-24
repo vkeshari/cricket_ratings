@@ -1,11 +1,13 @@
 # cricket_ratings
-> **Note**: You must attribute references to this or any derivative work to the original author.
+
+> [!IMPORTANT]
+> You must attribute references to this or any derivative work to the original author.
 
 Crawl data from ICC player rankings website. Create animated graphs of player ratings over time. Aggregate metrics over time. Create graphs for aggregated metrics. Find top players from aggregated metrics.
 
 ### Common Parameters:
 + `FORMAT`: `['test', 'odi', 't20']`
-+ `TYPE`  : `['batting', 'bowling', 'allrounder']` (no `'allrounder'` for get_data.py because those pages don't exist)
++ `TYPE`  : `['batting', 'bowling', 'allrounder']` (no `'allrounder'` option for `get_data.py` because those pages don't exist)
 + `START_DATE / END_DATE`: Self-explanatory.
 + `ALLROUNDERS_GEOM_MEAN`: Use an alternate formula that takes the geometric mean of batting and bowling ratings for a player as their allrounder rating.
 
@@ -15,7 +17,8 @@ Crawl data from ICC player rankings website. Create animated graphs of player ra
 + `odi` : `1975-01-01` for data, `1981-01-01` for graphs
 + `t20` : `2007-01-01` for data, `2009-01-01` for graphs
 
-> :pencil2: **Note:** no international cricket was played during WW1 and WW2. It is recommended to skip years `1913-1920`, `1940-1945` and `2020` for data analysis.
+> [!NOTE]
+> No international cricket was played during WW1 and WW2. It is recommended to skip years `1913-1920`, `1940-1945` and `2020` for data analysis.
 
 ## Data
 
@@ -27,7 +30,9 @@ Crawls ICC player ratings website for data and stores it in CSV format under `da
 Reads stored ratings data in `data/` and creates rating timelines under `players/`, one file per player.
 + `END_DATE`  : Set it to the last date you have data for.
 + `VALIDATION`: Validate that built player data in `players/` matches raw data in `data/`
-> :warning: **Known issue:** Two test players from India are named Cottari Nayudu from `1934-01-09` to `1936-12-07`. Data is overwritten if validation is skipped.
+
+> [!CAUTION]
+> **Known issue:** Two test players from India are named Cottari Nayudu from `1934-01-09` to `1936-12-07`. Data is overwritten if validation is skipped.
 
 ## Graphs
 
@@ -67,17 +72,51 @@ Aggregate ratings over a window by player or by bin using a numeric measure.
 
 ## Utils
 `./utils/*.py`
-> :pencil2: **Note:** Run these from the repository root folder.
-All utils read data from player ratings timelines in `players/`
+> [!NOTE]
+> Run all utils from the repository root folder.
+>
+> All utils except the first one read data from player ratings timelines in `players/`
+
+### `allrounder_heatmap.py`
+Simple util for showing a heatmap of allrounder ratings as a function of batting and bowling ratings.
+
+### `data_points.py`
+Show total no. of data points by year or by decade.
++ `CHANGED_DAYS_CRITERIA`: Only consider days when Rating or Rank changed.
 
 ### `final_ratings.py`
 Shows players that had the highest ratings at retirement.
 + `MAX_PLAYERS`  : Self-explanatory
 + `BY_FINAL_RANK`: Sort by final rank instead of final rating
 
-### `time_at_top.py`
-Shows players that were in the top N ratings for the longest time.
-+ `NUM_TOP`: Count days when player's rating is in the top NUM_TOP
+### `single_player_ratings.py`
+Show list of ratings for a single player.
++ `PLAYER`: Player name (in filename format)
+
+### `player_competition.py`
+Show the biggest competitors for a player: Players who were above or below the player's ratings, or their contemporaries, for the longest time.
++ `LOCATION`: `above` or `below` ratings, or `total` no. of days together on ratings list.
+
+### `best_players.py`
+Shows players that were in the top N ratings for the longest time, or with the highest all-time ratings.
++ `NUM_TOP`   : Count days when player's rating is in the top NUM_TOP
++ `SHOW_TABLE`: Self-explanatory
+
++ `SHOW_GRAPH`: Self-explanatory
++ `COLOR_BY_COUNTRY`: If graph is requested, color each player in their usual country colors.
++ `MAX_NAMES` : If graph is requested, show names for these many top players.
+
++ `SORT_BY_TIME_AT_TOP`: _(Choose One)_
++ `SORT_BY_MAX_RATING` : _(Choose One)_ (Graph not supported)
+
+### `compare_players.py`
+Compare two or more players over time by name or by rank.
++ `COMPARE_PLAYERS`: _(Choose One)_ Compare these players. See filenames under `players/*/*` for format.
++ `COMPARE_RANKS`  : _(Choose One)_ Compare players who are at these ranks at any time.
+
++ `PLOT_AVERAGES`    : Plot averages over this window size.
++ `PLOT_AVERAGE_KEYS`: Plot averages for these keys from `COMPARE_PLAYERS` or `COMPARE_RANKS` only.
++ `SHOW_CHANGES`     : Show single-day changes on graph.
 
 ### `single_day_changes.py`
 Shows the largest single-day gains and drops in ratings.
@@ -85,12 +124,10 @@ Shows the largest single-day gains and drops in ratings.
 + `BIN_WIDTH` : Show histogram of rating changes with bins of this width
 + `MAX_CHANGE`: Only show changes less than this value on histogram
 
-### `compare_players.py`
-Compare two or more players over time by name or by rank.
-+ `COMPARE_PLAYERS`: Compare these players. See filenames under `players/*/*` for format.
-+ `COMPARE_RANKS`  : Compare players who are at these ranks at any time.
+## Aggregation Utils
 
-> :pencil2: **Note:** All utils below aggregate ratings over time windows.
+> [!NOTE]
+> All utils below aggregate ratings over time windows.
 
 ### Common aggregation params
 + `AGGREGATION_WINDOW`: `['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'decadal']`
@@ -141,8 +178,27 @@ Same as `top_normal_graph.py` but fits an exponential curve to aggregated rating
 + `EXP_BIN_SIZE` : Split ratings into continuous bins of this size during counting
 + `BIN_AGGREGATE`: `['', 'avg', 'median', 'min', 'max', 'first', 'last']`
 
+## Graph and Stats Utils
+
+### `single_day_graph.py` and `single_day_histogram.py`
+Show top ratings or distribution of ratings on a single day.
+
+### `single_window_dist_histogram.py`
+Show distribution of ratings aggregated over a single time window, or multiple windows but one-at-a-time.
+
+### `single_window_dist_fit.py`
+Try to fit a probaility distribution to ratings aggregated over a single time window.
+
+### `multi_window_dist_heatmap.py` and `multi_window_dist_intervals.py`
+Show a heatmap or interval graph of distribution of ratings aggregated over multiple time windows.
+
+### `multi_window_dist_ratings.py` and `multi_window_dist_percentiles.py`
+Show a distribution of what ratings various percentiles lie at, or which percentiles various ratings are at, for a multi-window rating aggregation.
+
 ## DEPRECATED Utils
-> :warning: **WARNING:** There is no guarantee that these will run or produce accurate results.
+> [!CAUTION]
+> There is no guarantee that these will run or produce accurate results.
+
 ### `hist_aggregates.py`
 Aggregates each bin of the histogram of rating distribution over the specified time period, then calculates mean and standard deviation for ratings assuming an exponential distribution of ratings.
 
