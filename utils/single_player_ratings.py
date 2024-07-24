@@ -8,7 +8,7 @@ TYPE = 'batting'
 # ['', 'test', 'odi', 't20']
 FORMAT = 't20'
 
-START_DATE = date(2022, 12, 1)
+START_DATE = date(2023, 1, 1)
 END_DATE = date(2024, 1, 1)
 
 PLAYER = 'IND_Rohit_Sharma'
