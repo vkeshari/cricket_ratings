@@ -23,6 +23,9 @@ SHOW_GRAPH = True
 COLOR_BY_COUNTRY = True
 MAX_NAMES = 10
 
+SORT_BY_TIME_AT_TOP = True
+SORT_BY_MAX_RATING = False
+
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
 
@@ -36,6 +39,9 @@ assert MAX_NAMES <= MAX_PLAYERS, "MAX_NAMES must be at most MAX_PLAYERS"
 
 if COLOR_BY_COUNTRY:
   assert SHOW_GRAPH, "COLOR_BY_COUNTRY enabled without SHOW_GRAPH"
+
+assert SORT_BY_TIME_AT_TOP ^ SORT_BY_MAX_RATING, \
+        "Exactly one of SORT_BY_TIME_AT_TOP or SORT_BY_MAX_RATING should be set"
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
@@ -92,11 +98,18 @@ for typ, frmt in types_and_formats:
                                     allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
   top_player_stats = get_top_player_stats(daily_ratings, daily_ranks, NUM_TOP)
-  sorted_top_stats = dict(sorted(top_player_stats.items(), \
-                                      key = lambda item: (item[1]['days_at_top'], \
-                                                          -item[1]['min_rank'],
-                                                          item[1]['max_rating']), \
-                                      reverse = True))
+  if SORT_BY_MAX_RATING:
+    sorted_top_stats = dict(sorted(top_player_stats.items(), \
+                                        key = lambda item: (item[1]['max_rating'], \
+                                                            -item[1]['min_rank'],
+                                                            item[1]['days_at_top']), \
+                                        reverse = True))
+  elif SORT_BY_TIME_AT_TOP:
+    sorted_top_stats = dict(sorted(top_player_stats.items(), \
+                                        key = lambda item: (item[1]['days_at_top'], \
+                                                            -item[1]['min_rank'],
+                                                            item[1]['max_rating']), \
+                                        reverse = True))
 
   if SHOW_TABLE:
     print ("Players by Longest Time Spent in Top " + str(NUM_TOP) + ' Rankings :' \
