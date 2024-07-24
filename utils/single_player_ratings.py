@@ -4,14 +4,14 @@ from common.output import readable_name_and_country, pretty_format
 from datetime import date
 
 # ['', 'batting', 'bowling', 'allrounder']
-TYPE = ''
+TYPE = 'batting'
 # ['', 'test', 'odi', 't20']
 FORMAT = 't20'
 
-START_DATE = date(2024, 1, 1)
-END_DATE = date(2024, 7, 3)
+START_DATE = date(2022, 12, 1)
+END_DATE = date(2024, 1, 1)
 
-PLAYER = ''
+PLAYER = 'IND_Rohit_Sharma'
 
 # ['', 'rating', 'rank', 'either', 'both']
 CHANGED_DAYS_CRITERIA = 'rating'
