@@ -77,6 +77,9 @@ Aggregate ratings over a window by player or by bin using a numeric measure.
 >
 > All utils except the first one read data from player ratings timelines in `players/`
 
+> [!TIP]
+> Many utils can iterate over multiple `FORMAT`s and `TYPE`s if any of these fields is left blank. See params for each util to learn more.
+
 ### `allrounder_heatmap.py`
 Simple util for showing a heatmap of allrounder ratings as a function of batting and bowling ratings.
 
