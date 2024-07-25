@@ -127,6 +127,10 @@ Shows the largest single-day gains and drops in ratings.
 + `BIN_WIDTH` : Show histogram of rating changes with bins of this width
 + `MAX_CHANGE`: Only show changes less than this value on histogram
 
+### `aggregate_changes.py`
+Shows aggregate statistics on single-day changes.
++ `REMOVE_MISSED_GAME_DROPS`: Remove drops that might have been due to missed games.
+
 ## Aggregation Utils
 
 > [!NOTE]
