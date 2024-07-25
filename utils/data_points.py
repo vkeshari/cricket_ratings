@@ -9,7 +9,7 @@ import math
 
 ONE_YEAR = timedelta(days = 365)
 
-# ['batting', 'bowling', 'allrounder']
+# ['batting', 'bowling']
 TYPE = 'batting'
 # ['test', 'odi', 't20']
 FORMAT = 't20'
@@ -31,7 +31,7 @@ SHOW_YEAR_GRAPH = True
 ALLROUNDERS_GEOM_MEAN = True
 
 if TYPE:
-  assert TYPE in ['', 'batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
+  assert TYPE in ['', 'batting', 'bowling'], "Invalid TYPE provided"
 if FORMAT:
   assert FORMAT in ['', 'test', 'odi', 't20'], "Invalid FORMAT provided"
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"

@@ -18,6 +18,9 @@ assert TYPE in ['batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
 assert MAX_PLAYERS > 0, "MAX_PLAYERS must be positive"
 
+if BY_FINAL_RANK:
+  assert not TYPE == 'allrounder', "BY_FINAL_RANK not supported for allrounders"
+
 def get_last_ratings(players_dir):
   final_ratings = {}
   player_files = listdir(players_dir)

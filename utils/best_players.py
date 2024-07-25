@@ -47,6 +47,9 @@ if SORT_BY_MAX_RATING:
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
+if SORT_BY_TIME_AT_TOP:
+  assert not TYPE == 'allrounder', "SORT_BY_TIME_AT_TOP not supported for allrounders"
+
 
 def get_top_player_stats(daily_ratings, daily_ranks, num_top):
   player_stats = {}

@@ -55,6 +55,7 @@ for r in COMPARE_RANKS:
   assert r > 0 and r <= 10, "Each rank in COMPARE_RANKS must be between 1 and 10"
 if COMPARE_RANKS:
   assert not COMPARE_PLAYERS, "Both COMPARE_RANKS and COMPARE_PLAYERS cannot be set"
+  assert not TYPE == 'allrounder', "COMPARE_RANKS not supported for allrounders"
 if COMPARE_PLAYERS:
   assert not COMPARE_RANKS, "Both COMPARE_RANKS and COMPARE_PLAYERS cannot be set"
 if COLOR_BY_COUNTRY:

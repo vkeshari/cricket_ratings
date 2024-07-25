@@ -10,7 +10,7 @@ from pathlib import Path
 import math
 import numpy as np
 
-# ['batting', 'bowling', 'allrounder']
+# ['batting', 'bowling']
 TYPE = ''
 # ['test', 'odi', 't20']
 FORMAT = 't20'
@@ -40,7 +40,7 @@ LOG_SCALE = True
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
 
-assert TYPE in ['', 'batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
+assert TYPE in ['', 'batting', 'bowling'], "Invalid TYPE provided"
 assert FORMAT in ['', 'test', 'odi', 't20'], "Invalid FORMAT provided"
 
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
