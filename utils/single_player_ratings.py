@@ -9,12 +9,13 @@ TYPE = 'batting'
 FORMAT = 't20'
 
 START_DATE = date(2023, 1, 1)
-END_DATE = date(2024, 1, 1)
+END_DATE = date(2024, 7, 1)
 
 PLAYER = 'IND_Rohit_Sharma'
 
 # ['', 'rating', 'rank', 'either', 'both']
 CHANGED_DAYS_CRITERIA = 'rating'
+ONLY_RATING_CHANGES = True
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -72,6 +73,7 @@ for typ, frmt in types_and_formats:
       return {}
 
     player_ratings = {}
+    last_rating = 0
     for d in daily_ratings:
       if d < start_date or d > end_date:
         continue
@@ -80,7 +82,9 @@ for typ, frmt in types_and_formats:
         rating = daily_ratings[d][player]
         rank = daily_ranks[d][player]
 
-        player_ratings[d] = {'rating': rating, 'rank': rank} 
+        if not ONLY_RATING_CHANGES or not rating == last_rating:
+          player_ratings[d] = {'rating': rating, 'rank': rank}
+        last_rating = rating
 
     return player_ratings
 

@@ -12,6 +12,9 @@ TYPE = ''
 # ['test', 'odi', 't20']
 FORMAT = 't20'
 
+START_DATE = date(2007, 1, 1)
+END_DATE = date(2024, 7, 1)
+
 MAX_PLAYERS = 20
 NUM_TOP = 3
 
@@ -33,6 +36,9 @@ EPOCH = date(1901, 1, 1)
 
 assert TYPE in ['', 'batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['', 'test', 'odi', 't20'], "Invalid FORMAT provided"
+assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
+assert END_DATE <= date.today(), "Future END_DATE requested"
+
 assert NUM_TOP > 0, "NUM_TOP must be positive"
 assert MAX_PLAYERS >= NUM_TOP, "MAX_PLAYERS must be at least NUM_TOP"
 assert MAX_NAMES <= MAX_PLAYERS, "MAX_NAMES must be at most MAX_PLAYERS"
@@ -55,6 +61,8 @@ def get_top_player_stats(daily_ratings, daily_ranks, num_top):
   player_stats = {}
 
   for d in daily_ranks:
+    if d < START_DATE or d > END_DATE:
+      continue
     for p in daily_ranks[d]:
       if p not in player_stats:
         player_stats[p] = {'min_rank': 100, 'max_rating': 0, 'days_at_top': 0, \
@@ -68,6 +76,8 @@ def get_top_player_stats(daily_ratings, daily_ranks, num_top):
         player_stats[p]['days_at_top'] += 1
 
   for d in daily_ratings:
+    if d < START_DATE or d > END_DATE:
+      continue
     for p in daily_ratings[d]:
       if p not in player_stats:
         player_stats[p] = {'min_rank': 100, 'max_rating': 0, 'days_at_top': 0, \
@@ -137,8 +147,9 @@ for typ, frmt in types_and_formats:
     fig, ax = plt.subplots(figsize = resolution)
 
     title_text = pretty_format(frmt, typ) \
-                  + " by No. of Days Spent in Top " + str(NUM_TOP) + " Ranks"
-    ax.set_title(title_text, fontsize ='xx-large')
+                  + " by No. of Days Spent in Top " + str(NUM_TOP) + " Rank(s)" \
+                  + "\n(" + str(START_DATE) + " to " + str(END_DATE) + ")"
+    ax.set_title(title_text, fontsize ='x-large')
 
     ax.set_ylabel("No. of days", fontsize ='x-large')
 
