@@ -170,7 +170,7 @@ def process_for_day(graph_date, daily_ratings, fig, ax):
       plt.text(MAX_RATING - 10, ymax * 0.90, \
                 s = 'Kurtosis: {k:5.2f}'.format(k = kurtosis), \
                 alpha = 1, fontsize = 'large', \
-                horizontalalignment = 'right', verticalalignment = 'top')
+                horizontalalignment = 'right', verticalalignment = 'center')
 
     if fit_mean > 0:
       plt.plot(xs_fit, ys_fit, linewidth = 3, \
@@ -217,7 +217,6 @@ for typ, frmt in types_and_formats:
     out_filename = 'out/images/hist/distagg/ANIMATE_' + str(THRESHOLD) + '_' \
                     + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
                     + ('RESC_' if RESCALE else '') \
-                    + ('STATS_' if SHOW_STATS else '') \
                     + ('PF_' if PLOT_PERCENTILES and RATING_FRACTIONS else '') \
                     + ('FIT_' if FIT_CURVE else '') \
                     + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
@@ -243,7 +242,6 @@ for typ, frmt in types_and_formats:
       out_filename = 'out/images/hist/distagg/' + str(THRESHOLD) + '_' \
                       + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
                       + ('RESC_' if RESCALE else '') \
-                      + ('STATS_' if SHOW_STATS else '') \
                       + ('PF_' if PLOT_PERCENTILES and RATING_FRACTIONS else '') \
                       + ('FIT_' if FIT_CURVE else '') \
                       + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
