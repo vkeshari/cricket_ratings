@@ -33,11 +33,13 @@ BIN_AGGREGATE = 'avg'
 CHANGED_DAYS_CRITERIA = 'rating'
 
 SHOW_BIN_COUNTS = False
+
 SHOW_GRAPH = True
 PLOT_PERCENTILES = [50, 75, 90]
 RATING_FRACTIONS = True
 FIT_CURVE = False
 FIXED_YMAX = True
+SHOW_STATS = True
 ANIMATE = True
 
 RESCALE = False
@@ -86,7 +88,8 @@ def get_rating_fraction(r):
 def process_for_day(graph_date, daily_ratings, fig, ax):
   print (graph_date)
 
-  bin_counts, actual_bins, all_percentiles, (xs_fit, ys_fit, fit_mean) = \
+  bin_counts, actual_bins, all_percentiles, \
+      (skew, kurtosis), (xs_fit, ys_fit, fit_mean) = \
           get_single_window_distribution(daily_ratings, agg_date = graph_date, \
                                           agg_window = AGGREGATION_WINDOW, \
                                           agg_type = BIN_AGGREGATE, \
@@ -159,6 +162,16 @@ def process_for_day(graph_date, daily_ratings, fig, ax):
                 s = p_text, color = 'black', alpha = 0.9, fontsize = 'large', \
                 horizontalalignment = 'left', verticalalignment = 'center')
 
+    if SHOW_STATS:
+      plt.text(MAX_RATING - 10, ymax * 0.95, \
+                s = 'Skew: {s:5.2f}'.format(s = skew), \
+                alpha = 1, fontsize = 'large', \
+                horizontalalignment = 'right', verticalalignment = 'top')
+      plt.text(MAX_RATING - 10, ymax * 0.90, \
+                s = 'Kurtosis: {k:5.2f}'.format(k = kurtosis), \
+                alpha = 1, fontsize = 'large', \
+                horizontalalignment = 'right', verticalalignment = 'top')
+
     if fit_mean > 0:
       plt.plot(xs_fit, ys_fit, linewidth = 3, \
                 color = 'darkgreen', alpha = 0.5, antialiased = True, \
@@ -204,6 +217,7 @@ for typ, frmt in types_and_formats:
     out_filename = 'out/images/hist/distagg/ANIMATE_' + str(THRESHOLD) + '_' \
                     + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
                     + ('RESC_' if RESCALE else '') \
+                    + ('STATS_' if SHOW_STATS else '') \
                     + ('PF_' if PLOT_PERCENTILES and RATING_FRACTIONS else '') \
                     + ('FIT_' if FIT_CURVE else '') \
                     + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \
@@ -229,6 +243,7 @@ for typ, frmt in types_and_formats:
       out_filename = 'out/images/hist/distagg/' + str(THRESHOLD) + '_' \
                       + str(MAX_RATING) + '_' + str(BIN_SIZE) + '_' \
                       + ('RESC_' if RESCALE else '') \
+                      + ('STATS_' if SHOW_STATS else '') \
                       + ('PF_' if PLOT_PERCENTILES and RATING_FRACTIONS else '') \
                       + ('FIT_' if FIT_CURVE else '') \
                       + AGGREGATION_WINDOW + '_' + BIN_AGGREGATE + '_' \

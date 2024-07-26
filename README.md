@@ -130,6 +130,7 @@ Shows the largest single-day gains and drops in ratings.
 ### `aggregate_changes.py`
 Shows aggregate statistics on single-day changes.
 + `REMOVE_MISSED_GAME_DROPS`: Remove drops that might have been due to missed games.
++ `SUSPICION_RANGE`: Consider rating drop percentages that are this amount around expected drop for missed games as suspicious.
 
 ## Aggregation Utils
 

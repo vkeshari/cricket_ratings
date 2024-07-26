@@ -87,7 +87,7 @@ for typ, frmt in types_and_formats:
 
   all_bin_counts, all_percentiles = {}, {}
   for graph_date in GRAPH_DATES:
-    bin_counts, actual_bins, percentiles, _ = \
+    bin_counts, actual_bins, percentiles, _, _ = \
             get_single_window_distribution(daily_ratings, agg_date = graph_date, \
                                             agg_window = AGGREGATION_WINDOW, \
                                             agg_type = BIN_AGGREGATE, \

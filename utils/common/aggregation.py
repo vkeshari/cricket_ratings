@@ -1,5 +1,5 @@
 from common.stats import get_stats_for_list, normalize_array, fit_exp_curve, \
-                          make_distribution_normal, VALID_STATS
+                          make_distribution_normal, distribution_stats, VALID_STATS
 
 from datetime import date, timedelta
 
@@ -154,6 +154,11 @@ def get_single_window_distribution(daily_ratings, agg_date, agg_window, agg_type
                                             val_range = (threshold, max_rating), \
                                             scale_bins = 100)
 
+  skew, kurtosis = distribution_stats(bin_counts, bins = actual_bins, \
+                                            bin_width = bin_size, \
+                                            val_range = (threshold, max_rating), \
+                                            scale_bins = 100)
+
   if get_percentiles or fit_curve:
     stats_bin_size = (max_rating - threshold) / 100
     stats_bin_stops = list(np.linspace(threshold, max_rating, 101))
@@ -194,8 +199,8 @@ def get_single_window_distribution(daily_ratings, agg_date, agg_window, agg_type
     ys_fit = [y * (bin_size / stats_bin_size) for y in ys_fit]
     fit_mean = round(exp_mean)
 
-  return bin_counts, actual_bins, all_percentiles, (xs_fit, ys_fit, fit_mean)
-
+  return bin_counts, actual_bins, all_percentiles, \
+              (skew, kurtosis), (xs_fit, ys_fit, fit_mean)
 
 
 def get_metrics_by_stops(aggregate_ratings, stops, dates, \

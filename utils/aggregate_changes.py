@@ -11,10 +11,10 @@ import numpy as np
 # ['batting', 'bowling']
 TYPE = ''
 # ['test', 'odi', 't20']
-FORMAT = 't20'
+FORMAT = ''
 
 # Graph date range
-START_DATE = date(2007, 1, 1)
+START_DATE = date(1901, 1, 1)
 END_DATE = date(2024, 7, 1)
 
 # Upper and lower bounds of ratings to show
@@ -28,7 +28,7 @@ SHOW_STATS = True
 
 REMOVE_MISSED_GAME_DROPS = True
 SUSPICION_RANGE = 0.15
-SHOW_DEBUG_GRAPH = True
+SHOW_DEBUG_GRAPH = False
 X_MAX = 5
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
@@ -79,14 +79,14 @@ def is_possible_border_drop(f, d, frmt):
 
 
 def show_aggregate_stats(changes, neg = False):
-  print ("Count:\t{c:6d}".format(c = len(changes)))
-  print ("Total:\t{t:6d}".format(t = sum(changes)))
-  print ("Avg:\t{a:6.2f}".format(a = get_stats_for_list(changes, 'avg')))
-  print ("P10:\t{p:6d}".format(p = get_stats_for_list(changes, ('p90' if neg else 'p10'))))
-  print ("P25:\t{p:6d}".format(p = get_stats_for_list(changes, ('p75' if neg else 'p25'))))
-  print ("P50:\t{p:6d}".format(p = get_stats_for_list(changes, ('p50' if neg else 'p50'))))
-  print ("P75:\t{p:6d}".format(p = get_stats_for_list(changes, ('p25' if neg else 'p75'))))
-  print ("P90:\t{p:6d}".format(p = get_stats_for_list(changes, ('p10' if neg else 'p90'))))
+  print ("Count:\t{c:7d}".format(c = len(changes)))
+  print ("Total:\t{t:7d}".format(t = sum(changes)))
+  print ("Avg:\t{a:7.2f}".format(a = get_stats_for_list(changes, 'avg')))
+  print ("P10:\t{p:7d}".format(p = get_stats_for_list(changes, ('p90' if neg else 'p10'))))
+  print ("P25:\t{p:7d}".format(p = get_stats_for_list(changes, ('p75' if neg else 'p25'))))
+  print ("P50:\t{p:7d}".format(p = get_stats_for_list(changes, ('p50' if neg else 'p50'))))
+  print ("P75:\t{p:7d}".format(p = get_stats_for_list(changes, ('p25' if neg else 'p75'))))
+  print ("P90:\t{p:7d}".format(p = get_stats_for_list(changes, ('p10' if neg else 'p90'))))
 
 
 types_and_formats = []

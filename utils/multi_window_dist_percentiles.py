@@ -103,7 +103,7 @@ for typ, frmt in types_and_formats:
 
   for graph_date in GRAPH_DATES:
 
-    _, _, percentiles, _ = \
+    _, _, percentiles, _, _ = \
         get_single_window_distribution(daily_ratings, agg_date = graph_date, \
                                         agg_window = AGGREGATION_WINDOW, \
                                         agg_type = BIN_AGGREGATE, \

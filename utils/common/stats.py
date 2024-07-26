@@ -1,5 +1,6 @@
 from fitter import Fitter
 from scipy.optimize import curve_fit
+from scipy.stats import skew, kurtosis
 from sklearn.preprocessing import power_transform
 
 import numpy as np
@@ -66,6 +67,12 @@ def sample_from_distribution(bin_counts, bins, bin_width, \
   all_vals = np.concatenate(all_vals)
 
   return all_vals
+
+
+def distribution_stats(bin_counts, bins, bin_width, val_range, scale_bins):
+  sample_vals = sample_from_distribution(bin_counts, bins, bin_width, \
+                                          val_range, scale_bins)
+  return skew(sample_vals), kurtosis(sample_vals)
 
 
 def make_distribution_normal(bin_counts, bins, bin_width, val_range, scale_bins):
