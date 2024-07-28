@@ -13,8 +13,8 @@ TYPE = ''
 # ['', 'test', 'odi', 't20']
 FORMAT = 't20'
 
-START_DATE = date(2007, 1, 1)
-END_DATE = date(2024, 7, 1)
+START_DATE = date(2010, 1, 1)
+END_DATE = date(2020, 1, 1)
 
 MAX_RATING = 1000
 THRESHOLD = 500
@@ -25,11 +25,14 @@ for i, p in enumerate(COMPARE_PLAYERS):
   COMPARE_PLAYERS[i] = p + '.data'
 
 COLOR_BY_COUNTRY = False
+SOFT_COLORS = True
 
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'fiveyearly', 'decadal']
 PLOT_AVERAGES = 'yearly'
 PLOT_AVERAGE_KEYS = []
+
 SHOW_CHANGES = []
+
 if COMPARE_PLAYERS:
   for i, p in enumerate(PLOT_AVERAGE_KEYS):
     PLOT_AVERAGE_KEYS[i] = p + '.data'
@@ -68,6 +71,29 @@ if PLOT_AVERAGE_KEYS:
       "PLOT_AVERAGE_KEYS must be a subset of compare keys to plot"
 assert PLOT_AVERAGES in ['', 'monthly', 'quarterly', 'halfyearly', \
                           'yearly', 'fiveyearly', 'decadal']
+
+
+def stagger_keys(keys):
+  count = len(keys)
+  if count < 3:
+    return keys
+
+
+  staggered = []
+  if count % 2 == 0:
+    mid = int(count / 2)
+    for i in range(mid):
+      staggered.append(keys[i])
+      staggered.append(keys[mid + i])
+  else:
+    mid = int(count / 2) + 1
+    for i in range(mid):
+      staggered.append(keys[i])
+      if i < mid - 1:
+        staggered.append(keys[mid + i])
+
+  assert len(keys) == len(staggered), "Mismatch between keys and staggered keys"
+  return staggered
 
 
 types_and_formats = []
@@ -198,8 +224,25 @@ for typ, frmt in types_and_formats:
     ax.grid(True, which = 'major', axis = 'both', alpha = 0.6)
     ax.grid(True, which = 'minor', axis = 'both', alpha = 0.3)
 
+    if SOFT_COLORS:
+      if PLOT_AVERAGE_KEYS:
+        line_alpha = 0.1
+        avg_alpha = 0.3
+      else:
+        line_alpha = 0.3
+        avg_alpha = 0.0
+    else:
+      if PLOT_AVERAGE_KEYS:
+        line_alpha = 0.2
+        avg_alpha = 0.4
+      else:
+        line_alpha = 0.4
+        avg_alpha = 0.0
+
+
     if COMPARE_PLAYERS:
-      player_to_color = get_player_colors(COMPARE_PLAYERS, by_country = COLOR_BY_COUNTRY)
+      player_to_color = get_player_colors(stagger_keys(COMPARE_PLAYERS), \
+                                          by_country = COLOR_BY_COUNTRY)
 
       for p in COMPARE_PLAYERS:
         (xs, ys) = [], []
@@ -207,14 +250,14 @@ for typ, frmt in types_and_formats:
           (xs, ys) = zip(*compare_stats[p].items())
 
         plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
-                          alpha = 0.4, color = player_to_color[p], \
+                          alpha = line_alpha, color = player_to_color[p], \
                           label = readable_name_and_country(p))
 
         if PLOT_AVERAGE_KEYS and p in keys_to_avgs:
           ax.barh(y = keys_to_avgs[p].values(), width = agg_window_size, \
                   align = 'center', left = keys_to_avgs[p].keys(), \
                   height = (MAX_RATING - THRESHOLD) / 40, \
-                  color = player_to_color[p], alpha = 0.4)
+                  color = player_to_color[p], alpha = avg_alpha)
 
         if p in SHOW_CHANGES:
           last_r = 0
@@ -225,7 +268,7 @@ for typ, frmt in types_and_formats:
             last_r = r
 
     elif COMPARE_RANKS:
-      colors = get_colors_from_scale(len(COMPARE_RANKS))
+      colors = stagger_keys(get_colors_from_scale(len(COMPARE_RANKS)))
 
       for i, rank in enumerate(COMPARE_RANKS):
         (xs, ys) = [], []
@@ -233,13 +276,14 @@ for typ, frmt in types_and_formats:
           (xs, ys) = zip(*compare_stats[rank].items())
 
         plt.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
-                          alpha = 0.4, color = colors[i], label = 'Rank ' + str(rank))
+                          alpha = line_alpha, color = colors[i], \
+                          label = 'Rank ' + str(rank))
 
         if PLOT_AVERAGE_KEYS and rank in keys_to_avgs:
           ax.barh(y = keys_to_avgs[rank].values(), width = agg_window_size, \
                   align = 'center', left = keys_to_avgs[rank].keys(), \
                   height = (MAX_RATING - THRESHOLD) / 40, \
-                  color = colors[i], alpha = 0.4)
+                  color = colors[i], alpha = avg_alpha)
 
         if rank in SHOW_CHANGES:
           last_r = 0
@@ -261,6 +305,9 @@ for typ, frmt in types_and_formats:
       for r in COMPARE_RANKS:
         comparison_text += str(r) + '_'
     out_filename = 'out/images/line/comparison/' + comparison_text \
+                    + ("AVG" + str(len(PLOT_AVERAGE_KEYS)) + '_' \
+                                if PLOT_AVERAGE_KEYS else '') \
+                    + ("SOFT_" if SOFT_COLORS else '') \
                     + frmt + '_' + typ \
                     + ("GEOM" if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
                     + '_' + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
