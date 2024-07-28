@@ -87,6 +87,9 @@ Simple util for showing a heatmap of allrounder ratings as a function of batting
 Show total no. of data points by year or by decade.
 + `CHANGED_DAYS_CRITERIA`: Only consider days when Rating or Rank changed.
 
+### `heartbeat.py`
+Show every day with a ratings change for each format and type on one graph.
+
 ### `final_ratings.py`
 Shows players that had the highest ratings at retirement.
 + `MAX_PLAYERS`  : Self-explanatory
