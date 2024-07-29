@@ -51,18 +51,17 @@ def get_graph_metrics(metrics_bins, stops, dates, cumulatives):
   return graph_metrics
 
 
-def get_medal_stats(graph_metrics, stops, avg_medal_cumulative_counts):
-
-  all_medals = avg_medal_cumulative_counts.keys()
+def get_medal_stats(graph_metrics, stops, all_medals, avg_medal_cumulative_counts):
   medal_stats = {medal: {} for medal in all_medals}
 
   medal_indices = {medal: -1 for medal in all_medals}
   for i, av in enumerate(graph_metrics['avgs']):
-    for medal in medal_indices:
+    for j, medal in enumerate(medal_indices.keys()):
       if medal_indices[medal] == -1:
-        medal_desired =  avg_medal_cumulative_counts[medal]
+        medal_desired =  avg_medal_cumulative_counts[j]
         if av > medal_desired:
-          if av - medal_desired > medal_desired - graph_metrics['avgs'][i - 1]:
+          prev_av = graph_metrics['avgs'][i - 1]
+          if av - medal_desired > medal_desired - prev_av:
             medal_indices[medal] = i - 1
           else:
             medal_indices[medal] = i
@@ -81,45 +80,61 @@ def get_medal_stats(graph_metrics, stops, avg_medal_cumulative_counts):
   return medal_stats
 
 
-def get_player_medals(player_counts_by_step, medal_stats):
+def get_heirarchical_sort_lambda_key(medals):
+  key = '('
+  for m in medals:
+    key += "item[1][" + repr(m) + "],"
+  key += ')'
+  return key
 
-  all_medals = medal_stats.keys()
+
+def get_player_medals(player_counts_by_step, medal_stats, all_medals):
   player_medals = {}
 
   for p in player_counts_by_step:
     if p not in player_medals:
       player_medals[p] = {medal: 0 for medal in all_medals}
     for r in sorted(player_counts_by_step[p].keys()):
-      if r < medal_stats['bronze']['threshold']:
+      reversed_medals = list(reversed(all_medals))
+      bottom_medal = reversed_medals[0]
+      if r < medal_stats[bottom_medal]['threshold']:
         continue
-      elif r < medal_stats['silver']['threshold']:
-        player_medals[p]['bronze'] += player_counts_by_step[p][r]
-      elif r < medal_stats['gold']['threshold']:
-        player_medals[p]['silver'] += player_counts_by_step[p][r]
+      for i, m in enumerate(reversed_medals):
+        if i == 0:
+          continue
+        prev_medal = reversed_medals[i - 1]
+        if r < medal_stats[m]['threshold']:
+          player_medals[p][prev_medal] += player_counts_by_step[p][r]
+          break
       else:
-        player_medals[p]['gold'] += player_counts_by_step[p][r]
+        top_medal = all_medals[0]
+        player_medals[p][top_medal] += player_counts_by_step[p][r]
 
+  sort_key = get_heirarchical_sort_lambda_key(all_medals)
   player_medals = dict(sorted(player_medals.items(),
-                                key = lambda item: (item[1]['gold'], \
-                                                    item[1]['silver'],
-                                                    item[1]['bronze']), \
+                                key = lambda item: eval(sort_key), \
                                 reverse = True))
 
   return player_medals
 
 
-def show_top_medals(player_medals, player_periods, top_players, by_percentage = False):
-  print('\n=== Top ' + str(top_players) + ' Players by Medals ===')
-  print('RANK\tSPAN,\tMEDALS,\tGOLD,\tSILVER,\tBRONZE,\tPLAYER NAME')
+def show_top_medals(player_medals, player_periods, all_medals, \
+                      top_players = 10, by_percentage = False):
+  medal_str = ''
+  for m in all_medals:
+    medal_str += '\t' + m.upper() + ','
 
-  for i, p in enumerate(player_medals):
+  print('\n=== Top ' + str(top_players) + ' Players by Medals ===')
+  print('RANK\tSPAN,\tMEDALS,' + medal_str + '\tPLAYER NAME')
+
+  for i, p in enumerate(player_medals.keys()):
     s = str(i + 1) + ',\t' + str(player_periods[p]) + ','
     total_medals = sum(player_medals[p].values())
     if by_percentage:
       s += '\t{v:.2f}'.format(v = total_medals) + ','
     else:
       s += '\t' + str(total_medals) + ','
-    for medal in ['gold', 'silver', 'bronze']:
+    for medal in all_medals:
       if by_percentage:
         s += '\t{v:.2f}'.format(v = player_medals[p][medal]) + ','
       else:

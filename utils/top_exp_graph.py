@@ -60,13 +60,13 @@ TOP_STATS_SORT = ('sum', 'avg')
 
 SHOW_TOP_MEDALS = True
 BY_MEDAL_PERCENTAGES = False
-AVG_MEDAL_CUMULATIVE_COUNTS = {'gold': 2, 'silver': 5, 'bronze': 10}
+AVG_MEDAL_CUMULATIVE_COUNTS = [2, 5, 10]
 
 SHOW_GRAPH = True
 TRIM_EMPTY_ROWS = True
 SHOW_MEDALS = True
-# ['', 'bronze', 'silver', 'gold']
-TRUNCATE_GRAPH_AT = 'bronze'
+# A value from AVG_MEDAL_CUMULATIVE_COUNTS
+TRUNCATE_GRAPH_AT = 10
 GRAPH_CUMULATIVES = True
 
 TOP_PLAYERS = 25
@@ -96,17 +96,17 @@ assert MIN_SIGMA >= 0.0 and MIN_SIGMA < MAX_SIGMA, \
       "MIN_SIGMA must be between 0.0 and MAX_SIGMA"
 assert SIGMA_STEP in [0.05, 0.1, 0.2, 0.5], "Invalid SIGMA_STEP provided"
 
-assert not AVG_MEDAL_CUMULATIVE_COUNTS.keys() ^ {'gold', 'silver', 'bronze'}, \
-      "AVG_MEDAL_CUMULATIVE_COUNTS keys must be gold silver and bronze"
-for amcc in AVG_MEDAL_CUMULATIVE_COUNTS.values():
+for amcc in AVG_MEDAL_CUMULATIVE_COUNTS:
   assert amcc > 0, "All values in AVG_MEDAL_CUMULATIVE_COUNTS must be positive"
+assert AVG_MEDAL_CUMULATIVE_COUNTS == sorted(AVG_MEDAL_CUMULATIVE_COUNTS), \
+        "AVG_MEDAL_CUMULATIVE_COUNTS must be sorted"
 
 if SHOW_MEDALS:
   assert SHOW_GRAPH, "SHOW_GRAPH must be enabled if SHOW_MEDALS is enabled"
-assert TRUNCATE_GRAPH_AT in ['', 'bronze', 'silver', 'gold']
+assert TRUNCATE_GRAPH_AT in AVG_MEDAL_CUMULATIVE_COUNTS, \
+        "TRUNCATE_GRAPH_AT larger than AVG_MEDAL_CUMULATIVE_COUNTS"
 if TRUNCATE_GRAPH_AT:
-  assert SHOW_MEDALS, "SHOW_MEDALS must be enabled if either of" \
-                      + " TRIM_EMPTY_ROWS or TRUNCATE_GRAPH_AT is enabled"
+  assert SHOW_MEDALS, "SHOW_MEDALS must be enabled if TRUNCATE_GRAPH_AT is set"
 
 if TOP_STATS_SORT:
   assert SHOW_TOP_STATS, "SHOW_TOP_STATS must be enabled if TOP_STATS_SORT is enabled"
@@ -114,6 +114,9 @@ if TOP_STATS_SORT:
       "Invalid sort parameter in TOP_STATS_SORT"
 
 assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
+
+
+ALL_MEDALS = ['T' + str(c) for c in AVG_MEDAL_CUMULATIVE_COUNTS]
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
@@ -206,18 +209,21 @@ if SHOW_TOP_MEDALS or SHOW_GRAPH:
   reversed_stops = list(reversed(actual_sigma_stops))
 
   graph_metrics = get_graph_metrics(metrics_bins, stops = reversed_stops, \
-                                    dates = dates_to_show, cumulatives = GRAPH_CUMULATIVES)
+                                    dates = dates_to_show, \
+                                    cumulatives = GRAPH_CUMULATIVES)
 
 
   medal_stats = get_medal_stats(graph_metrics, stops = reversed_stops, \
+                                all_medals = ALL_MEDALS, \
                                 avg_medal_cumulative_counts = AVG_MEDAL_CUMULATIVE_COUNTS)
 
-  player_medals = get_player_medals(player_counts_by_step, medal_stats)
+  player_medals = get_player_medals(player_counts_by_step, medal_stats, \
+                                    all_medals = ALL_MEDALS)
 
 
 if SHOW_TOP_MEDALS:
-  show_top_medals(player_medals, player_periods, top_players = TOP_PLAYERS, \
-                    by_percentage = BY_MEDAL_PERCENTAGES)
+  show_top_medals(player_medals, player_periods, all_medals = ALL_MEDALS, \
+                    top_players = TOP_PLAYERS, by_percentage = BY_MEDAL_PERCENTAGES)
 
 if SHOW_GRAPH:
   graph_annotations = {'TYPE': TYPE, 'FORMAT': FORMAT, \
@@ -237,7 +243,9 @@ if SHOW_GRAPH:
       else:
         break
   if SHOW_MEDALS and TRUNCATE_GRAPH_AT:
-    yparams_min = medal_stats[TRUNCATE_GRAPH_AT]['threshold'] - SIGMA_STEP
+    truncation_medal_index = AVG_MEDAL_CUMULATIVE_COUNTS.index(TRUNCATE_GRAPH_AT)
+    truncation_medal = ALL_MEDALS[truncation_medal_index]
+    yparams_min = medal_stats[truncation_medal]['threshold'] - SIGMA_STEP
   else:
     yparams_min = MIN_SIGMA
   graph_yparams = {'min': yparams_min, 'max': yparams_max, 'step': SIGMA_STEP}

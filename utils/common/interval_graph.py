@@ -50,8 +50,6 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   assert not {'min', 'max', 'step'} ^ yparams.keys(), "yparams must be min, max and step"
   if show_medals:
     assert medal_stats, "No medal_stats provided"
-    assert not {'gold', 'silver', 'bronze'} ^ medal_stats.keys(), \
-          "medal_stats keys must be gold, silver and bronze"
     for medal in medal_stats:
       for metric in {'threshold', 'exp_num'}:
         assert medal_stats[medal][metric], "No " + metric + " in medal_stats for " + medal
