@@ -219,7 +219,7 @@ if SHOW_GRAPH:
     yparams_min = MIN_RATIO
   graph_yparams = {'min': yparams_min, 'max': yparams_max, 'step': RATIO_STEP}
 
-  out_filename = 'out/images/interval/topplayers/ratings/' \
+  out_filename = 'out/images/interval/topplayers/ratios/' \
                     + str(MIN_RATIO) + '_' + str(MAX_RATIO) + '_' \
                     + str(RATIO_STEP) + '_' \
                     + (str(MEDAL_COUNT) + 'MEDALS_' if MEDAL_COUNT else '') \

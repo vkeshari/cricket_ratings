@@ -227,7 +227,7 @@ if SHOW_GRAPH:
     yparams_min = MIN_SIGMA
   graph_yparams = {'min': yparams_min, 'max': yparams_max, 'step': SIGMA_STEP}
 
-  out_filename = 'out/images/interval/topplayers/ratings/' \
+  out_filename = 'out/images/interval/topplayers/normal/' \
                     + str(MIN_SIGMA) + '_' + str(MAX_SIGMA) + '_' \
                     + str(SIGMA_STEP) + '_' \
                     + (str(MEDAL_COUNT) + 'MEDALS_' if MEDAL_COUNT else '') \
