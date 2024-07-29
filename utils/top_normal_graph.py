@@ -57,6 +57,7 @@ TOP_STATS_SORT = ('sum', 'avg')
 SHOW_TOP_MEDALS = True
 BY_MEDAL_PERCENTAGES = False
 AVG_MEDAL_CUMULATIVE_COUNTS = [2, 5, 10]
+MEDAL_LABELS = ['gold', 'silver', 'bronze']
 
 SHOW_GRAPH = True
 TRIM_EMPTY_ROWS = True
@@ -94,6 +95,9 @@ for amcc in AVG_MEDAL_CUMULATIVE_COUNTS:
   assert amcc > 0, "All values in AVG_MEDAL_CUMULATIVE_COUNTS must be positive"
 assert AVG_MEDAL_CUMULATIVE_COUNTS == sorted(AVG_MEDAL_CUMULATIVE_COUNTS), \
         "AVG_MEDAL_CUMULATIVE_COUNTS must be sorted"
+if MEDAL_LABELS:
+  assert len(MEDAL_LABELS) == len(AVG_MEDAL_CUMULATIVE_COUNTS), \
+        "MEDAL_LABELS and AVG_MEDAL_CUMULATIVE_COUNTS should have the same length"
 
 if SHOW_MEDALS:
   assert SHOW_GRAPH, "SHOW_GRAPH must be enabled if SHOW_MEDALS is enabled"
@@ -110,7 +114,10 @@ if TOP_STATS_SORT:
 assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
 
 
-ALL_MEDALS = ['T' + str(c) for c in AVG_MEDAL_CUMULATIVE_COUNTS]
+if MEDAL_LABELS:
+  ALL_MEDALS = MEDAL_LABELS
+else:
+  ALL_MEDALS = ['T' + str(c) for c in AVG_MEDAL_CUMULATIVE_COUNTS]
 
 print (FORMAT + '\t' + TYPE)
 print (str(START_DATE) + ' to ' + str(END_DATE))
