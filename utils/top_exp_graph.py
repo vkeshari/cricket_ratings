@@ -66,9 +66,9 @@ MEDAL_LABELS = ['gold', 'silver', 'bronze']
 SHOW_GRAPH = True
 TRIM_EMPTY_ROWS = True
 SHOW_MEDALS = True
+GRAPH_CUMULATIVES = True
 # A value from AVG_MEDAL_CUMULATIVE_COUNTS
 TRUNCATE_GRAPH_AT = 10
-GRAPH_CUMULATIVES = True
 
 TOP_PLAYERS = 25
 
@@ -101,7 +101,6 @@ for amcc in AVG_MEDAL_CUMULATIVE_COUNTS:
   assert amcc > 0, "All values in AVG_MEDAL_CUMULATIVE_COUNTS must be positive"
 assert AVG_MEDAL_CUMULATIVE_COUNTS == sorted(AVG_MEDAL_CUMULATIVE_COUNTS), \
         "AVG_MEDAL_CUMULATIVE_COUNTS must be sorted"
-
 if MEDAL_LABELS:
   assert len(MEDAL_LABELS) == len(AVG_MEDAL_CUMULATIVE_COUNTS), \
         "MEDAL_LABELS and AVG_MEDAL_CUMULATIVE_COUNTS should have the same length"
@@ -258,6 +257,16 @@ if SHOW_GRAPH:
     yparams_min = MIN_SIGMA
   graph_yparams = {'min': yparams_min, 'max': yparams_max, 'step': SIGMA_STEP}
 
+  out_filename = 'out/images/interval/topplayers/ratings/' \
+                    + str(MIN_SIGMA) + '_' + str(MAX_SIGMA) + '_' \
+                    + str(SIGMA_STEP) + '_' \
+                    + (str(MEDAL_COUNT) + 'MEDALS_' if MEDAL_COUNT else '') \
+                    + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE + '_' \
+                    + FORMAT + '_' + TYPE \
+                    + ('GEOM' if TYPE == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
+                    + '_' + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
+
   plot_interval_graph(graph_metrics, stops = reversed_stops, \
                       annotations = graph_annotations, yparams = graph_yparams, \
-                      medal_stats = medal_stats, show_medals = SHOW_MEDALS)
+                      medal_stats = medal_stats, show_medals = SHOW_MEDALS, \
+                      save_filename = out_filename)

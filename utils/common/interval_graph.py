@@ -1,6 +1,7 @@
 from common.output import pretty_format
 
 from matplotlib import pyplot as plt
+from pathlib import Path
 
 import math
 
@@ -156,5 +157,6 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   if not save_filename:
     plt.show()
   else:
+    Path(save_filename).parent.mkdir(exist_ok = True, parents = True)
     fig.savefig(save_filename)
     print("Written: " + save_filename)
