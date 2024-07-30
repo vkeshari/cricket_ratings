@@ -20,6 +20,7 @@ ALLROUNDERS_GEOM_MEAN = True
 
 assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
 assert END_DATE <= date.today(), "Future END_DATE requested"
+assert END_DATE - START_DATE < 11 * ONE_YEAR, "Max span of 10 years supported"
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both'], \
         "Invalid CHANGED_DAYS_CRITERIA"
@@ -69,10 +70,8 @@ ax.set_yticklabels(format_titles, fontsize = 'large')
 ax.grid(True, which = 'major', axis = 'both', alpha = 0.6)
 ax.grid(True, which = 'minor', axis = 'both', alpha = 0.3)
 
-if END_DATE - START_DATE > 2 * ONE_YEAR:
-  dot_alpha = 0.1
-else:
-  dot_alpha = 0.3
+span_years = (END_DATE - START_DATE) / ONE_YEAR
+dot_alpha = 0.3 - (span_years - 1) * 0.2 / 9
 for i, f in enumerate(formats):
   format_days = days_by_format[f]
   count = len(format_days)
