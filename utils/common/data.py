@@ -5,7 +5,7 @@ from os import listdir
 
 import math
 
-def get_days_with_change(daily_data, agg_window):
+def get_days_with_change(daily_data, agg_window, consider_player_keys = False):
   assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
                           'yearly', 'fiveyearly', 'decadal'], \
         "Invalid agg_window provided"
@@ -16,11 +16,11 @@ def get_days_with_change(daily_data, agg_window):
     changed = False
     if not last_daily_data:
       changed = True
-    elif not sorted(daily_data[d].keys()) == sorted(last_daily_data.keys()):
+    elif consider_player_keys and daily_data[d].keys() ^ last_daily_data.keys():
       changed = True
     else:
       for p in daily_data[d]:
-        if not daily_data[d][p] == last_daily_data[p]:
+        if p in last_daily_data and not daily_data[d][p] == last_daily_data[p]:
           changed = True
           break
     if changed or agg_window and is_aggregation_window_start(d, agg_window):
@@ -80,10 +80,15 @@ def get_daily_ratings(typ, frmt, changed_days_criteria = '', agg_window = '', \
     if changed_days_criteria in {'rating', 'either', 'both'}:
       rating_change_days = get_days_with_change(daily_ratings, agg_window)
     if changed_days_criteria in {'rank', 'either', 'both'}:
-      rank_change_days = get_days_with_change(daily_ranks, agg_window)
+      rank_change_days = get_days_with_change(daily_ranks, agg_window, \
+                                              consider_player_keys = True)
 
     change_days = set()
-    if changed_days_criteria in {'rating', 'rank', 'either'}:
+    if changed_days_criteria == 'rating':
+      change_days = rating_change_days
+    elif changed_days_criteria == 'rank':
+      change_days = rank_change_days
+    elif changed_days_criteria == 'either':
       change_days = rating_change_days | rank_change_days
     elif changed_days_criteria == 'both':
       change_days = rating_change_days & rank_change_days

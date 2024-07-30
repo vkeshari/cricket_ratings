@@ -98,7 +98,8 @@ for typ, frmt in types_and_formats:
 
   aggregation_dates = []
   if PLOT_AVERAGE_RATINGS:
-    days_with_change = get_days_with_change(daily_ratings, PLOT_AVERAGES)
+    days_with_change = get_days_with_change(daily_ratings, PLOT_AVERAGES, \
+                                            consider_player_keys = True)
     agg_daily_ratings = {d: v for d, v in daily_ratings.items() if d in days_with_change}
 
     aggregation_dates = get_aggregation_dates(agg_daily_ratings, \

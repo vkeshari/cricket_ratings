@@ -14,7 +14,7 @@ END_DATE = date(2024, 7, 1)
 PLAYER = 'IND_Rohit_Sharma'
 
 # ['', 'rating', 'rank', 'either', 'both']
-CHANGED_DAYS_CRITERIA = 'rating'
+CHANGED_DAYS_CRITERIA = 'either'
 ONLY_RATING_CHANGES = True
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.

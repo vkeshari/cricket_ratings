@@ -14,7 +14,7 @@ LOCATION = 'above'
 NUM_SHOW = 20
 
 # ['', 'rating', 'rank', 'either', 'both']
-CHANGED_DAYS_CRITERIA = 'either'
+CHANGED_DAYS_CRITERIA = 'rating'
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
