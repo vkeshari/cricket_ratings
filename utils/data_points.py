@@ -21,7 +21,8 @@ MAX_RATING = 1000
 THRESHOLD = 0
 
 # ['', 'rating', 'rank', 'either', 'both']
-CHANGED_DAYS_CRITERIA = 'rating'
+CHANGED_DAYS_CRITERIA = 'either'
+RATING_CHANGES_ONLY = False
 
 SHOW_DECADE_DATA = True
 SHOW_YEAR_DATA = False
@@ -43,6 +44,10 @@ assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both'], \
         "Invalid CHANGED_DAYS_CRITERIA"
+
+
+if RATING_CHANGES_ONLY:
+  CHANGED_DAYS_CRITERIA = 'rating'
 
 types_and_formats = []
 if TYPE and FORMAT:
@@ -162,6 +167,7 @@ for typ, frmt in types_and_formats:
     fig.tight_layout()
 
     out_filename = 'out/images/bar/datapoints/' + frmt + '_' \
+                  + ('RATINGONLY_' if RATING_CHANGES_ONLY else '') \
                   + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
 
     Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
