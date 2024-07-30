@@ -1,11 +1,13 @@
 from common.data import get_daily_ratings
 from common.output import get_timescale_xticks, pretty_format, resolution_by_span
 
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from matplotlib import pyplot as plt
 
 import numpy as np
+
+ONE_YEAR = timedelta(days = 365)
 
 START_DATE = date(2010, 1, 1)
 END_DATE = date(2020, 1, 1)
@@ -22,13 +24,12 @@ assert END_DATE <= date.today(), "Future END_DATE requested"
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both'], \
         "Invalid CHANGED_DAYS_CRITERIA"
 
-types_and_formats = []
-for f in ['t20', 'odi', 'test']:
-  for t in ['batting', 'bowling']:
-    types_and_formats.append((t, f))
 
-days_by_ft = {}
-for typ, frmt in types_and_formats:
+typ = 'batting'
+formats = ['t20', 'odi', 'test']
+
+days_by_format = {}
+for frmt in formats:
   print (frmt + ' : ' + typ)
   print (str(START_DATE) + ' : ' + str(END_DATE))
 
@@ -38,9 +39,7 @@ for typ, frmt in types_and_formats:
 
   rating_days = [d for d in sorted(daily_ratings.keys()) \
                   if d >= START_DATE and d <= END_DATE]
-  days_by_ft[(frmt, typ)] = rating_days
-
-all_ft = [pretty_format(ft[0], ft[1]) for ft in days_by_ft.keys()]
+  days_by_format[frmt] = rating_days
 
 resolution, aspect_ratio = resolution_by_span(START_DATE, END_DATE)
 fig, ax = plt.subplots(figsize = resolution)
@@ -61,23 +60,32 @@ ax.set_xticklabels(xticklabels, fontsize ='large')
 
 ymax = 1
 ax.set_ylim(0, ymax)
-yticks = np.linspace(0, ymax, len(all_ft) + 2)
+yticks = np.linspace(0, ymax, len(formats) + 2)
 ax.set_yticks(yticks)
-ax.set_yticklabels([''] + all_ft + [''], fontsize = 'large')
+
+format_titles = [''] + [pretty_format(f) for f in formats] + ['']
+ax.set_yticklabels(format_titles, fontsize = 'large')
 
 ax.grid(True, which = 'major', axis = 'both', alpha = 0.6)
 ax.grid(True, which = 'minor', axis = 'both', alpha = 0.3)
 
-for i, (f, t) in enumerate(days_by_ft.keys()):
-  ft_days = days_by_ft[(f, t)]
-  count = len(ft_days)
-  ax.plot(ft_days, [yticks[i + 1]] * count, \
+if END_DATE - START_DATE > 2 * ONE_YEAR:
+  dot_alpha = 0.1
+else:
+  dot_alpha = 0.3
+for i, f in enumerate(formats):
+  format_days = days_by_format[f]
+  count = len(format_days)
+  ax.plot(format_days, [yticks[i + 1]] * count, \
             linewidth = 0, marker = 'o', markersize = 5, \
-            alpha = 0.1)
+            alpha = dot_alpha)
 
 fig.tight_layout()
 
-out_filename = 'out/images/dot/heartbeat/' \
+format_str = ''
+for f in sorted(formats):
+  format_str += f + '_'
+out_filename = 'out/images/dot/heartbeat/' + format_str \
                   + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
 
 Path(out_filename).parent.mkdir(exist_ok = True, parents = True)
