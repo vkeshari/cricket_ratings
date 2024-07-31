@@ -37,8 +37,9 @@ PLAYER_AGGREGATE = 'max'
 
 SHOW_GRAPH = True
 TOP_PLAYERS = 10
+SHOW_ALL_RANKS = True
 
-SHOW_MEDALS = False
+SHOW_MEDALS = True
 AVG_MEDAL_CUMULATIVE_COUNTS = [2, 5, 10]
 MEDAL_LABELS = ['gold', 'silver', 'bronze']
 
@@ -123,18 +124,19 @@ def filter_by_threshold(aggregate_ratings):
 aggregate_ratings = filter_by_threshold(aggregate_ratings)
 
 if SHOW_GRAPH:
-  all_dates = [d for d in aggregate_ratings.keys() if d.year not in SKIP_YEARS]
+  graph_dates = [d for d in aggregate_ratings.keys() if d.year not in SKIP_YEARS]
   agg_window_width = get_aggregation_window_width(AGGREGATION_WINDOW)
   half_agg_window = timedelta(days = int((agg_window_width / 2).days))
-  date_plot_locs = [d + half_agg_window for d in all_dates]
+  date_plot_locs = [d + half_agg_window for d in graph_dates]
 
-  ranks_to_ratings = {rank: {} for rank in range(TOP_PLAYERS)}
-  for d in aggregate_ratings:
-    if d.year in SKIP_YEARS:
-      continue
+  ranks_to_ratings = {rank: {} for rank in range(100)}
+  for d in graph_dates:
     sorted_ratings = sorted(aggregate_ratings[d].values(), reverse = True)
     for rank in ranks_to_ratings:
-      ranks_to_ratings[rank][d] = sorted_ratings[rank]
+      if rank < len(sorted_ratings):
+        ranks_to_ratings[rank][d] = sorted_ratings[rank]
+      else:
+        ranks_to_ratings[rank][d] = THRESHOLD - 100
 
   if SHOW_MEDALS:
     rating_stops = list(range(THRESHOLD, MAX_RATING, RATING_STEP))
@@ -142,13 +144,12 @@ if SHOW_GRAPH:
 
     metrics_bins, player_counts_by_step, player_periods = \
             get_metrics_by_stops(aggregate_ratings, stops = rating_stops, \
-                                  dates = dates_to_show, \
-                                )
+                                  dates = dates_to_show)
 
     reversed_stops = list(reversed(actual_rating_stops))
 
     graph_metrics = get_graph_metrics(metrics_bins, stops = reversed_stops, \
-                                      dates = dates_to_show)
+                                      dates = dates_to_show, cumulatives = True)
 
 
     medal_stats = get_medal_stats(graph_metrics, stops = reversed_stops, \
@@ -197,9 +198,16 @@ if SHOW_GRAPH:
   ax.grid(True, which = 'minor', axis = 'both', alpha = 0.4)
 
   for rank in ranks_to_ratings:
-    ax.plot(date_plot_locs, ranks_to_ratings[rank].values(), \
-              linewidth = 0, marker = 'o', markersize = 10, alpha = 0.5, \
-              label = "Rank " + str(rank + 1))
+    print(rank)
+    if rank < TOP_PLAYERS:
+      ax.plot(date_plot_locs, ranks_to_ratings[rank].values(), \
+                linewidth = 0, marker = 'o', markersize = 10, alpha = 0.5, \
+                label = "Rank " + str(rank + 1))
+    elif SHOW_ALL_RANKS:
+      ax.plot(date_plot_locs, ranks_to_ratings[rank].values(), \
+                linewidth = 0, marker = 'o', markersize = 10, alpha = 0.3, \
+                color = 'darkgrey')
+
 
   if SHOW_MEDALS:
     for medal in medal_stats:
@@ -215,6 +223,7 @@ if SHOW_GRAPH:
   out_filename = 'out/images/line/topplayers/ratings/' \
                   + str(THRESHOLD) + '_' + str(MAX_RATING) + '_' \
                   + str(RATING_STEP) + '_' \
+                  + ('ALL_' if SHOW_ALL_RANKS else '') \
                   + (str(MEDAL_COUNT) + 'MEDALS_' if SHOW_MEDALS and MEDAL_COUNT else '') \
                   + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE + '_' \
                   + FORMAT + '_' + TYPE \

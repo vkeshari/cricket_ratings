@@ -177,8 +177,7 @@ if SHOW_TOP_MEDALS or SHOW_GRAPH:
           get_metrics_by_stops(aggregate_ratings, stops = ratio_stops, \
                                 dates = dates_to_show, \
                                 by_percentage = BY_MEDAL_PERCENTAGES, \
-                                show_bin_counts = SHOW_BIN_COUNTS, \
-                              )
+                                show_bin_counts = SHOW_BIN_COUNTS)
 
   reversed_stops = list(reversed(actual_ratio_stops))
 
