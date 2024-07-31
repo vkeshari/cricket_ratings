@@ -134,7 +134,9 @@ for typ, frmt in types_and_formats:
     resolution, aspect_ratio = resolution_by_span(START_DATE, END_DATE)
     fig, ax = plt.subplots(figsize = resolution)
 
-    title = 'Number of Days of Data by Year: ' + pretty_format(frmt) \
+    title = 'Number of Days of ' \
+            + ('Ratings Change ' if RATING_CHANGES_ONLY else 'Data ') \
+            + 'by Year: ' + pretty_format(frmt) \
             + '\n' + str(START_DATE) + ' to ' + str(END_DATE)
     ax.set_title(title, fontsize ='xx-large')
 
