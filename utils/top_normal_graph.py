@@ -27,7 +27,6 @@ FORMAT = 't20'
 # Graph date range
 START_DATE = date(2009, 1, 1)
 END_DATE = date(2024, 1, 1)
-SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
@@ -59,14 +58,14 @@ BY_MEDAL_PERCENTAGES = False
 AVG_MEDAL_CUMULATIVE_COUNTS = [2, 5, 10]
 MEDAL_LABELS = ['gold', 'silver', 'bronze']
 
+TOP_PLAYERS = 25
+
 SHOW_GRAPH = True
 TRIM_EMPTY_ROWS = True
 SHOW_MEDALS = True
 GRAPH_CUMULATIVES = True
 # A value from AVG_MEDAL_CUMULATIVE_COUNTS
 TRUNCATE_GRAPH_AT = 10
-
-TOP_PLAYERS = 25
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -113,6 +112,13 @@ if TOP_STATS_SORT:
 
 assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
 
+
+if FORMAT == 'test':
+  SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [1970]
+elif FORMAT == 'odi':
+  SKIP_YEARS = [2018]
+elif FORMAT == 't20':
+  SKIP_YEARS = [2011]
 
 MEDAL_COUNT = len(AVG_MEDAL_CUMULATIVE_COUNTS)
 if MEDAL_LABELS:
