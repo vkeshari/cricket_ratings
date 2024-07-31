@@ -227,7 +227,8 @@ if SHOW_GRAPH:
   out_filename = 'out/images/interval/topplayers/ratios/' \
                     + str(MIN_RATIO) + '_' + str(MAX_RATIO) + '_' \
                     + str(RATIO_STEP) + '_' \
-                    + (str(MEDAL_COUNT) + 'MEDALS_' if MEDAL_COUNT else '') \
+                    + (str(MEDAL_COUNT) + 'MEDALS_' \
+                              if SHOW_TOP_MEDALS and MEDAL_COUNT else '') \
                     + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE + '_' \
                     + FORMAT + '_' + TYPE \
                     + ('GEOM' if TYPE == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
