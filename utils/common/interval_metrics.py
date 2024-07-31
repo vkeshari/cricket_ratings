@@ -20,7 +20,7 @@ def get_graph_stats(data):
   return outer_interval, inner_interval, line, avg
 
 
-def get_graph_metrics(metrics_bins, stops, dates, cumulatives):
+def get_graph_metrics(metrics_bins, stops, dates, cumulatives = False):
 
   graph_metrics = {'outers': [], 'inners': [], 'lines': [], 'avgs': []}
 

@@ -11,6 +11,29 @@ LAST_FUTURE_DATE = date(2030, 1, 1)
 VALID_AGGREGATIONS = {'', 'monthly', 'quarterly', 'halfyearly', \
                             'yearly', 'fiveyearly', 'decadal', '1952_1992'}
 
+
+def get_aggregation_window_width(agg_window):
+  assert agg_window in VALID_AGGREGATIONS, "Invalid agg_window provided"
+  
+  if not agg_window:
+    return ONE_DAY
+
+  if agg_window == 'monthly':
+    return 30 * ONE_DAY
+  elif agg_window == 'quarterly':
+    return 91 * ONE_DAY
+  elif agg_window == 'halfyearly':
+    return 182 * ONE_DAY
+  elif agg_window == 'yearly':
+    return 365 * ONE_DAY
+  elif agg_window == 'fiveyearly':
+    return 5 * 365 * ONE_DAY
+  elif agg_window == 'decadal':
+    return 10 * 365 * ONE_DAY
+  elif agg_window == '1952_1992':
+    return 40 * 365 * ONE_DAY
+
+
 def is_aggregation_window_start(d, agg_window):
   assert agg_window in VALID_AGGREGATIONS, "Invalid agg_window provided"
 
