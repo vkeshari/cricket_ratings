@@ -206,6 +206,9 @@ Show a heatmap or interval graph of distribution of ratings aggregated over mult
 ### `multi_window_dist_ratings.py` and `multi_window_dist_percentiles.py`
 Show a distribution of what ratings various percentiles lie at, or which percentiles various ratings are at, for a multi-window rating aggregation.
 
+### `top_ratings_chart.py` and `top_ratios_chart.py`
+Do the same calculations as `top_ratings_intervals.py` and `top_ratios_intervals.py` respectively, but instead of showing an interval graph, show top N players for each year.
+
 ## DEPRECATED Utils
 > [!CAUTION]
 > There is no guarantee that these will run or produce accurate results.
