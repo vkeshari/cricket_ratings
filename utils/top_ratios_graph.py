@@ -98,17 +98,16 @@ if MEDAL_LABELS:
   assert len(MEDAL_LABELS) == len(AVG_MEDAL_CUMULATIVE_COUNTS), \
         "MEDAL_LABELS and AVG_MEDAL_CUMULATIVE_COUNTS should have the same length"
 
-if SHOW_MEDALS:
-  assert SHOW_GRAPH, "SHOW_GRAPH must be enabled if SHOW_MEDALS is enabled"
-assert TRUNCATE_GRAPH_AT in AVG_MEDAL_CUMULATIVE_COUNTS, \
-        "TRUNCATE_GRAPH_AT larger than AVG_MEDAL_CUMULATIVE_COUNTS"
-if TRUNCATE_GRAPH_AT:
-  assert SHOW_MEDALS, "SHOW_MEDALS must be enabled if TRUNCATE_GRAPH_AT is set"
+if SHOW_GRAPH:
+  if TRUNCATE_GRAPH_AT:
+    assert SHOW_MEDALS, "SHOW_MEDALS must be enabled if TRUNCATE_GRAPH_AT is set"
+    assert TRUNCATE_GRAPH_AT in AVG_MEDAL_CUMULATIVE_COUNTS, \
+            "TRUNCATE_GRAPH_AT larger than AVG_MEDAL_CUMULATIVE_COUNTS"
 
-if TOP_STATS_SORT:
-  assert SHOW_TOP_STATS, "SHOW_TOP_STATS must be enabled if TOP_STATS_SORT is enabled"
-  assert not set(TOP_STATS_SORT) - {'span', 'avg', 'max', 'sum'}, \
-      "Invalid sort parameter in TOP_STATS_SORT"
+if SHOW_TOP_STATS:            
+  if TOP_STATS_SORT:
+    assert not set(TOP_STATS_SORT) - {'span', 'avg', 'max', 'sum'}, \
+        "Invalid sort parameter in TOP_STATS_SORT"
 
 assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
 
