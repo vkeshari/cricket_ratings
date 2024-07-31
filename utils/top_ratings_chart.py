@@ -198,14 +198,13 @@ if SHOW_GRAPH:
   ax.grid(True, which = 'minor', axis = 'both', alpha = 0.4)
 
   for rank in ranks_to_ratings:
-    print(rank)
     if rank < TOP_PLAYERS:
       ax.plot(date_plot_locs, ranks_to_ratings[rank].values(), \
                 linewidth = 0, marker = 'o', markersize = 10, alpha = 0.5, \
                 label = "Rank " + str(rank + 1))
     elif SHOW_ALL_RANKS:
       ax.plot(date_plot_locs, ranks_to_ratings[rank].values(), \
-                linewidth = 0, marker = 'o', markersize = 10, alpha = 0.3, \
+                linewidth = 0, marker = 'o', markersize = 10, alpha = 0.2, \
                 color = 'darkgrey')
 
 
