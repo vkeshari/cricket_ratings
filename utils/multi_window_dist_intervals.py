@@ -16,7 +16,7 @@ FORMAT = 't20'
 
 START_DATE = date(2011, 1, 1)
 END_DATE = date(2024, 7, 1)
-SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
+SKIP_YEARS = list(range(1915, 1920)) + list(range(1940, 1946)) + [2020]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
@@ -100,11 +100,9 @@ for typ, frmt in types_and_formats:
   bin_stops = range(THRESHOLD, MAX_RATING + 1, BIN_SIZE)
   actual_bin_stops = list(bin_stops)[ : -1]
 
-  for i, d in enumerate(aggregation_dates):
-    if d.year in SKIP_YEARS:
-      del aggregation_dates[i]
-    if aggregation_dates[-1] == END_DATE:
-      aggregation_dates.pop()
+  aggregation_dates = list(filter(lambda d: d.year not in SKIP_YEARS, aggregation_dates))
+  if aggregation_dates[-1] == END_DATE:
+    aggregation_dates.pop()
 
   aggregated_buckets, _ = get_aggregated_distribution(daily_ratings, \
                                     agg_dates = aggregation_dates, \
@@ -136,17 +134,18 @@ for typ, frmt in types_and_formats:
                                       dates = aggregation_dates, \
                                       cumulatives = GRAPH_CUMULATIVES)
 
+    title_text = 'Percent of ' + ((str(THRESHOLD) + '+ ') if THRESHOLD else '') \
+                    + 'Players above Rating ' + (" (Rescaled)" if RESCALE else '')
+    ylabel = "Rating"
+    xlabel = 'Percent of ' + ((str(THRESHOLD) + '+ ') if THRESHOLD else '') \
+                    + 'Players above rating'
     graph_annotations = {'TYPE': typ, 'FORMAT': frmt, \
-                        'START_DATE': START_DATE, 'END_DATE': END_DATE, \
-                        'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
-                        'AGG_TYPE': BIN_AGGREGATE, 'AGG_LOCATION': 'x', \
-                        'LABEL_METRIC': 'Percent of ' \
-                                + ((str(THRESHOLD) + '+ ') if THRESHOLD else '') \
-                                + 'Players', \
-                        'LABEL_KEY': 'rating',
-                        'LABEL_TEXT': 'Rating' + (" (Rescaled)" if RESCALE else ''), \
-                        'DTYPE': 'int', \
-                        }
+                          'START_DATE': START_DATE, 'END_DATE': END_DATE, \
+                          'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
+                          'AGG_TYPE': BIN_AGGREGATE, 'AGG_LOCATION': 'x', \
+                          'TITLE': title_text, 'YLABEL': ylabel, 'XLABEL': xlabel, \
+                          'DTYPE': 'int', \
+                          }
 
     if TRIM_GRAPH_TO:
       yparams_min = TRIM_GRAPH_TO

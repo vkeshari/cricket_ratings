@@ -73,7 +73,7 @@ if MEDAL_LABELS:
 
 
 if FORMAT == 'test':
-  SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [1970]
+  SKIP_YEARS = list(range(1915, 1920)) + list(range(1940, 1946)) + [1970]
 elif FORMAT == 'odi':
   SKIP_YEARS = [2018]
 elif FORMAT == 't20':
@@ -104,9 +104,7 @@ aggregate_ratings = get_aggregate_ratings(daily_ratings, agg_dates = dates_to_sh
                                           date_to_agg_date = date_to_agg_date, \
                                           player_aggregate = PLAYER_AGGREGATE)
 
-for i, d in enumerate(dates_to_show):
-  if d.year in SKIP_YEARS:
-    del dates_to_show[i]
+dates_to_show = list(filter(lambda d: d.year not in SKIP_YEARS, dates_to_show))
 if dates_to_show[-1] == END_DATE:
   dates_to_show.pop()
 

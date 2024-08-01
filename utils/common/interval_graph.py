@@ -21,12 +21,14 @@ def filter_to_yrange(yparams, graph_metrics, stops):
   return filtered_graph_metrics, filtered_stops
 
 
-def plot_medal_indicators(medal, medal_threshold, exp_num, ylims, xlims):
+def plot_medal_indicators(medal, medal_threshold, exp_num, ylims, xlims, \
+                            report_labels = False):
   medal_label = '{v:.2f}'.format(v = exp_num)
   plt.axhline(y = medal_threshold, linestyle = '--', linewidth = 1, \
                 color = 'black', alpha = 0.8)
+  medal_text = medal.title() + 'Threshold' if report_labels else medal.upper()
   plt.text(x = xlims['xmax'] - 1, y = medal_threshold, \
-                s = medal.upper(), alpha = 0.8, fontsize = 'large', \
+                s = medal_text, alpha = 0.8, fontsize = 'large', \
                 horizontalalignment = 'right', verticalalignment = 'bottom')
   medal_line_ymax = (medal_threshold - ylims['ymin']) / (ylims['ymax'] - ylims['ymin'])
   plt.axvline(x = exp_num, linestyle = ':', linewidth = 1, \
@@ -35,7 +37,7 @@ def plot_medal_indicators(medal, medal_threshold, exp_num, ylims, xlims):
 
 def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
                             medal_stats = {}, show_medals = False, all_xticks = True, \
-                            save_filename = ''):
+                            save_filename = '', report_labels = False):
   assert graph_metrics, "No graph_metrics provided"
   assert not {'lines', 'avgs', 'outers', 'inners'} - graph_metrics.keys(), \
           "Not all graph metrics provided"
@@ -43,7 +45,7 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   assert annotations, "No annotations provided"
   assert not {'TYPE', 'FORMAT', 'START_DATE', 'END_DATE', \
                   'AGGREGATION_WINDOW', 'AGG_TYPE', 'AGG_LOCATION', \
-                  'LABEL_METRIC', 'LABEL_KEY', 'LABEL_TEXT', 'DTYPE'} \
+                  'TITLE', 'YLABEL', 'XLABEL', 'DTYPE'} \
               ^ annotations.keys(), \
           "Not all annotations provided"
   assert annotations['AGG_LOCATION'] in {'', 'x', 'y'}
@@ -60,23 +62,22 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
   resolution = tuple([7.2, 7.2])
   fig, ax = plt.subplots(figsize = resolution)
 
-  title_text = annotations['LABEL_METRIC'] + " Above " \
-                + annotations['LABEL_TEXT'] + "\n" \
+  title_text = annotations['TITLE'] + "\n" \
                 + pretty_format(annotations['FORMAT'], annotations['TYPE']) \
                 + ' (' + str(annotations['START_DATE']) \
                 + ' to ' + str(annotations['END_DATE']) + ')'
-  ax.set_title(title_text, fontsize ='xx-large')
+  ax.set_title(title_text, fontsize ='x-large')
 
   agg_text = ''
   if annotations['AGG_LOCATION']:
     agg_text = ' (' + annotations['AGGREGATION_WINDOW'] \
                     + ' ' + annotations['AGG_TYPE'] + ')'
 
-  ylabel = annotations['LABEL_TEXT'] \
+  ylabel = annotations['YLABEL'] \
                 +  (agg_text if annotations['AGG_LOCATION'] == 'y' else '')
   ax.set_ylabel(ylabel, fontsize ='x-large')
 
-  xlabel = annotations['LABEL_METRIC'] + ' above ' + annotations['LABEL_KEY'] \
+  xlabel = annotations['XLABEL'] \
                 + (agg_text if annotations['AGG_LOCATION'] == 'x' else '')
   ax.set_xlabel(xlabel, fontsize ='x-large')
 
@@ -130,16 +131,18 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
           color = 'green', alpha = 0.5, label = "Middle 50%", \
         )
 
+  average_label = 'AverageThresholdCount' if report_labels else 'Average'
   plt.plot(graph_metrics['avgs'], stops, \
                     linewidth = 0, alpha = 0.5, \
                     marker = 'x', markeredgecolor = 'blue', \
-                    markersize = 8, markeredgewidth = 2, label = "Average")
+                    markersize = 8, markeredgewidth = 2, label = average_label)
 
   for i, s in enumerate(stops):
     plt.plot(list(graph_metrics['lines'][i]), [s, s], linewidth = 2, \
                       color = 'black', alpha = 0.9, \
                       marker = 'o', markerfacecolor = 'red', \
-                      markersize = 3, markeredgewidth = 0, label = "Full Range" if i == 0 else '')
+                      markersize = 3, markeredgewidth = 0, \
+                      label = "Full Range" if i == 0 else '')
 
   if show_medals:
     for medal in medal_stats:
@@ -148,10 +151,9 @@ def plot_interval_graph(graph_metrics, stops, annotations, yparams, \
                               medal_threshold = medal_stats[medal]['threshold'], \
                               exp_num = medal_stats[medal]['exp_num'], \
                               ylims = {'ymin': ymin, 'ymax': ymax}, \
-                              xlims = {'xmax': xmax}
-                              )
+                              xlims = {'xmax': xmax}, report_labels = report_labels)
 
-  ax.legend(loc = 'best', fontsize = 'large')
+  ax.legend(loc = 'upper center', fontsize = 'large')
   fig.tight_layout()
 
   if not save_filename:

@@ -48,7 +48,7 @@ RATIO_BINS = round((MAX_RATIO - MIN_RATIO) / RATIO_STEP)
 
 SHOW_BIN_COUNTS = False
 
-SHOW_TOP_STATS = True
+SHOW_TOP_STATS = False
 TOP_STATS_SORT = ('sum', 'avg')
 
 SHOW_TOP_MEDALS = True
@@ -64,6 +64,8 @@ SHOW_MEDALS = True
 GRAPH_CUMULATIVES = True
 # A value from AVG_MEDAL_CUMULATIVE_COUNTS
 TRUNCATE_GRAPH_AT = 10
+
+REPORT_LABELS = True
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -110,7 +112,7 @@ assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
 
 
 if FORMAT == 'test':
-  SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [1970]
+  SKIP_YEARS = list(range(1915, 1920)) + list(range(1940, 1946)) + [1970]
 elif FORMAT == 'odi':
   SKIP_YEARS = [2018]
 elif FORMAT == 't20':
@@ -141,9 +143,7 @@ aggregate_ratings = get_aggregate_ratings(daily_ratings, agg_dates = dates_to_sh
                                           date_to_agg_date = date_to_agg_date, \
                                           player_aggregate = PLAYER_AGGREGATE)
 
-for i, d in enumerate(dates_to_show):
-  if d.year in SKIP_YEARS:
-    del dates_to_show[i]
+dates_to_show = list(filter(lambda d: d.year not in SKIP_YEARS, dates_to_show))
 if dates_to_show[-1] == END_DATE:
   dates_to_show.pop()
 
@@ -197,14 +197,28 @@ if SHOW_TOP_MEDALS:
                     top_players = TOP_PLAYERS, by_percentage = BY_MEDAL_PERCENTAGES)
 
 if SHOW_GRAPH:
-  graph_annotations = {'TYPE': TYPE, 'FORMAT': FORMAT, \
-                        'START_DATE': START_DATE, 'END_DATE': END_DATE, \
-                        'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
-                        'AGG_TYPE': PLAYER_AGGREGATE, 'AGG_LOCATION': 'y', \
-                        'LABEL_METRIC': 'No. of Players', \
-                        'LABEL_KEY': 'ratio', 'LABEL_TEXT': 'Ratio vs Top Player', \
-                        'DTYPE': DTYPE, \
-                        }
+  if REPORT_LABELS:
+    title_text = "Distribution of YearThresholdCount values by Threshold"
+    ylabel = "Threshold (on MaxRatingRatio of players)"
+    xlabel = "YearThresholdCount values"
+    graph_annotations = {'TYPE': TYPE, 'FORMAT': FORMAT, \
+                          'START_DATE': START_DATE, 'END_DATE': END_DATE, \
+                          'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
+                          'AGG_TYPE': PLAYER_AGGREGATE, 'AGG_LOCATION': '', \
+                          'TITLE': title_text, 'YLABEL': ylabel, 'XLABEL': xlabel, \
+                          'DTYPE': DTYPE, \
+                          }
+  else:
+    title_text = "No. of Players Above Ratio vs Top Player"
+    ylabel = "Ratio vs Top Player"
+    xlabel = "No. of Players above ratio"
+    graph_annotations = {'TYPE': TYPE, 'FORMAT': FORMAT, \
+                          'START_DATE': START_DATE, 'END_DATE': END_DATE, \
+                          'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
+                          'AGG_TYPE': PLAYER_AGGREGATE, 'AGG_LOCATION': 'y', \
+                          'TITLE': title_text, 'YLABEL': ylabel, 'XLABEL': xlabel, \
+                          'DTYPE': DTYPE, \
+                          }
 
   yparams_max = MAX_RATIO
   if TRIM_EMPTY_ROWS:
@@ -234,4 +248,4 @@ if SHOW_GRAPH:
   plot_interval_graph(graph_metrics, stops = reversed_stops, \
                       annotations = graph_annotations, yparams = graph_yparams, \
                       medal_stats = medal_stats, show_medals = SHOW_MEDALS, \
-                      save_filename = out_filename)
+                      save_filename = out_filename, report_labels = REPORT_LABELS)

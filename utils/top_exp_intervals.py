@@ -27,7 +27,6 @@ FORMAT = 't20'
 # Graph date range
 START_DATE = date(2009, 1, 1)
 END_DATE = date(2024, 1, 1)
-SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [2020]
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
@@ -120,7 +119,7 @@ assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
 
 
 if FORMAT == 'test':
-  SKIP_YEARS = list(range(1913, 1921)) + list(range(1940, 1946)) + [1970]
+  SKIP_YEARS = list(range(1915, 1920)) + list(range(1940, 1946)) + [1970]
 elif FORMAT == 'odi':
   SKIP_YEARS = [2018]
 elif FORMAT == 't20':
@@ -182,9 +181,7 @@ def get_exp_medians(daily_ratings):
 exp_medians = get_exp_medians(daily_ratings)
 print(AGGREGATION_WINDOW + " exp medians built")
 
-for i, d in enumerate(dates_to_show):
-  if d.year in SKIP_YEARS:
-    del dates_to_show[i]
+dates_to_show = list(filter(lambda d: d.year not in SKIP_YEARS, dates_to_show))
 if dates_to_show[-1] == END_DATE:
   dates_to_show.pop()
 
@@ -239,12 +236,14 @@ if SHOW_TOP_MEDALS:
                     top_players = TOP_PLAYERS, by_percentage = BY_MEDAL_PERCENTAGES)
 
 if SHOW_GRAPH:
+  title_text = "No. of Players Above Exponential Std Devs"
+  ylabel = "Exponential Std Dev"
+  xlabel = "No. of Players above std dev"
   graph_annotations = {'TYPE': TYPE, 'FORMAT': FORMAT, \
                         'START_DATE': START_DATE, 'END_DATE': END_DATE, \
                         'AGGREGATION_WINDOW': AGGREGATION_WINDOW, \
                         'AGG_TYPE': PLAYER_AGGREGATE, 'AGG_LOCATION': 'y', \
-                        'LABEL_METRIC': 'No. of Players', \
-                        'LABEL_KEY': 'std dev', 'LABEL_TEXT': 'Exponential Std Devs', \
+                        'TITLE': title_text, 'YLABEL': ylabel, 'XLABEL': xlabel, \
                         'DTYPE': DTYPE, \
                         }
 
