@@ -47,7 +47,9 @@ SHOW_GRAPH = True
 TOP_PLAYERS = 10
 SHOW_ALL_RANKS = True
 
-SHOW_MEDALS = False
+SHOW_RATIO_LINES = []
+
+SHOW_MEDALS = True
 AVG_MEDAL_CUMULATIVE_COUNTS = [2, 5, 10]
 MEDAL_LABELS = ['gold', 'silver', 'bronze']
 
@@ -74,13 +76,18 @@ assert RATIO_STEP in [0.01, 0.02, 0.05, 0.1], "Invalid RATIO_STEP provided"
 
 assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
 
-for amcc in AVG_MEDAL_CUMULATIVE_COUNTS:
-  assert amcc > 0, "All values in AVG_MEDAL_CUMULATIVE_COUNTS must be positive"
-assert AVG_MEDAL_CUMULATIVE_COUNTS == sorted(AVG_MEDAL_CUMULATIVE_COUNTS), \
-        "AVG_MEDAL_CUMULATIVE_COUNTS must be sorted"
-if MEDAL_LABELS:
-  assert len(MEDAL_LABELS) == len(AVG_MEDAL_CUMULATIVE_COUNTS), \
-        "MEDAL_LABELS and AVG_MEDAL_CUMULATIVE_COUNTS should have the same length"
+if SHOW_GRAPH:
+  for r in SHOW_RATIO_LINES:
+    assert r >= MIN_RATIO and r <= MAX_RATIO, \
+          "Every ratio in SHOW_RATIO_LINES must be between MIN_RATIO and MAX_RATIO"
+
+  for amcc in AVG_MEDAL_CUMULATIVE_COUNTS:
+    assert amcc > 0, "All values in AVG_MEDAL_CUMULATIVE_COUNTS must be positive"
+  assert AVG_MEDAL_CUMULATIVE_COUNTS == sorted(AVG_MEDAL_CUMULATIVE_COUNTS), \
+          "AVG_MEDAL_CUMULATIVE_COUNTS must be sorted"
+  if MEDAL_LABELS:
+    assert len(MEDAL_LABELS) == len(AVG_MEDAL_CUMULATIVE_COUNTS), \
+          "MEDAL_LABELS and AVG_MEDAL_CUMULATIVE_COUNTS should have the same length"
 
 
 if FORMAT == 'test':
@@ -187,7 +194,7 @@ if SHOW_GRAPH:
   ax.set_xlabel(xlabel, fontsize ='x-large')
 
   ymin = MIN_RATIO
-  ymax = MAX_RATIO
+  ymax = MAX_RATIO + RATIO_STEP
   ax.set_ylim(ymin, ymax)
 
   yticks_major = np.linspace(MIN_RATIO, MAX_RATIO, int(RATIO_BINS / 5) + 1)
@@ -219,11 +226,15 @@ if SHOW_GRAPH:
                 linewidth = 0, marker = 'o', markersize = 10, alpha = 0.2, \
                 color = 'darkgrey')
 
+  if SHOW_RATIO_LINES:
+    for r in SHOW_RATIO_LINES:
+      plt.axhline(y = r, linestyle = '--', linewidth = 3, \
+                color = 'red', alpha = 0.7)      
 
   if SHOW_MEDALS:
     for medal in medal_stats:
       medal_threshold = medal_stats[medal]['threshold']
-      plt.axhline(y = medal_threshold, linestyle = '--', linewidth = 1, \
+      plt.axhline(y = medal_threshold, linestyle = '--', linewidth = 3, \
                 color = 'red', alpha = 0.7)
       plt.text(x = xmax, y = medal_threshold, color = 'red', \
                 s = medal.upper(), alpha = 0.8, fontsize = 'large', \
@@ -235,7 +246,8 @@ if SHOW_GRAPH:
                     + str(MIN_RATIO) + '_' + str(MAX_RATIO) + '_' \
                     + str(RATIO_STEP) + '_' \
                   + ('ALL_' if SHOW_ALL_RANKS else '') \
-                  + (str(MEDAL_COUNT) + 'MEDALS_' if SHOW_MEDALS and MEDAL_COUNT else '') \
+                  + (str(len(SHOW_RATIO_LINES)) + 'LINES_' if SHOW_RATIO_LINES else '') \
+                  + (str(MEDAL_COUNT) + 'MEDALS_' if SHOW_MEDALS else '') \
                   + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE + '_' \
                   + FORMAT + '_' + TYPE \
                   + ('GEOM' if TYPE == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
