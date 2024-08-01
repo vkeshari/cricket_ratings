@@ -39,8 +39,6 @@ AGGREGATION_WINDOW = 'yearly'
 # See common.stats.VALID_STATS for possible aggregate stats
 PLAYER_AGGREGATE = 'max'
 
-THRESHOLD_RELATIVE = False
-
 MAX_RATIO = 1.0
 MIN_RATIO = 0.7
 # [0.01, 0.02, 0.05, 0.1]

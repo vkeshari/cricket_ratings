@@ -10,6 +10,8 @@ from datetime import date, timedelta
 from matplotlib import pyplot as plt
 from pathlib import Path
 
+import numpy as np
+
 ONE_DAY = timedelta(days = 1)
 
 # ['batting', 'bowling', 'allrounder']
@@ -24,7 +26,6 @@ END_DATE = date(2024, 1, 1)
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500
 MAX_RATING = 1000
-RATING_STEP = 10
 
 # ['', 'rating', 'rank', 'either', 'both']
 CHANGED_DAYS_CRITERIA = 'rating'
@@ -34,6 +35,13 @@ CHANGED_DAYS_CRITERIA = 'rating'
 AGGREGATION_WINDOW = 'yearly'
 # See common.stats.VALID_STATS for possible aggregate stats
 PLAYER_AGGREGATE = 'max'
+
+MAX_RATIO = 1.0
+MIN_RATIO = 0.7
+# [0.01, 0.02, 0.05, 0.1]
+RATIO_STEP = 0.01
+
+RATIO_BINS = round((MAX_RATIO - MIN_RATIO) / RATIO_STEP)
 
 SHOW_GRAPH = True
 TOP_PLAYERS = 10
@@ -54,12 +62,15 @@ assert END_DATE <= date.today(), "Future END_DATE requested"
 assert MAX_RATING <= 1000, "MAX_RATING must not be greater than 1000"
 assert THRESHOLD >= 0 and THRESHOLD < MAX_RATING, \
       "THRESHOLD must be between 0 and MAX_RATING"
-assert RATING_STEP >= 5, "RATING_STEP must be at least 5"
 
 assert CHANGED_DAYS_CRITERIA in ['', 'rating', 'rank', 'either', 'both']
 
 assert AGGREGATION_WINDOW in VALID_AGGREGATIONS, "Invalid AGGREGATION_WINDOW provided"
 assert PLAYER_AGGREGATE in VALID_STATS, "Invalid PLAYER_AGGREGATE provided"
+
+assert MAX_RATIO == 1.0, "MAX_RATIO must be 1.0"
+assert MIN_RATIO > 0.0 and MIN_RATIO < 1.0, "MIN_RATIO must be between 0.0 and 1.0"
+assert RATIO_STEP in [0.01, 0.02, 0.05, 0.1], "Invalid RATIO_STEP provided"
 
 assert TOP_PLAYERS > 5, "TOP_PLAYERS must be at least 5"
 
@@ -111,17 +122,18 @@ if dates_to_show[-1] == END_DATE:
   dates_to_show.pop()
 
 
-def filter_by_threshold(aggregate_ratings):
-  aggregate_filtered = {}
+def get_aggregate_ratios(aggregate_ratings):
+  aggregate_ratios = {}
   for d in aggregate_ratings:
-    aggregate_filtered[d] = {}
+    aggregate_ratios[d] = {}
+    max_rating = max(aggregate_ratings[d].values())
     for p in aggregate_ratings[d]:
       rating = aggregate_ratings[d][p]
       if rating >= THRESHOLD:
-        aggregate_filtered[d][p] = rating
-  return aggregate_filtered
+        aggregate_ratios[d][p] = rating / max_rating
+  return aggregate_ratios
 
-aggregate_ratings = filter_by_threshold(aggregate_ratings)
+aggregate_ratings = get_aggregate_ratios(aggregate_ratings)
 
 if SHOW_GRAPH:
   graph_dates = [d for d in aggregate_ratings.keys() if d.year not in SKIP_YEARS]
@@ -136,17 +148,17 @@ if SHOW_GRAPH:
       if rank < len(sorted_ratings):
         ranks_to_ratings[rank][d] = sorted_ratings[rank]
       else:
-        ranks_to_ratings[rank][d] = THRESHOLD - 100
+        ranks_to_ratings[rank][d] = MIN_RATIO - 0.1
 
   if SHOW_MEDALS:
-    rating_stops = list(range(THRESHOLD, MAX_RATING, RATING_STEP))
-    actual_rating_stops = rating_stops[ : -1]
+    ratio_stops = np.linspace(MIN_RATIO, MAX_RATIO, RATIO_BINS + 1)
+    actual_ratio_stops = ratio_stops[ : -1]
 
     metrics_bins, player_counts_by_step, player_periods = \
-            get_metrics_by_stops(aggregate_ratings, stops = rating_stops, \
+            get_metrics_by_stops(aggregate_ratings, stops = ratio_stops, \
                                   dates = dates_to_show)
 
-    reversed_stops = list(reversed(actual_rating_stops))
+    reversed_stops = list(reversed(actual_ratio_stops))
 
     graph_metrics = get_graph_metrics(metrics_bins, stops = reversed_stops, \
                                       dates = dates_to_show, cumulatives = True)
@@ -163,26 +175,26 @@ if SHOW_GRAPH:
 
   agg_text = '(' + AGGREGATION_WINDOW + ' ' + PLAYER_AGGREGATE + ')'
 
-  title_text = "Ratings of Top " + str(TOP_PLAYERS) + " Players " \
+  title_text = "Rating Ratios (vs Top Player) of Top " + str(TOP_PLAYERS) + " Players " \
                 + agg_text + "\n" + pretty_format(FORMAT, TYPE) \
                 + ' (' + str(START_DATE) + ' to ' + str(END_DATE) + ')'
   ax.set_title(title_text, fontsize ='x-large')
 
-  ylabel = "Rating " + agg_text
+  ylabel = "Rating Ratio " + agg_text
   ax.set_ylabel(ylabel, fontsize ='x-large')
 
   xlabel = "Year"
   ax.set_xlabel(xlabel, fontsize ='x-large')
 
-  ymin = THRESHOLD
-  ymax = MAX_RATING
+  ymin = MIN_RATIO
+  ymax = MAX_RATIO
   ax.set_ylim(ymin, ymax)
 
-  yticks_major = range(THRESHOLD, MAX_RATING + 1, RATING_STEP * 5)
-  yticks_minor = range(THRESHOLD, MAX_RATING + 1, RATING_STEP)
+  yticks_major = np.linspace(MIN_RATIO, MAX_RATIO, int(RATIO_BINS / 5) + 1)
+  yticks_minor = np.linspace(MIN_RATIO, MAX_RATIO, RATIO_BINS + 1)
   ax.set_yticks(yticks_major)
   ax.set_yticks(yticks_minor, minor = True)
-  ax.set_yticklabels([str(y) for y in yticks_major], fontsize ='large')
+  ax.set_yticklabels(['{y:.2f}'.format(y = y) for y in yticks_major], fontsize ='large')
 
   xticks_major, xticks_minor, xticklabels = \
           get_timescale_xticks(START_DATE, END_DATE, format = aspect_ratio)
@@ -219,9 +231,9 @@ if SHOW_GRAPH:
 
   fig.tight_layout()
 
-  out_filename = 'out/images/dot/topplayers/ratings/' \
-                  + str(THRESHOLD) + '_' + str(MAX_RATING) + '_' \
-                  + str(RATING_STEP) + '_' \
+  out_filename = 'out/images/dot/topplayers/ratios/' \
+                    + str(MIN_RATIO) + '_' + str(MAX_RATIO) + '_' \
+                    + str(RATIO_STEP) + '_' \
                   + ('ALL_' if SHOW_ALL_RANKS else '') \
                   + (str(MEDAL_COUNT) + 'MEDALS_' if SHOW_MEDALS and MEDAL_COUNT else '') \
                   + AGGREGATION_WINDOW + '_' + PLAYER_AGGREGATE + '_' \
