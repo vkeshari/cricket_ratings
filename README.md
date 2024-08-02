@@ -1,7 +1,7 @@
 # cricket_ratings
 
 > [!IMPORTANT]
-> You must attribute references to this or any derivative work to the original author.
+> You may use the code in this repository for your own analysis of cricket ratings data, but **you must attribute references to this or any derivative work** to the original author.
 
 Crawl data from ICC player rankings website. Create animated graphs of player ratings over time. Aggregate metrics over time. Create graphs for aggregated metrics. Find top players from aggregated metrics.
 
@@ -51,6 +51,7 @@ Reads player ratings timelines from `players/` and creates an animated graph of 
 + `MAX_RATING`    : Maximum rating to show (y-axis max).
 + `THRESHOLD`     : Minimum rating to show (y-axis min).
 + `Y_BUFFER`      : Ratings are calculated for this buffer below the THRESHOLD but not shown.
++ `GRAPH_TYPE`    : `line` or `bar`
 + `GRAPH_SMOOTH`  : Fit a monotonic spline curve on data
 
 Bar charts only:
