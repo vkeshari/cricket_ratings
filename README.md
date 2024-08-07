@@ -1,7 +1,8 @@
 # Cricket Ratings Analytics Library
 
 > [!IMPORTANT]
-> You may use the code in this repository for your own analysis of cricket ratings data, but **you must attribute references to this or any derivative work** to the original author.
+> You may use the code in this repository for your own analysis of cricket ratings data, but:
+> **You must attribute references to this or any derivative work to the original author**.
 
 > [!TIP]
 > Head over to the [Wiki](https://github.com/vkeshari/cricket_ratings/wiki) for detailed reports on:
@@ -9,7 +10,13 @@
 > * **The Greatest Players of All-Time**.
 > > _Last Updated: July 2024_
 
-Crawl data from ICC player rankings website. Create animated graphs of player ratings over time. Aggregate metrics over time. Create graphs for aggregated metrics. Find top players from aggregated metrics.
+The Cricket Ratings Analytics Library can:
+* Crawl data from ICC player rankings website
+* Create static or animated graphs of player ratings over time
+* Analyse and visualise changes in ratings over time
+* Compare players based on rankings and ratings
+* Aggregate metrics over time and create various graphs for aggregated metrics
+* Find the top players from aggregated metrics
 
 ### Common Parameters:
 + `FORMAT`: `['test', 'odi', 't20']`
