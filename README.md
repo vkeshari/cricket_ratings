@@ -4,7 +4,9 @@
 > You may use the code in this repository for your own analysis of cricket ratings data, but **you must attribute references to this or any derivative work** to the original author.
 
 > [!TIP]
-> Head over to the [Wiki](https://github.com/vkeshari/cricket_ratings/wiki) for detailed reports on **A Deep-Dive into ICC Player Rankings** and **The Greatest Players of All-Time**.
+> Head over to the [Wiki](https://github.com/vkeshari/cricket_ratings/wiki) for detailed reports on:
+> * **A Deep-Dive into ICC Player Rankings**, and 
+> * **The Greatest Players of All-Time**.
 > > _Last Updated: July 2024_
 
 Crawl data from ICC player rankings website. Create animated graphs of player ratings over time. Aggregate metrics over time. Create graphs for aggregated metrics. Find top players from aggregated metrics.
