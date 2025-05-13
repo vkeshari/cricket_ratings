@@ -132,8 +132,8 @@ while d < TODAY:
   tasks = []
   with ThreadPoolExecutor() as executor:
     for frmt in FORMAT:
-        for typ in TYPE:
-            tasks.append(executor.submit(process_data, d, frmt, typ))
+      for typ in TYPE:
+        tasks.append(executor.submit(process_data, d, frmt, typ))
     success = [t.result() for t in as_completed(tasks)]
     if not all(success):
       break # Stop processing
