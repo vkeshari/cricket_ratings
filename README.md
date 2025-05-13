@@ -1,9 +1,15 @@
 # Cricket Ratings Analytics Library
 
 > [!IMPORTANT]
-> You may use the code in this repository for your own analysis of cricket ratings data, but:
+> You may use the code in this repository for your own analysis of cricket ratings data, but **you must attribute references to this or any derivative work to the original author**.
+>
+> ### Example attribution
 > 
-> **You must attribute references to this or any derivative work to the original author**.
+> * When code is used as-is or with minimal changes:
+>   > Made with [Cricket Ratings Library](https://github.com/vkeshari/cricket_ratings)
+>
+> * When code is referenced or substantially changed:
+>   > Adapted from [Cricket Ratings Library](https://github.com/vkeshari/cricket_ratings)
 
 > [!TIP]
 > Head over to the [Wiki](https://github.com/vkeshari/cricket_ratings/wiki) for detailed reports on:
@@ -116,7 +122,8 @@ Show list of ratings for a single player.
 
 ### `player_competition.py`
 Show the biggest competitors for a player: Players who were above or below the player's ratings, or their contemporaries, for the longest time.
-+ `LOCATION`: `above` or `below` ratings, or `total` no. of days together on ratings list.
++ `LOCATION`    : `above` or `below` ratings, or `total` no. of days together on ratings list.
++ `COUNTRY_ONLY`: Only show other players from the same country as player.
 
 ### `best_players.py`
 Shows players that were in the top N ratings for the longest time, or with the highest all-time ratings.
