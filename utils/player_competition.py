@@ -1,5 +1,5 @@
 from common.data import get_daily_ratings
-from common.output import readable_name_and_country, pretty_format
+from common.output import readable_name_and_country, pretty_format, country
 
 # ['', 'batting', 'bowling', 'allrounder']
 TYPE = 'batting'
@@ -12,6 +12,8 @@ PLAYER = 'IND_Virat_Kohli'
 # ['above', 'below', 'total']
 LOCATION = 'above'
 NUM_SHOW = 20
+
+COUNTRY_ONLY = False
 
 # ['', 'rating', 'rank', 'either', 'both']
 CHANGED_DAYS_CRITERIA = 'rating'
@@ -35,6 +37,8 @@ def get_player_competition(daily_ratings, player):
     if player not in daily_ratings[d]:
       continue
     for p in daily_ratings[d]:
+      if COUNTRY_ONLY and not country(p) == country(player):
+        continue
       if daily_ratings[d][p] < THRESHOLD:
         continue
       if p not in competition:

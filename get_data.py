@@ -113,18 +113,28 @@ def write_data(d, frmt, typ, data):
   print('\t' + filename + '\t' + str(len(data)))
 
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+def process_data(d, frmt, typ):
+  text = get_data(d, frmt, typ)
+  players = parse_html(text)
+
+  if not players:
+    print("\tNO PLAYERS FOUND for " + frmt + " " + typ)
+    return False
+
+  write_data(d, frmt, typ, players)
+  return True
+
 d = START_DATE
-while (d < TODAY):
+while d < TODAY:
   print (d)
-  for frmt in FORMAT:
-    for typ in TYPE:
-      text = get_data(d, frmt, typ)
-      players = parse_html(text)
-
-      if not players:
-        print("\tNO PLAYERS FOUND for " + frmt + " " + typ)
-        break
-
-      write_data(d, frmt, typ, players)
+  tasks = []
+  with ThreadPoolExecutor() as executor:
+    for frmt in FORMAT:
+        for typ in TYPE:
+            tasks.append(executor.submit(process_data, d, frmt, typ))
+    success = [t.result() for t in as_completed(tasks)]
+    if not all(success):
+      break # Stop processing
   d += ONE_DAY
-

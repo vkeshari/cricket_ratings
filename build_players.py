@@ -12,7 +12,7 @@ ONE_DAY = timedelta(days = 1)
 
 START_DATE = date(2007, 1, 1)
 # Last day of available data
-END_DATE = date(2024, 7, 3)
+END_DATE = date(2025, 5, 1)
 
 VALIDATION = True
 
