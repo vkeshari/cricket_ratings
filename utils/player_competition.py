@@ -1,10 +1,15 @@
 from common.data import get_daily_ratings
 from common.output import readable_name_and_country, pretty_format, country
 
+from datetime import date
+
 # ['', 'batting', 'bowling', 'allrounder']
 TYPE = 'batting'
 # ['', 'test', 'odi', 't20']
 FORMAT = 't20'
+
+START_DATE = date(2010, 1, 1)
+END_DATE = date(2020, 1, 1)
 
 THRESHOLD = 500
 
@@ -23,6 +28,9 @@ ALLROUNDERS_GEOM_MEAN = True
 
 assert TYPE in ['', 'batting', 'bowling', 'allrounder'], "Invalid TYPE provided"
 assert FORMAT in ['', 'test', 'odi', 't20'], "Invalid FORMAT provided"
+assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
+assert END_DATE <= date.today(), "Future END_DATE requested"
+
 assert THRESHOLD >= 0, "THRESHOLD must be non-negative"
 assert PLAYER, "No player requested"
 assert LOCATION in {'above', 'below', 'total'}
@@ -31,10 +39,10 @@ assert NUM_SHOW >= 5, "NUM_SHOW must be at least 5"
 player = PLAYER + '.data'
 
 
-def get_player_competition(daily_ratings, player):
+def get_player_competition(daily_ratings, player, start_date, end_date):
   competition = {}
   for d in daily_ratings:
-    if player not in daily_ratings[d]:
+    if player not in daily_ratings[d] or not start_date <= d <= end_date:
       continue
     for p in daily_ratings[d]:
       if COUNTRY_ONLY and not country(p) == country(player):
@@ -51,14 +59,14 @@ def get_player_competition(daily_ratings, player):
   return competition
 
 
-def get_career_span(daily_ratings, player):
+def get_career_span(daily_ratings, player, start_date, end_date):
   player_dates = []
   for d in daily_ratings:
     if player in daily_ratings[d] and daily_ratings[d][player] >= THRESHOLD:
       player_dates.append(d)
   player_dates = sorted(player_dates)
 
-  return min(player_dates), max(player_dates)
+  return max(min(player_dates), start_date), min(max(player_dates), end_date)
 
 
 types_and_formats = []
@@ -82,8 +90,8 @@ for typ, frmt in types_and_formats:
                             changed_days_criteria = CHANGED_DAYS_CRITERIA, \
                             allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
-  first_date, last_date = get_career_span(daily_ratings, player)
-  competition = get_player_competition(daily_ratings, player)
+  first_date, last_date = get_career_span(daily_ratings, player, START_DATE, END_DATE)
+  competition = get_player_competition(daily_ratings, player, START_DATE, END_DATE)
   competition = dict(sorted(competition.items(), \
                             key = lambda item: item[1][LOCATION], reverse = True))
 
