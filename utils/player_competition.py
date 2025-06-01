@@ -39,10 +39,10 @@ assert NUM_SHOW >= 5, "NUM_SHOW must be at least 5"
 player = PLAYER + '.data'
 
 
-def get_player_competition(daily_ratings, player, start_date, end_date):
+def get_player_competition(daily_ratings, player, first_date, last_date):
   competition = {}
   for d in daily_ratings:
-    if player not in daily_ratings[d] or not start_date <= d <= end_date:
+    if player not in daily_ratings[d] or not first_date <= d <= last_date:
       continue
     for p in daily_ratings[d]:
       if COUNTRY_ONLY and not country(p) == country(player):
@@ -66,7 +66,10 @@ def get_career_span(daily_ratings, player, start_date, end_date):
       player_dates.append(d)
   player_dates = sorted(player_dates)
 
-  return max(min(player_dates), start_date), min(max(player_dates), end_date)
+  if not player_dates:
+    return end_date, end_date # just return the last date so that nothing is compared against
+  else:
+    return max(min(player_dates), start_date), min(max(player_dates), end_date)
 
 
 types_and_formats = []
@@ -76,11 +79,11 @@ elif TYPE:
   for f in ['test', 'odi', 't20']:
     types_and_formats.append((TYPE, f))
 elif FORMAT:
-  for t in ['batting', 'bowling']:
+  for t in ['batting', 'bowling', 'allrounder']:
     types_and_formats.append((t, FORMAT))
 else:
   for f in ['test', 'odi', 't20']:
-    for t in ['batting', 'bowling']:
+    for t in ['batting', 'bowling', 'allrounder']:
       types_and_formats.append((t, f))
 
 for typ, frmt in types_and_formats:
@@ -91,7 +94,7 @@ for typ, frmt in types_and_formats:
                             allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
   first_date, last_date = get_career_span(daily_ratings, player, START_DATE, END_DATE)
-  competition = get_player_competition(daily_ratings, player, START_DATE, END_DATE)
+  competition = get_player_competition(daily_ratings, player, first_date, last_date)
   competition = dict(sorted(competition.items(), \
                             key = lambda item: item[1][LOCATION], reverse = True))
 
@@ -107,3 +110,4 @@ for typ, frmt in types_and_formats:
                 + readable_name_and_country(p))
     if i == NUM_SHOW:
       break
+  print()
