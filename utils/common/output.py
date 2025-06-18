@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta
 from matplotlib import cm
+from matplotlib import colors as mcolors
 
 import numpy as np
 
@@ -64,9 +65,14 @@ def get_type_color(typ):
   elif typ == 'allrounder':
     return 'green'
 
-def get_colors_from_scale(num_colors, scale = cm.brg):
-  color_stops = np.linspace(0, 1, num_colors + 1)
-  return scale(color_stops)
+def get_colors_from_scale(num_colors):
+  if num_colors <= 10:
+    colorlist = list(mcolors.TABLEAU_COLORS.keys())
+  else:
+    colorlist = list(mcolors.CSS4_COLORS.keys())
+    np.random.shuffle(colorlist)
+  
+  return colorlist[ : num_colors]
 
 def get_player_colors(players, by_country = False):
   player_to_color = {}
