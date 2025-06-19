@@ -25,7 +25,7 @@ for i, p in enumerate(COMPARE_PLAYERS):
   COMPARE_PLAYERS[i] = p + '.data'
 
 COLOR_BY_COUNTRY = False
-SOFT_COLORS = True
+SOFT_COLORS = False
 
 # ['', 'monthly', 'quarterly', 'halfyearly', 'yearly', 'fiveyearly', 'decadal']
 PLOT_AVERAGES = 'yearly'
