@@ -14,6 +14,8 @@ START_DATE = date(2007, 1, 1)
 # Last day of available data
 END_DATE = date(2025, 5, 1)
 
+SUFFIX = ''
+
 VALIDATION = True
 
 assert not TYPE - {'batting', 'bowling', 'allrounder'}, "Invalid TYPE provided"
@@ -53,7 +55,7 @@ def get_file_lines(filename):
 def parse_date(d, typ, frmt, data):
   (yr, mn, dy) = date_to_parts(d)
   date_str = yr + mn + dy
-  filename = 'data/' + typ + '/' + frmt + '/' + date_str + '.csv'
+  filename = 'data' + SUFFIX + '/' + typ + '/' + frmt + '/' + date_str + '.csv'
   lines = get_file_lines(filename)
 
   if not lines:
@@ -96,7 +98,7 @@ def validate_data(start_date, end_date, typ, frmt, data):
   while (d < end_date):
     (yr, mn, dy) = date_to_parts(d)
     date_str = yr + mn + dy
-    filename = 'data/' + typ + '/' + frmt + '/' + date_str + '.csv'
+    filename = 'data' + SUFFIX + '/' + typ + '/' + frmt + '/' + date_str + '.csv'
     lines = get_file_lines(filename)
 
     failed = False
@@ -193,7 +195,7 @@ for typ in TYPE:
     country = all_player_data[key]['country']
     name = all_player_data[key]['name']
     ratings = all_player_data[key]['ratings']
-    filename = 'players/' + typ + '/' + FORMAT + '/' + country + '_' + name + '.data'
+    filename = 'players' + SUFFIX + '/' + typ + '/' + FORMAT + '/' + country + '_' + name + '.data'
 
     output_file = Path(filename)
     output_file.parent.mkdir(exist_ok = True, parents = True)

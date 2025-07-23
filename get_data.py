@@ -11,6 +11,9 @@ START_DATE = date(2024, 1, 1)
 TODAY = date.today()
 ONE_DAY = timedelta(days = 1)
 
+STOP_ON_ERROR = True
+SUFFIX = ''
+
 assert not set(TYPE) - {'batting', 'bowling', 'allrounder'}, "Invalid TYPE provided"
 assert not set(FORMAT) - {'test', 'odi', 't20'}, "Invalid FORMAT provided"
 assert START_DATE < TODAY, "START_DATE must be in the past"
@@ -102,7 +105,7 @@ def parse_html(h):
 
 def write_data(d, frmt, typ, data):
   (yr, mn, dy) = date_to_parts(d)
-  filename = 'data/' + typ + '/' + frmt + '/' + yr + mn + dy + '.csv'
+  filename = 'data' + SUFFIX + '/' + typ + '/' + frmt + '/' + yr + mn + dy + '.csv'
 
   output_file = Path(filename)
   output_file.parent.mkdir(exist_ok = True, parents = True)
@@ -126,9 +129,10 @@ def process_data(d, frmt, typ):
   write_data(d, frmt, typ, players)
   return True
 
+failure_days = []
 d = START_DATE
 while d < TODAY:
-  print (d)
+  print(d)
   tasks = []
   with ThreadPoolExecutor() as executor:
     for frmt in FORMAT:
@@ -136,5 +140,13 @@ while d < TODAY:
         tasks.append(executor.submit(process_data, d, frmt, typ))
     success = [t.result() for t in as_completed(tasks)]
     if not all(success):
-      break # Stop processing
+      if STOP_ON_ERROR:
+        print("STOPPING ON ERROR")
+        break
+      failure_days.append(d)
   d += ONE_DAY
+
+if failure_days:
+  print("DAYS WITH FAILURE: " + '\t' + str(len(failure_days)))
+  for d in failure_days:
+    print ('\t' + str(d))

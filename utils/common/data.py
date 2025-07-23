@@ -7,6 +7,7 @@ from pathlib import Path
 import math
 import pickle
 
+SUFFIX = ''
 REBUILD_DATA = False
 
 def get_days_with_change(daily_data, agg_window, consider_player_keys = False):
@@ -35,7 +36,7 @@ def get_days_with_change(daily_data, agg_window, consider_player_keys = False):
 
 
 def get_daily_ratings(typ, frmt, changed_days_criteria = '', agg_window = '', \
-                                  allrounders_geom_mean = False, rebuild_data = False):
+                          allrounders_geom_mean = False, rebuild_data = False, suffix = ''):
   assert typ in ['batting', 'bowling', 'allrounder'], "Invalid type provided"
   assert frmt in ['test', 'odi', 't20'], "Invalid format provided"
   assert changed_days_criteria in ['', 'rating', 'rank', 'either', 'both'], \
@@ -43,12 +44,16 @@ def get_daily_ratings(typ, frmt, changed_days_criteria = '', agg_window = '', \
   assert agg_window in ['', 'monthly', 'quarterly', 'halfyearly', \
                           'yearly', 'fiveyearly', 'decadal'], \
         "Invalid agg_window provided"
+  
+  if not suffix:
+    suffix = SUFFIX
 
   pickle_filename = typ + '_' + frmt + '_' + changed_days_criteria + '_' + agg_window + '_' \
                     + str(allrounders_geom_mean)
-  pickle_file = Path("pickle/" + pickle_filename)
+  pickle_file = Path('pickle' + suffix + '/' + pickle_filename)
 
-  if not REBUILD_DATA and not rebuild_data and pickle_file.exists():
+  rebuild_data = rebuild_data or REBUILD_DATA
+  if not rebuild_data and pickle_file.exists():
     with open(pickle_file, 'rb') as f:
       (daily_ratings, daily_ranks) = pickle.load(f)
       print("UNPICKLED!")
@@ -61,10 +66,11 @@ def get_daily_ratings(typ, frmt, changed_days_criteria = '', agg_window = '', \
     daily_ranks = {}
     dates_parsed = set()
 
-    player_files = listdir('players/' + typ + '/' + frmt)
+    player_dir = 'players' + suffix + '/' + typ + '/' + frmt
+    player_files = listdir(player_dir)
     for p in player_files:
       lines = []
-      with open('players/' + typ + '/' + frmt + '/' + p, 'r') as f:
+      with open(player_dir + '/' + p, 'r') as f:
         lines += f.readlines()
 
       for l in lines:
