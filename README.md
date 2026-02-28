@@ -1,7 +1,7 @@
 # Cricket Ratings Analytics Library
 
 > [!IMPORTANT]
-> You may use the code in this repository for your own analysis of cricket ratings data, but **you must attribute references to this or any derivative work to the original author**.
+> You may use the code in this repository for your own analysis of cricket ratings data, but **please attribute references to this or any derivative work to the original author**.
 >
 > ### Example attribution
 > 
