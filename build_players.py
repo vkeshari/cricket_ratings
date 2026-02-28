@@ -12,9 +12,9 @@ ONE_DAY = timedelta(days = 1)
 
 START_DATE = date(2007, 1, 1)
 # Last day of available data
-END_DATE = date(2025, 5, 1)
+END_DATE = date(2026, 1, 1)
 
-SUFFIX = ''
+SUFFIX = '25'
 
 VALIDATION = True
 

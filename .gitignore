@@ -1,6 +1,7 @@
 **/__pycache__
 **/.DS_Store
-data/
+data*/
 out/
-pickle/
-players/
+pickle*/
+players*/
+*.zip

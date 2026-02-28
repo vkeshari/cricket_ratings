@@ -7,12 +7,12 @@ TYPE = {'batting', 'bowling'}
 # ['test', 'odi', 't20']
 FORMAT = {'test', 'odi', 't20'}
 
-START_DATE = date(2024, 1, 1)
+START_DATE = date(2025, 1, 1)
 TODAY = date.today()
 ONE_DAY = timedelta(days = 1)
 
 STOP_ON_ERROR = True
-SUFFIX = ''
+SUFFIX = '25'
 
 assert not set(TYPE) - {'batting', 'bowling', 'allrounder'}, "Invalid TYPE provided"
 assert not set(FORMAT) - {'test', 'odi', 't20'}, "Invalid FORMAT provided"
