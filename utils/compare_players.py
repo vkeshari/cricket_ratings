@@ -5,7 +5,7 @@ from common.output import get_player_colors, get_timescale_xticks, get_colors_fr
 from common.stats import get_stats_for_list
 
 from datetime import date
-from matplotlib import pyplot as plt, cm
+from matplotlib import pyplot as plt
 from pathlib import Path
 
 # ['', 'batting', 'bowling', 'allrounder']
@@ -78,7 +78,6 @@ def stagger_keys(keys):
   if count < 3:
     return keys
 
-
   staggered = []
   if count % 2 == 0:
     mid = int(count / 2)
@@ -96,6 +95,49 @@ def stagger_keys(keys):
   return staggered
 
 
+def get_compare_stats(daily_ratings, daily_ranks, \
+                        compare_players, compare_ranks, start_date, end_date):
+  if compare_players and compare_ranks:
+    print ("Both players and ranks list provided")
+    return {}
+  if not daily_ratings or not daily_ranks:
+    print ("Daily ratings or rankings are empty")
+    return {}
+  if not daily_ratings.keys() == daily_ranks.keys():
+    print ("Key mismatch between daily ratings and ranks")
+    return {}
+
+  invalid_players = compare_players
+  for d in daily_ratings:
+    invalid_players = invalid_players - daily_ratings[d].keys()
+    if not invalid_players:
+      break
+  if invalid_players:
+    print("Invalid player name(s)")
+    print(invalid_players)
+    return {}
+
+  compare_stats = {}
+  for d in daily_ratings:
+    if d < start_date or d > end_date:
+      continue
+
+    for p in daily_ratings[d]:
+      rating = daily_ratings[d][p]
+      rank = daily_ranks[d][p]
+
+      if p in compare_players:
+        if p not in compare_stats:
+          compare_stats[p] = {}
+        compare_stats[p][d] = rating
+      elif rank in compare_ranks:
+        if rank not in compare_stats:
+          compare_stats[rank] = {}
+        compare_stats[rank][d] = rating
+
+  return compare_stats
+
+
 types_and_formats = []
 if TYPE and FORMAT:
   types_and_formats.append((TYPE, FORMAT))
@@ -103,58 +145,17 @@ elif TYPE:
   for f in ['test', 'odi', 't20']:
     types_and_formats.append((TYPE, f))
 elif FORMAT:
-  for t in ['batting', 'bowling']:
+  for t in ['batting', 'bowling']: # No 'allrounder' because of different THRESHOLD
     types_and_formats.append((t, FORMAT))
 else:
   for f in ['test', 'odi', 't20']:
     for t in ['batting', 'bowling']:
       types_and_formats.append((t, f))
 
+
 for typ, frmt in types_and_formats:
   print (frmt + ' : ' + typ)
   print (str(START_DATE) + ' : ' + str(END_DATE))
-
-  def get_compare_stats(daily_ratings, daily_ranks, \
-                          compare_players, compare_ranks, start_date, end_date):
-    if compare_players and compare_ranks:
-      print ("Both players and ranks list provided")
-      return {}
-    if not daily_ratings or not daily_ranks:
-      print ("Daily ratings or rankings are empty")
-      return {}
-    if not daily_ratings.keys() == daily_ranks.keys():
-      print ("Key mismatch between daily ratings and ranks")
-      return {}
-
-    invalid_players = compare_players
-    for d in daily_ratings:
-      invalid_players = invalid_players - daily_ratings[d].keys()
-      if not invalid_players:
-        break
-    if invalid_players:
-      print("Invalid player name(s)")
-      print(invalid_players)
-      return {}
-
-    compare_stats = {}
-    for d in daily_ratings:
-      if d < start_date or d > end_date:
-        continue
-
-      for p in daily_ratings[d]:
-        rating = daily_ratings[d][p]
-        rank = daily_ranks[d][p]
-
-        if p in compare_players:
-          if p not in compare_stats:
-            compare_stats[p] = {}
-          compare_stats[p][d] = rating
-        elif rank in compare_ranks:
-          if rank not in compare_stats:
-            compare_stats[rank] = {}
-          compare_stats[rank][d] = rating
-
-    return compare_stats
 
   daily_ratings, daily_ranks = get_daily_ratings(typ, frmt, changed_days_criteria = '', \
                                     allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
