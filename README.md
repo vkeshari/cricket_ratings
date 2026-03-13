@@ -146,6 +146,10 @@ Compare two or more players over time by name or by rank.
 + `PLOT_AVERAGE_KEYS`: Plot averages for these keys from `COMPARE_PLAYERS` or `COMPARE_RANKS` only.
 + `SHOW_CHANGES`     : Show single-day changes on graph.
 
+### `interval_graph.py`
+Shows the ratings and names of top players over time.
++ `SHOW_NAMES`: Show names of players at either ends of their rating timelines.
+
 ### `single_day_changes.py`
 Shows the largest single-day gains and drops in ratings.
 + `NUM_TOP`   : Show these many gains and drops in ratings
