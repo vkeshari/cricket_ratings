@@ -14,7 +14,7 @@ START_DATE = date(2007, 1, 1)
 # Last day of available data
 END_DATE = date(2026, 1, 1)
 
-SUFFIX = '25'
+SUFFIX = ''
 
 VALIDATION = True
 

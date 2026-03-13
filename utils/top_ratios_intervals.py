@@ -24,7 +24,7 @@ FORMAT = 't20'
 
 # Graph date range
 START_DATE = date(2009, 1, 1)
-END_DATE = date(2024, 1, 1)
+END_DATE = date(2026, 1, 1)
 
 # Upper and lower bounds of ratings to show
 THRESHOLD = 500

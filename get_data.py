@@ -7,16 +7,18 @@ TYPE = {'batting', 'bowling'}
 # ['test', 'odi', 't20']
 FORMAT = {'test', 'odi', 't20'}
 
-START_DATE = date(2025, 1, 1)
+START_DATE = date(2026, 1, 1)
 TODAY = date.today()
 ONE_DAY = timedelta(days = 1)
 
 STOP_ON_ERROR = True
-SUFFIX = '25'
+SUFFIX = ''
 
 assert not set(TYPE) - {'batting', 'bowling', 'allrounder'}, "Invalid TYPE provided"
 assert not set(FORMAT) - {'test', 'odi', 't20'}, "Invalid FORMAT provided"
 assert START_DATE < TODAY, "START_DATE must be in the past"
+
+REQUEST_HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0'}
 
 ID_TAG_PREFIX = '<td class="'
 ID_TAG_START = '>'
@@ -49,13 +51,14 @@ def date_to_parts(d):
 
 def get_data(d, frmt, typ):
   (yr, mn, dy) = date_to_parts(d)
-  url = 'http://www.relianceiccrankings.com/datespecific/' + frmt + '/' \
+  url = 'https://iccbackup.co.uk/datespecific/' + frmt + '/' \
         + typ  + '/' + yr + '/' + mn + '/' + dy + '/'
 
   text = ''
   while not text:
     try:
-      page = request.urlopen(url)
+      req = request.Request(url, headers = REQUEST_HEADERS)
+      page = request.urlopen(req)
       text = page.read().decode('utf-8')
     except:
       print (yr + '\t' + mn + '\t' + dy + '\t' + 'Retrying')

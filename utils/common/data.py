@@ -7,7 +7,7 @@ from pathlib import Path
 import math
 import pickle
 
-SUFFIX = '25'
+SUFFIX = ''
 REBUILD_DATA = False
 
 def get_days_with_change(daily_data, agg_window, consider_player_keys = False):
