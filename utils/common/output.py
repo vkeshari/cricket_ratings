@@ -5,6 +5,7 @@ from matplotlib import colors as mcolors
 import numpy as np
 
 ONE_DAY = timedelta(days = 1)
+ONE_MONTH = timedelta(days = 30)
 ONE_YEAR = timedelta(days = 365)
 
 def string_to_date(s):
@@ -130,6 +131,17 @@ def get_timescale_xticks(start_date, end_date, format = 'square'):
 
   d = start_date
   while d <= end_date:
+    if format == 'square' and date_range < ONE_MONTH or \
+        format == 'widescreen' and date_range < 2 * ONE_MONTH:
+      if d.day % 10 == 1:
+        xticks_major.append(d)
+      xticks_minor.append(d)
+    if format == 'square' and date_range < 3 * ONE_MONTH or \
+        format == 'widescreen' and date_range < 2 * 3 * ONE_MONTH:
+      if d.day == 1:
+        xticks_major.append(d)
+      if d.day % 10 == 1:
+        xticks_minor.append(d)
     if format == 'square' and date_range < ONE_YEAR or \
         format == 'widescreen' and date_range < 2 * ONE_YEAR:
       if d.day == 1 and d.month % 3 == 1:
