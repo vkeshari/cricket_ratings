@@ -1,6 +1,6 @@
 from common.data import get_daily_ratings
-from common.output import get_player_colors, get_timescale_xticks, readable_name_and_country, \
-                          pretty_format
+from common.output import country, get_player_colors, get_timescale_xticks, \
+                          pretty_format, readable_name, readable_name_and_country
 
 from datetime import date, timedelta
 from matplotlib import pyplot as plt
@@ -20,8 +20,11 @@ MAX_RATING = 1000
 THRESHOLD = 700
 Y_BUFFER = 100
 
-COLOR_BY_COUNTRY = True
+COLOR_BY_COUNTRY = False
 SHOW_NAMES = True
+
+# '' or in {'IND', 'AUS', 'ENG', ...}
+ONLY_COUNTRY = ''
 
 # Alternate way to calculate allrounder ratings. Use geometric mean of batting and bowling.
 ALLROUNDERS_GEOM_MEAN = True
@@ -39,15 +42,21 @@ assert THRESHOLD >= 100 and THRESHOLD < MAX_RATING, \
       "THRESHOLD must be between 100 and MAX_RATING"
 assert 0 <= Y_BUFFER <= 100, "Y_BUFFER must be between 0 and 100"
 
-DATA_THRESHOLD = THRESHOLD - Y_BUFFER
+if ONLY_COUNTRY:
+  assert not COLOR_BY_COUNTRY, "Cannot COLOR_BY_COUNTRY if ONLY_COUNTRY is set"
 
 
-def get_filtered_stats(daily_ratings, min_rating, start_date, end_date):
+def get_filtered_stats(daily_ratings, threshold, y_buffer, start_date, end_date, only_country):
   assert start_date in daily_ratings, "START_DATE not found in ratings"
-  start_date_ratings = {p: r for p, r in daily_ratings[start_date].items() if r >= DATA_THRESHOLD}
+
+  data_threshold = threshold - y_buffer
+
+  start_date_ratings = {p: r for p, r in daily_ratings[start_date].items() \
+                        if r >= threshold and (not only_country or only_country == country(p))}
 
   assert end_date in daily_ratings, "END_DATE not found in ratings"
-  end_date_ratings = {p: r for p, r in daily_ratings[end_date].items() if r >= DATA_THRESHOLD}
+  end_date_ratings = {p: r for p, r in daily_ratings[end_date].items() \
+                      if r >= threshold and (not only_country or only_country == country(p))}
 
   filtered_players = set()
   for d in daily_ratings:
@@ -55,7 +64,9 @@ def get_filtered_stats(daily_ratings, min_rating, start_date, end_date):
       continue
 
     for p in daily_ratings[d]:
-      if daily_ratings[d][p] >= min_rating:
+      if only_country and not only_country == country(p):
+        continue
+      if daily_ratings[d][p] >= data_threshold:
         if p not in filtered_players:
           filtered_players.add(p)
 
@@ -89,7 +100,8 @@ for typ, frmt in types_and_formats:
                           allrounders_geom_mean = ALLROUNDERS_GEOM_MEAN)
 
   filtered_ratings, start_date_ratings, end_date_ratings = \
-            get_filtered_stats(daily_ratings, DATA_THRESHOLD, START_DATE, END_DATE)
+            get_filtered_stats(daily_ratings, THRESHOLD, Y_BUFFER, START_DATE, END_DATE,
+                                only_country = ONLY_COUNTRY)
   print("Filtered stats built with " + str(len(filtered_ratings)) + " keys")
 
   if filtered_ratings:
@@ -99,6 +111,7 @@ for typ, frmt in types_and_formats:
     ax.set_title("Ratings of top " + pretty_format(frmt, typ) \
                       +("(GEOM)" if typ == 'allrounder' \
                                 and ALLROUNDERS_GEOM_MEAN else '') \
+                      +(" (" + ONLY_COUNTRY + ")" if ONLY_COUNTRY else '') \
                       + "\n" + str(START_DATE) + " to " + str(END_DATE), \
                   fontsize ='xx-large')
 
@@ -110,6 +123,7 @@ for typ, frmt in types_and_formats:
 
     if SHOW_NAMES:
       x_buffer = timedelta(days = ((END_DATE - START_DATE) / 3).days + 1)
+      x_name_buffer = timedelta(days = ((END_DATE - START_DATE) / 48).days + 1)
     else:
       x_buffer = 0
     graph_start_date = START_DATE - x_buffer
@@ -131,44 +145,41 @@ for typ, frmt in types_and_formats:
     for p in filtered_ratings:
       (xs, ys) = zip(*filtered_ratings[p].items())
 
-      ax.plot(xs, ys, linestyle = '-', linewidth = 5, antialiased = True, \
-                        alpha = 0.3, color = player_to_color[p], \
+      ax.plot(xs, ys, linestyle = '-', linewidth = 3, antialiased = True, \
+                        alpha = 0.5, color = player_to_color[p], \
                         label = readable_name_and_country(p))
       
     xs = [START_DATE] * len(start_date_ratings)
     names, ys = zip(*start_date_ratings.items())
     cols = [player_to_color[n] for n in names]
     ax.scatter(xs, ys, s = 50, c = cols, edgecolors = 'none', linewidths = 0, marker = 'o',
-                antialiased = True, alpha = 0.5)
+                antialiased = True, alpha = 0.7)
     
     xs = [END_DATE] * len(end_date_ratings)
     names, ys = zip(*end_date_ratings.items())
     cols = [player_to_color[n] for n in names]
     ax.scatter(xs, ys, s = 50, c = cols, edgecolors = 'none', linewidths = 0, marker = 'o',
-                antialiased = True, alpha = 0.5)
+                antialiased = True, alpha = 0.7)
 
     if SHOW_NAMES:
       for p in start_date_ratings:
-        if start_date_ratings[p] < THRESHOLD:
-          continue
-        ax.text(x = START_DATE - ONE_DAY, y = start_date_ratings[p],
-                  s = str(readable_name_and_country(p)),
-        alpha = 0.8, fontsize = 'medium', antialiased = True,
-        horizontalalignment = 'right', verticalalignment = 'center')
+        print_name = readable_name(p) if ONLY_COUNTRY else readable_name_and_country(p)
+        ax.text(x = START_DATE - x_name_buffer, y = start_date_ratings[p], s = print_name,
+                alpha = 0.8, fontsize = 'medium', antialiased = True,
+                horizontalalignment = 'right', verticalalignment = 'center')
 
       for p in end_date_ratings:
-        if end_date_ratings[p] < THRESHOLD:
-          continue
-        ax.text(x = END_DATE + ONE_DAY, y = end_date_ratings[p],
-                  s = str(readable_name_and_country(p)),
-        alpha = 0.8, fontsize = 'medium', antialiased = True,
-        horizontalalignment = 'left', verticalalignment = 'center')
+        print_name = readable_name(p) if ONLY_COUNTRY else readable_name_and_country(p)
+        ax.text(x = END_DATE + x_name_buffer, y = end_date_ratings[p], s = print_name,
+                alpha = 0.8, fontsize = 'medium', antialiased = True,
+                horizontalalignment = 'left', verticalalignment = 'center')
 
     fig.tight_layout()
 
     out_filename = 'out/images/line/interval/' \
                     + frmt + '_' + typ \
                     + ("GEOM" if typ == 'allrounder' and ALLROUNDERS_GEOM_MEAN else '') \
+                    + ('_' + ONLY_COUNTRY if ONLY_COUNTRY else '') \
                     + '_' + str(THRESHOLD) \
                     + '_' + str(START_DATE.year) + '_' + str(END_DATE.year) + '.png'
 

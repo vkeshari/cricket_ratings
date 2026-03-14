@@ -149,6 +149,7 @@ Compare two or more players over time by name or by rank.
 ### `interval_graph.py`
 Shows the ratings and names of top players over time.
 + `SHOW_NAMES`: Show names of players at either ends of their rating timelines.
++ `ONLY_COUNTRY`: Filter by players from one country only.
 
 ### `single_day_changes.py`
 Shows the largest single-day gains and drops in ratings.
