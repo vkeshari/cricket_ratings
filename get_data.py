@@ -7,7 +7,7 @@ TYPE = {'batting', 'bowling'}
 # ['test', 'odi', 't20']
 FORMAT = {'test', 'odi', 't20'}
 
-START_DATE = date(2026, 1, 1)
+START_DATE = date(2025, 1, 1)
 TODAY = date.today()
 ONE_DAY = timedelta(days = 1)
 

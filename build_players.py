@@ -5,23 +5,27 @@ import math
 
 # ['batting', 'bowling', 'allrounder']
 TYPE = {'batting', 'bowling', 'allrounder'}
-# ['test', 'odi', 't20']
-FORMAT = 't20'
 
 ONE_DAY = timedelta(days = 1)
 
-START_DATE = date(2007, 1, 1)
+START_DATES = {'test': date(1901, 1, 1),
+                'odi': date(1981, 1, 1),
+                't20': date(2007, 1, 1)}
 # Last day of available data
 END_DATE = date(2026, 1, 1)
 
 SUFFIX = ''
 
 VALIDATION = True
+# See README for when to use this flag
+SKIP_VALIDATION_FOR_TESTS = True
 
 assert not TYPE - {'batting', 'bowling', 'allrounder'}, "Invalid TYPE provided"
-assert FORMAT in ['test', 'odi', 't20'], "Invalid FORMAT provided"
-assert START_DATE < END_DATE, "START_DATE must be earlier than END_DATE"
+
 assert END_DATE <= date.today(), "Future END_DATE requested"
+assert not START_DATES.keys() - {'test', 'odi', 't20'}, "INVALID format provided in START_DATES"
+for d in START_DATES.values():
+  assert d < END_DATE, "Each date in START_DATES must be earlier than END_DATE"
 
 def date_to_parts(d):
   yr = str(d.year)
@@ -123,26 +127,26 @@ def validate_data(start_date, end_date, typ, frmt, data):
   return not mismatch
 
 
-def parse_all_dates(typ):
+def parse_all_dates(typ, frmt, start_date, end_date):
   player_data = {}
-  d = START_DATE
-  while (d < END_DATE):
-    parse_date(d, typ, FORMAT, player_data)
+  d = start_date
+  while (d < end_date):
+    parse_date(d, typ, frmt, player_data)
     d += ONE_DAY
 
-  if VALIDATION:
-    if validate_data(START_DATE, END_DATE, typ, FORMAT, player_data):
-      print (typ + ': VALIDATION SUCCESS')
-      return player_data
-    else:
-      print (typ + ': VALIDATION FAILED')
-      return {}
-  else:
+  if not VALIDATION or frmt == 'test' and SKIP_VALIDATION_FOR_TESTS:
     print (typ + ': VALIDATION SKIPPED')
     return player_data
+  
+  if validate_data(start_date, end_date, typ, frmt, player_data):
+    print (typ + ': VALIDATION SUCCESS')
+    return player_data
+  else:
+    print (typ + ': VALIDATION FAILED')
+    return {}
 
 
-def build_allrounder_data(player_data_by_format):
+def build_allrounder_data(player_data_by_format, start_date, end_date):
   max_ever = 0
   batting_player_data = player_data_by_format['batting']
   bowling_player_data = player_data_by_format['bowling']
@@ -154,8 +158,8 @@ def build_allrounder_data(player_data_by_format):
     all_player_data[key]['country'] = batting_player_data[key]['country']
     all_player_data[key]['name'] = batting_player_data[key]['name']
     all_player_data[key]['ratings'] = {}
-    d = START_DATE
-    while d < END_DATE:
+    d = start_date
+    while d < end_date:
       (yr, mn, dy) = date_to_parts(d)
       date_str = yr + mn + dy
       if date_str in batting_player_data[key]['ratings'] \
@@ -175,36 +179,39 @@ def build_allrounder_data(player_data_by_format):
 
   return all_player_data
 
+for frmt, start_date in START_DATES.items():
+  print ('\n== ' + frmt + ' ==\n')
 
-player_data_by_format = {}
-for typ in ['batting', 'bowling']:
-  if typ in TYPE or 'allrounder' in TYPE:
-    player_data_by_format[typ] = parse_all_dates(typ)
+  player_data_by_format = {}
+  for typ in ['batting', 'bowling']:
+    if typ in TYPE or 'allrounder' in TYPE:
+      player_data_by_format[typ] = parse_all_dates(typ, frmt, start_date, end_date = END_DATE)
 
-for typ in TYPE:
-  print ('\n' + FORMAT + '\t' + typ)
+  for typ in TYPE:
+    print ('\n' + frmt + '\t' + typ)
 
-  if typ == 'allrounder':
-    all_player_data = build_allrounder_data(player_data_by_format)
-  else:
-    all_player_data = player_data_by_format[typ]
+    if typ == 'allrounder':
+      all_player_data = build_allrounder_data(player_data_by_format, start_date,
+                                              end_date = END_DATE)
+    else:
+      all_player_data = player_data_by_format[typ]
 
-  print ('Players built: ' + '\t' + str(len(all_player_data)))
+    print ('Players built: ' + '\t' + str(len(all_player_data)))
 
-  for key in all_player_data:
-    country = all_player_data[key]['country']
-    name = all_player_data[key]['name']
-    ratings = all_player_data[key]['ratings']
-    filename = 'players' + SUFFIX + '/' + typ + '/' + FORMAT + '/' + country + '_' + name + '.data'
+    for key in all_player_data:
+      country = all_player_data[key]['country']
+      name = all_player_data[key]['name']
+      ratings = all_player_data[key]['ratings']
+      filename = 'players' + SUFFIX + '/' + typ + '/' + frmt + '/' + country + '_' + name + '.data'
 
-    output_file = Path(filename)
-    output_file.parent.mkdir(exist_ok = True, parents = True)
+      output_file = Path(filename)
+      output_file.parent.mkdir(exist_ok = True, parents = True)
 
-    with output_file.open('w') as f:
-      for date_str in ratings:
-        f.write(date_str + ',' \
-                + str(all_player_data[key]['ratings'][date_str]['rank']) + ',' \
-                + str(all_player_data[key]['ratings'][date_str]['rating']) + '\n')
-  print(FORMAT + ' ' + typ + ' data written')
+      with output_file.open('w') as f:
+        for date_str in ratings:
+          f.write(date_str + ',' \
+                  + str(all_player_data[key]['ratings'][date_str]['rank']) + ',' \
+                  + str(all_player_data[key]['ratings'][date_str]['rating']) + '\n')
+    print(frmt + ' ' + typ + ' data written')
 
 print ('\nAll data written')
